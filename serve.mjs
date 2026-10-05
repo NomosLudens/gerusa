@@ -234,6 +234,14 @@ async function main() {
         return;
       }
 
+      // GERUSA Gate 01 exposes only the root shell. Do not turn retired
+      // KALLISTIS routes or API paths into a successful HTML fallback.
+      if (url.pathname !== "/") {
+        res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+        res.end("Not found");
+        return;
+      }
+
       // SPA fallback
       const indexRes = await serveIndex();
       res.writeHead(indexRes.status, Object.fromEntries(indexRes.headers));

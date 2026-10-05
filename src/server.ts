@@ -2,18 +2,8 @@ import "./lib/error-capture";
 
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
-import type { ChatRateLimitBinding } from "./lib/rate-limit";
-import { attachRuntimeEnv } from "./server/runtime/context";
 
-type CloudflareEnv = {
-  CHAT_RATE_LIMITER: ChatRateLimitBinding;
-  CHAT_PRE_AUTH_RATE_LIMITER: ChatRateLimitBinding;
-  RECOVERY_RATE_LIMITER?: ChatRateLimitBinding;
-  HYPERDRIVE?: { connectionString: string };
-  KALLISTIS_MEDIA?: unknown;
-  ASSETS?: unknown;
-  [key: string]: unknown;
-};
+type CloudflareEnv = Record<string, unknown>;
 
 type CloudflareExecutionContext = {
   waitUntil(promise: Promise<unknown>): void;
@@ -43,14 +33,14 @@ const CONTENT_SECURITY_POLICY = [
   "base-uri 'self'",
   "object-src 'none'",
   "form-action 'self'",
-  "frame-ancestors 'self' https://kallistis.app https:// https:// https://*.workers.dev",
-  "script-src 'self' 'unsafe-inline' https://accounts.google.com https://apis.google.com https://static.cloudflareinsights.com",
+  "frame-ancestors 'self'",
+  "script-src 'self' 'unsafe-inline'",
   "style-src 'self' 'unsafe-inline'",
   "img-src 'self' data: blob: https:",
   "font-src 'self' data:",
   "media-src 'self' data: blob:",
-  "connect-src 'self' https: wss:",
-  "frame-src 'self' https://accounts.google.com https://content.googleapis.com https://docs.google.com",
+  "connect-src 'self'",
+  "frame-src 'none'",
   "worker-src 'self' blob:",
   "manifest-src 'self'",
 ].join("; ");
@@ -142,30 +132,17 @@ function newRequestId(request: Request): string {
 // src/lib/background-task.ts.
 function attachCloudflareRuntime(
   request: Request,
-  env: CloudflareEnv,
-  ctx: CloudflareExecutionContext,
-  requestId: string,
+  env: CloudflareEnv = {},
+  ctx?: CloudflareExecutionContext,
+  requestId: string = crypto.randomUUID(),
 ) {
-  Object.defineProperty(request, "__cfWaitUntil", {
-    value: ctx.waitUntil.bind(ctx),
-    enumerable: false,
-    configurable: true,
-  });
-  Object.defineProperty(request, "__cfChatRateLimiter", {
-    value: env.CHAT_RATE_LIMITER,
-    enumerable: false,
-    configurable: true,
-  });
-  Object.defineProperty(request, "__cfPreAuthChatRateLimiter", {
-    value: env.CHAT_PRE_AUTH_RATE_LIMITER,
-    enumerable: false,
-    configurable: true,
-  });
-  Object.defineProperty(request, "__cfRecoveryRateLimiter", {
-    value: env.RECOVERY_RATE_LIMITER,
-    enumerable: false,
-    configurable: true,
-  });
+  if (ctx && typeof ctx.waitUntil === "function") {
+    Object.defineProperty(request, "__cfWaitUntil", {
+      value: ctx.waitUntil.bind(ctx),
+      enumerable: false,
+      configurable: true,
+    });
+  }
   Object.defineProperty(request, "__requestId", {
     value: requestId,
     enumerable: false,
@@ -174,7 +151,7 @@ function attachCloudflareRuntime(
 }
 
 export default {
-  async fetch(request: Request, env: CloudflareEnv, ctx: CloudflareExecutionContext) {
+  async fetch(request: Request, env: CloudflareEnv = {}, ctx?: CloudflareExecutionContext) {
     const start = Date.now();
     const url = new URL(request.url);
     const request_id = newRequestId(request);
@@ -186,15 +163,19 @@ export default {
     let response: Response;
     let errorMessage: string | undefined;
     try {
-      attachCloudflareRuntime(request, env, ctx, request_id);
-      attachRuntimeEnv(request, env);
-      if (url.pathname === "/convite/" || url.pathname === "/convite/index.html") {
-        response = Response.redirect(`${url.origin}/convite${url.search}`, 308);
+      if (
+        url.pathname !== "/" &&
+        url.pathname !== "/gerusa.png" &&
+        url.pathname !== "/gerusa-logo.png" &&
+        !url.pathname.startsWith("/assets/")
+      ) {
+        response = new Response("Not found", { status: 404 });
       } else {
+        attachCloudflareRuntime(request, env, ctx, request_id);
         const handler = await getServerEntry();
-        response = await handler.fetch(request, env, ctx);
+        response = await handler.fetch(request, env, ctx as CloudflareExecutionContext);
+        response = await normalizeCatastrophicSsrResponse(response);
       }
-      response = await normalizeCatastrophicSsrResponse(response);
     } catch (error) {
       errorMessage = error instanceof Error ? error.message : String(error);
       console.error(

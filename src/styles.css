@@ -2719,3 +2719,374 @@
     order: 10;
   }
 }
+
+/* GERUSA Gate 01: uma página própria, enxuta e feita para telas pequenas. */
+:root {
+  --obsidian: #160b0c;
+  --background: #160b0c;
+  --foreground: #f2e6d7;
+  --ivory: #f2e6d7;
+  --ivory-dim: #cbb8a7;
+  --wine: #450a16;
+  --burgundy: #871b2d;
+  --gold: #c98758;
+  --primary: #a7253a;
+  --primary-foreground: #fff0e8;
+  --ring: #d75a57;
+}
+
+body {
+  background: #160b0c;
+}
+
+.gerusa-page {
+  position: relative;
+  display: flex;
+  min-height: 100svh;
+  flex-direction: column;
+  overflow: hidden;
+  isolation: isolate;
+  color: #f2e6d7;
+  background:
+    radial-gradient(ellipse at 77% 42%, rgba(172, 22, 43, 0.28), transparent 43%),
+    radial-gradient(ellipse at 2% 92%, rgba(139, 18, 43, 0.2), transparent 35%),
+    #160b0c;
+}
+
+.gerusa-page::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-image: repeating-linear-gradient(115deg, transparent 0 13px, #f5d3a308 14px 15px);
+  content: "";
+}
+
+.gerusa-glow {
+  position: absolute;
+  z-index: -1;
+  top: 10%;
+  right: -12rem;
+  width: 35rem;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: #b51e3b33;
+  filter: blur(100px);
+}
+
+.gerusa-header,
+.gerusa-footer {
+  display: flex;
+  width: min(1320px, calc(100% - 80px));
+  align-items: center;
+  justify-content: space-between;
+  margin-inline: auto;
+}
+
+.gerusa-header {
+  min-height: 90px;
+  border-bottom: 1px solid #e9c69924;
+}
+
+.gerusa-wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: #f5e8d8;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: 0.19em;
+  text-decoration: none;
+}
+
+.gerusa-wordmark img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 11px #d41f3c70);
+}
+
+.gerusa-wordmark span {
+  color: #f5e8d8;
+}
+
+.gerusa-header p,
+.gerusa-footer {
+  color: #c4ad9b;
+  font-size: 0.68rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.gerusa-header i,
+.gerusa-footer i {
+  padding-inline: 0.45em;
+  color: #d44d53;
+  font-style: normal;
+}
+
+.gerusa-hero {
+  display: grid;
+  width: min(1320px, calc(100% - 80px));
+  flex: 1;
+  grid-template-columns: minmax(0, 1.05fr) minmax(350px, 0.95fr);
+  align-items: center;
+  gap: clamp(56px, 8vw, 124px);
+  margin-inline: auto;
+  padding-block: 42px;
+}
+
+.gerusa-portrait {
+  position: relative;
+  min-height: min(70svh, 740px);
+  overflow: hidden;
+  border: 1px solid #d2a16a45;
+  border-radius: 45% 45% 3px 3px;
+  background: #291413;
+  box-shadow: 0 28px 90px #0008, 0 0 55px #8a3d201f;
+}
+
+.gerusa-portrait::after {
+  position: absolute;
+  inset: 55% 0 0;
+  background: linear-gradient(transparent, #160b0ce8);
+  content: "";
+}
+
+.gerusa-portrait img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: inherit;
+  object-fit: cover;
+  object-position: 50% 43%;
+}
+
+.portrait-caption {
+  position: absolute;
+  z-index: 1;
+  right: 1.25rem;
+  bottom: 1.2rem;
+  left: 1.25rem;
+  color: #f2e6d7c9;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.02rem;
+  font-style: italic;
+  text-align: center;
+}
+
+.gerusa-copy {
+  max-width: 510px;
+  padding-block: 20px;
+}
+
+.gerusa-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin: 0;
+  color: #c4ad9b;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.gerusa-eyebrow span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #dc384c;
+  box-shadow: 0 0 16px #ed2946a8;
+}
+
+.gerusa-quote {
+  margin: clamp(30px, 6vh, 60px) 0 0;
+  color: #d7a66d;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1.7rem, 3vw, 2.4rem);
+  font-style: italic;
+}
+
+.gerusa-copy h1 {
+  margin: 5px 0 0;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(3.5rem, 7.4vw, 6.7rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 0.89;
+}
+
+.gerusa-copy h1 em {
+  display: block;
+  color: #d6b695;
+  font-weight: 400;
+}
+
+.gerusa-role {
+  margin: 1.4rem 0 0;
+  color: #d7a66d;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+
+.gerusa-intro,
+.gerusa-detail {
+  max-width: 440px;
+  color: #e4d5c7;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: clamp(1.35rem, 2.2vw, 1.75rem);
+  line-height: 1.32;
+}
+
+.gerusa-intro {
+  margin: 2.1rem 0 0;
+}
+
+.gerusa-detail {
+  margin: 1rem 0 0;
+  color: #c4ad9b;
+  font-size: clamp(1.13rem, 1.8vw, 1.35rem);
+}
+
+.gerusa-cta {
+  display: inline-flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2.5rem;
+  margin-top: 2rem;
+  padding: 0 1.25rem;
+  border: 1px solid #be3345;
+  border-radius: 2px;
+  color: #fff0e8;
+  background: linear-gradient(135deg, #a9233a, #781727);
+  box-shadow: 0 8px 28px #aa172e38;
+  font: 600 0.72rem/1 "Inter", sans-serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gerusa-cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.78;
+}
+
+.gerusa-cta span {
+  font-size: 1.05rem;
+}
+
+.gerusa-note {
+  margin: 0.75rem 0 0;
+  color: #c4ad9b;
+  font-size: 0.72rem;
+}
+
+.gerusa-signature {
+  margin: 2rem 0 0;
+  color: #bd8850;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.15rem;
+  font-style: italic;
+}
+
+.gerusa-footer {
+  min-height: 62px;
+  border-top: 1px solid #e9c69924;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+}
+
+.gerusa-footer b {
+  padding-left: 0.35rem;
+  color: #bd8850;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+  .gerusa-header,
+  .gerusa-footer,
+  .gerusa-hero {
+    width: min(100% - 36px, 520px);
+  }
+
+  .gerusa-header {
+    min-height: 68px;
+    align-items: flex-start;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.15rem;
+  }
+
+  .gerusa-wordmark {
+    font-size: 1.15rem;
+  }
+
+  .gerusa-wordmark img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .gerusa-header p {
+    margin: 0;
+    font-size: 0.55rem;
+  }
+
+  .gerusa-hero {
+    grid-template-columns: 1fr;
+    gap: 1.65rem;
+    padding-block: 1.4rem 2.25rem;
+  }
+
+  .gerusa-portrait {
+    min-height: 0;
+    aspect-ratio: 1.02;
+    border-radius: 42% 42% 3px 3px;
+  }
+
+  .gerusa-portrait img {
+    min-height: 0;
+  }
+
+  .portrait-caption {
+    right: 0.8rem;
+    bottom: 0.8rem;
+    left: 0.8rem;
+    font-size: 0.9rem;
+  }
+
+  .gerusa-copy {
+    padding-block: 0;
+  }
+
+  .gerusa-quote {
+    margin-top: 1.3rem;
+  }
+
+  .gerusa-copy h1 {
+    font-size: clamp(3.65rem, 16vw, 5.4rem);
+  }
+
+  .gerusa-intro {
+    margin-top: 1.4rem;
+  }
+
+  .gerusa-cta {
+    width: 100%;
+    margin-top: 1.55rem;
+  }
+
+  .gerusa-signature {
+    margin-top: 1.35rem;
+  }
+
+  .gerusa-footer {
+    min-height: 58px;
+    font-size: 0.48rem;
+    letter-spacing: 0.08em;
+  }
+}

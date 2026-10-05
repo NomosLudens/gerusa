@@ -27,6 +27,9 @@ export default defineConfig({
         entry: "server",
       },
       router: {
+        // Gate 01 is a single public shell. Keep the legacy KALLISTIS routes
+        // out of both the route tree and the runtime bundle.
+        routeFileIgnorePattern: "^(?!(index|__root)\\.tsx$).*",
         // Divide o componente de cada rota em chunk próprio. Sem isso, o glue
         // code das ~50 rotas ia inteiro no chunk principal (~310 KB gzip antes
         // de qualquer interação) — custo de parse/exec pesado no WebKit,

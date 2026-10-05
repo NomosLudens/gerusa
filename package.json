@@ -11,21 +11,12 @@
     "start": "bun serve.mjs",
     "preview": "vite preview",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit -p tsconfig.gerusa.json",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "provision:local-user": "bun scripts/provision-local-user.ts",
-    "generate:player-invite-links": "bun scripts/generate-player-invite-links.ts",
-    "check:local-migrations": "node scripts/check-local-migrations.mjs",
     "test:watch": "vitest",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "deploy:kallistis": "node scripts/deploy-kallistis.mjs",
-    "supabase:export-personal": "bun scripts/supabase/export-personal-data.ts",
-    "supabase:import-personal": "bun scripts/supabase/import-personal-data.ts",
-    "telegram:webhook:set": "bun scripts/telegram-webhook.mjs set",
-    "telegram:webhook:info": "bun scripts/telegram-webhook.mjs info",
-    "telegram:webhook:delete": "bun scripts/telegram-webhook.mjs delete"
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@ai-sdk/openai-compatible": "^2.0.51",

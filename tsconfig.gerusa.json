@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "include": [
+    "src/routeTree.gen.ts",
+    "src/router.tsx",
+    "src/start.ts",
+    "src/server.ts",
+    "src/routes/__root.tsx",
+    "src/routes/index.tsx",
+    "vite.config.ts"
+  ],
+  "exclude": ["node_modules", "dist"]
+}

@@ -1,6 +1,5 @@
 import { QueryClient } from "@tanstack/react-query";
 import { createRouter } from "@tanstack/react-router";
-import { KallistisLoadingShell } from "./components/KallistisLoadingShell";
 import { routeTree } from "./routeTree.gen";
 
 export const getRouter = () => {
@@ -19,7 +18,6 @@ export const getRouter = () => {
     scrollRestoration: true,
     defaultPreload: "intent",
     defaultPreloadStaleTime: 0,
-    defaultPendingComponent: KallistisLoadingShell,
   });
 
   return router;
