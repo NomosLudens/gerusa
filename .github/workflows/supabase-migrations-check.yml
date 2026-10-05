@@ -1,0 +1,39 @@
+# Desativado em 2026-07-02: supabase/migrations/ agora tem um único arquivo
+# consolidado (20260702010000_clean_baseline_v2.sql), destinado a provisionar
+# um Supabase NOVO/diferente no futuro, não o projeto de produção atual. O
+# histórico de migrations já aplicadas na produção (39 versões antigas) não
+# existe mais localmente, então `supabase db push --dry-run` sempre falha com
+# "Remote migration versions not found in local migrations directory". Ver
+# supabase/migrations_legacy/README.md. Reative via workflow_dispatch manual
+# se um dia isso for reconciliado (supabase migration repair) ou se este
+# workflow for redesenhado para outro projeto.
+name: Supabase migrations check
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: supabase-migrations-check-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Dry-run pending migrations
+        run: supabase db push --dry-run
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

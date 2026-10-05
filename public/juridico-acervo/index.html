@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#08080e" />
+    <title>Acervo Jurídico</title>
+    <style>
+      :root {
+        --bg: #08080e;
+        --card: rgba(40, 20, 10, 0.35);
+        --border: rgba(255, 68, 0, 0.2);
+        --gold: #ff4400; /* --kaline: cor real do domínio Kaline */
+        --gold-dim: rgba(255, 68, 0, 0.12);
+        --text: #f3ebdd;
+        --text-dim: #b6a88f;
+        --text-faint: #847661;
+        --radius: 16px;
+        --radius-sm: 10px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      .app {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 20px 14px 90px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, "Times New Roman", serif;
+        margin: 0;
+        color: var(--gold);
+        font-weight: 500;
+      }
+      h1 {
+        font-size: 1.6rem;
+        margin-bottom: 6px;
+      }
+      h2 {
+        font-size: 1.05rem;
+        margin: 20px 0 10px;
+      }
+      p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      .dim {
+        color: var(--text-dim);
+      }
+      .small {
+        font-size: 0.82rem;
+      }
+      .search-row {
+        display: flex;
+        gap: 8px;
+        margin: 16px 0;
+      }
+      .search-row input {
+        flex: 1;
+      }
+      input {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        padding: 12px 13px;
+        font-size: 0.92rem;
+        font-family: inherit;
+      }
+      .btn {
+        border: 0;
+        border-radius: var(--radius-sm);
+        padding: 0 18px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--gold);
+        color: #180a04;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .btn.sm {
+        padding: 6px 14px;
+        font-size: 0.8rem;
+      }
+      .spinner {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(0, 0, 0, 0.3);
+        border-top-color: #180a04;
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .card {
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--card);
+        padding: 14px 16px;
+        margin-bottom: 16px;
+      }
+      .aviso {
+        color: var(--text-dim);
+      }
+      .disclaimer {
+        border: 1px solid var(--border);
+        background: var(--gold-dim);
+        color: var(--text-dim);
+        border-radius: 8px;
+        padding: 8px 10px;
+        font-size: 0.76rem;
+        margin-bottom: 10px;
+      }
+      .resultado-texto {
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-size: 0.9rem;
+      }
+      .list {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+        display: grid;
+        gap: 10px;
+      }
+      .item {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: rgba(40, 20, 10, 0.25);
+        padding: 12px 14px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 10px;
+        align-items: start;
+      }
+      .item .titulo {
+        color: var(--gold);
+        font-size: 0.88rem;
+        margin-bottom: 4px;
+        word-break: break-word;
+      }
+      .item .texto {
+        font-size: 0.84rem;
+        color: var(--text);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .item .btn.icon {
+        background: transparent;
+        border: 0;
+        color: var(--text-dim);
+        padding: 6px;
+        border-radius: 999px;
+        cursor: pointer;
+        font-size: 1rem;
+      }
+      .item .btn.icon:hover {
+        color: var(--gold);
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .hide {
+        display: none !important;
+      }
+      .italic {
+        font-style: italic;
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: #140a05;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        z-index: 60;
+        max-width: 90vw;
+        text-align: center;
+      }
+      #toast.error {
+        border-color: #fb7185;
+        color: #fda4af;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <h1 id="titulo"></h1>
+      <p class="small dim" style="margin-bottom: 4px">
+        Busca assistida por IA — as fontes não são verificadas automaticamente. Confira tribunal,
+        número e link antes de usar. Salve no acervo o que for útil.
+      </p>
+
+      <form id="form-buscar" class="search-row">
+        <input id="query" type="text" required minlength="3" />
+        <button id="btn-buscar" type="submit" class="btn">buscar</button>
+      </form>
+
+      <div id="aviso-box" class="card aviso hide"></div>
+
+      <div id="resultado-box" class="card hide">
+        <p class="disclaimer">
+          Gerado por IA. Pode conter citações imprecisas ou inexistentes — verifique cada fonte
+          oficial antes de citar.
+        </p>
+        <div id="resultado-texto" class="resultado-texto"></div>
+        <button id="btn-salvar" class="btn sm" style="margin-top: 12px">Salvar no acervo</button>
+      </div>
+
+      <h2>Acervo</h2>
+      <p id="acervo-vazio" class="small dim italic hide">Nenhum item salvo ainda.</p>
+      <ul id="acervo-lista" class="list"></ul>
+    </main>
+
+    <div id="toast" class="hide" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        if (new URLSearchParams(location.search).get("embedded") === "1") {
+          document.documentElement.classList.add("embedded");
+        }
+
+        var modo =
+          new URLSearchParams(location.search).get("modo") === "legislacao"
+            ? "legislacao"
+            : "jurisprudencia";
+
+        var TITULOS = { jurisprudencia: "Jurisprudência", legislacao: "Legislação" };
+        var PLACEHOLDERS = {
+          jurisprudencia: "Ex: prescrição intercorrente trabalhista STJ",
+          legislacao: "Ex: art. 5º CF inciso LXXVIII duração razoável",
+        };
+        document.title = TITULOS[modo];
+        var query = "";
+
+        function $(id) {
+          return document.getElementById(id);
+        }
+        function esc(value) {
+          return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+        function emit(action, payload) {
+          window.parent?.postMessage(
+            {
+              source: "juridico-acervo",
+              action: action,
+              payload: payload || {},
+              timestamp: Date.now(),
+            },
+            window.location.origin,
+          );
+        }
+        var toastTimer;
+        function toast(message, isError) {
+          var el = $("toast");
+          el.textContent = message;
+          el.className = isError ? "error" : "";
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () {
+            el.className = "hide";
+          }, 3000);
+        }
+
+        $("titulo").textContent = TITULOS[modo];
+        $("query").placeholder = PLACEHOLDERS[modo];
+
+        function renderAcervo(itens) {
+          $("acervo-vazio").classList.toggle("hide", itens.length > 0);
+          $("acervo-lista").innerHTML = itens
+            .map(function (it) {
+              return (
+                '<li class="item"><div><p class="titulo">' +
+                esc(it.titulo) +
+                '</p><p class="texto">' +
+                esc(it.texto) +
+                '</p></div><button class="btn icon" data-id="' +
+                esc(it.id) +
+                '" aria-label="Remover">✕</button></li>'
+              );
+            })
+            .join("");
+          $("acervo-lista")
+            .querySelectorAll("button[data-id]")
+            .forEach(function (btn) {
+              btn.onclick = function () {
+                emit("juridico-acervo:remover", { id: btn.dataset.id });
+              };
+            });
+        }
+
+        $("form-buscar").addEventListener("submit", function (e) {
+          e.preventDefault();
+          query = $("query").value.trim();
+          if (query.length < 3) return;
+          $("btn-buscar").disabled = true;
+          $("btn-buscar").innerHTML = '<span class="spinner"></span>';
+          $("resultado-box").classList.add("hide");
+          $("aviso-box").classList.add("hide");
+          emit("juridico-acervo:buscar", { query: query });
+        });
+
+        $("btn-salvar").onclick = function () {
+          emit("juridico-acervo:salvar", {
+            titulo: query,
+            texto: $("resultado-texto").textContent,
+          });
+        };
+
+        window.addEventListener("message", function (event) {
+          if (event.origin !== window.location.origin) return;
+          var msg = event.data;
+          if (!msg || msg.source !== "kaline-host") return;
+          var p = msg.payload || {};
+
+          if (msg.action === "juridico-acervo:itens-ready") {
+            renderAcervo(p.itens || []);
+            return;
+          }
+          if (msg.action === "juridico-acervo:resultado") {
+            $("btn-buscar").disabled = false;
+            $("btn-buscar").textContent = "buscar";
+            if (p.resultado) {
+              $("resultado-texto").textContent = p.resultado;
+              $("resultado-box").classList.remove("hide");
+            } else if (p.aviso) {
+              $("aviso-box").textContent = p.aviso;
+              $("aviso-box").classList.remove("hide");
+            }
+            return;
+          }
+          if (msg.action === "juridico-acervo:salvo") {
+            renderAcervo(p.itens || []);
+            toast("Salvo no acervo");
+            return;
+          }
+          if (msg.action === "juridico-acervo:removido") {
+            renderAcervo(p.itens || []);
+            return;
+          }
+          if (msg.action === "juridico-acervo:error") {
+            $("btn-buscar").disabled = false;
+            $("btn-buscar").textContent = "buscar";
+            toast(p.message || "Erro no acervo jurídico.", true);
+            return;
+          }
+        });
+
+        emit("microapp:ready");
+        emit("juridico-acervo:itens-request");
+      })();
+    </script>
+  </body>
+</html>

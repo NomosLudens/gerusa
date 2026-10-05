@@ -1,0 +1,1323 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>KALLISTIS — Geek Wizards | A Intenção da Guarda</title>
+    <style>
+      :root {
+        --bg: #0a0b0f;
+        --panel: #12141a;
+        --panel2: #171a22;
+        --line: #2a2e39;
+        --text: #ece9df;
+        --muted: #aaa79d;
+        --dim: #77746d;
+        --gold: #7a4bc2;
+        --gold2: #6c43a8;
+        --red: #b94e5d;
+        --blue: #7a4bc2;
+        --green: #8fa77d;
+        --violet: #9b86b8;
+        --shadow: 0 12px 36px rgba(0, 0, 0, 0.35);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at 20% 0%, rgba(122, 75, 194, 0.08), transparent 36rem),
+          radial-gradient(circle at 90% 10%, rgba(138, 160, 199, 0.05), transparent 34rem),
+          var(--bg);
+      }
+      button,
+      textarea,
+      input {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+      .wrap {
+        max-width: 1220px;
+        margin: 0 auto;
+        padding: 28px 18px 72px;
+      }
+      header.hero {
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, rgba(23, 26, 34, 0.95), rgba(14, 16, 21, 0.96));
+        border-radius: 18px;
+        padding: 28px;
+        box-shadow: var(--shadow);
+      }
+      .kicker {
+        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--gold);
+      }
+      h1 {
+        margin: 0.35rem 0 0.3rem;
+        font-family: Georgia, serif;
+        font-size: clamp(2rem, 5vw, 4rem);
+        font-weight: 500;
+        letter-spacing: -0.03em;
+      }
+      .subtitle {
+        color: var(--muted);
+        max-width: 780px;
+        font-size: 1.03rem;
+      }
+      .meta {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-top: 18px;
+      }
+      .chip {
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 10px;
+        color: var(--muted);
+        font-size: 0.78rem;
+        background: #0e1015;
+      }
+      .chip b {
+        color: var(--text);
+        font-weight: 600;
+      }
+      .topgrid {
+        display: grid;
+        grid-template-columns: 1.3fr 0.7fr;
+        gap: 16px;
+        margin-top: 18px;
+      }
+      @media (max-width: 860px) {
+        .topgrid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        border: 1px solid var(--line);
+        background: rgba(18, 20, 26, 0.94);
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 6px 24px rgba(0, 0, 0, 0.16);
+      }
+      .card h2,
+      .card h3 {
+        margin: 0 0 10px;
+      }
+      .card h2 {
+        font-family: Georgia, serif;
+        font-size: 1.35rem;
+        font-weight: 500;
+      }
+      .card h3 {
+        font-size: 0.95rem;
+        letter-spacing: 0.02em;
+      }
+      .lead {
+        font-size: 1.05rem;
+      }
+      .small {
+        font-size: 0.84rem;
+        color: var(--muted);
+      }
+      .alert {
+        border-left: 3px solid var(--gold);
+        padding: 10px 12px;
+        background: rgba(122, 75, 194, 0.07);
+        border-radius: 8px;
+      }
+      .danger {
+        border-left-color: var(--red);
+        background: rgba(185, 78, 93, 0.07);
+      }
+      nav {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        margin: 18px 0;
+        background: rgba(10, 11, 15, 0.9);
+        backdrop-filter: blur(12px);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 8px;
+        display: flex;
+        gap: 6px;
+        overflow: auto;
+      }
+      nav a {
+        color: var(--muted);
+        text-decoration: none;
+        padding: 7px 10px;
+        border-radius: 8px;
+        white-space: nowrap;
+        font-size: 0.82rem;
+      }
+      nav a:hover {
+        background: var(--panel2);
+        color: var(--text);
+      }
+      section {
+        scroll-margin-top: 84px;
+        margin-top: 18px;
+      }
+      .section-title {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin: 0 0 10px;
+      }
+      .num {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        border: 1px solid var(--gold2);
+        color: var(--gold);
+        font-size: 0.8rem;
+      }
+      .section-title h2 {
+        margin: 0;
+        font-family: Georgia, serif;
+        font-weight: 500;
+        font-size: 1.55rem;
+      }
+      .flow {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 8px;
+      }
+      @media (max-width: 900px) {
+        .flow {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      @media (max-width: 520px) {
+        .flow {
+          grid-template-columns: 1fr;
+        }
+      }
+      .flow .step {
+        border: 1px solid var(--line);
+        background: #101219;
+        border-radius: 10px;
+        padding: 12px;
+        min-height: 100px;
+      }
+      .step .t {
+        color: var(--gold);
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.09em;
+      }
+      .step p {
+        margin: 0.35rem 0 0;
+        font-size: 0.88rem;
+        color: var(--muted);
+      }
+      .scene {
+        border: 1px solid var(--line);
+        background: linear-gradient(180deg, #141720, #101218);
+        border-radius: 14px;
+        margin: 12px 0;
+        overflow: hidden;
+      }
+      .scene summary {
+        list-style: none;
+        padding: 16px 18px;
+        font-weight: 650;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+      .scene summary::-webkit-details-marker {
+        display: none;
+      }
+      .scene summary:after {
+        content: "＋";
+        color: var(--gold);
+      }
+      .scene[open] summary:after {
+        content: "−";
+      }
+      .scene-body {
+        padding: 0 18px 18px;
+        border-top: 1px solid var(--line);
+      }
+      .readaloud {
+        margin: 14px 0;
+        padding: 16px 18px;
+        border: 1px solid #3a3322;
+        background: rgba(122, 75, 194, 0.055);
+        border-radius: 10px;
+        font-family: Georgia, serif;
+        color: #e9e2d0;
+      }
+      .readaloud:before {
+        content: "PARA LER NA MESA";
+        display: block;
+        font:
+          700 0.66rem/1.3 Inter,
+          sans-serif;
+        letter-spacing: 0.12em;
+        color: var(--gold);
+        margin-bottom: 8px;
+      }
+      .cols {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      @media (max-width: 760px) {
+        .cols {
+          grid-template-columns: 1fr;
+        }
+      }
+      ul {
+        padding-left: 1.15rem;
+      }
+      .tight li {
+        margin: 0.2rem 0;
+      }
+      .route-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+      @media (max-width: 900px) {
+        .route-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .route {
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 15px;
+        background: #10131a;
+      }
+      .route h3 {
+        margin: 0 0 6px;
+      }
+      .route .tag {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--blue);
+      }
+      .clue {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 10px 0;
+        border-bottom: 1px dashed #2a2d35;
+      }
+      .clue:last-child {
+        border-bottom: 0;
+      }
+      .clue input {
+        margin-top: 5px;
+        accent-color: var(--gold);
+      }
+      .clue b {
+        display: block;
+      }
+      .clue span {
+        color: var(--muted);
+        font-size: 0.87rem;
+      }
+      .master {
+        border: 1px dashed rgba(185, 78, 93, 0.55);
+        background: rgba(185, 78, 93, 0.055);
+        border-radius: 12px;
+        padding: 16px;
+      }
+      .master .label {
+        font-size: 0.67rem;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: #df8995;
+        font-weight: 800;
+        margin-bottom: 8px;
+      }
+      .unknown {
+        border: 1px dashed rgba(155, 134, 184, 0.55);
+        background: rgba(155, 134, 184, 0.05);
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .unknown b {
+        color: #c9b7de;
+      }
+      .decision {
+        border: 1px solid var(--gold2);
+        background: rgba(122, 75, 194, 0.045);
+        border-radius: 12px;
+        padding: 15px;
+      }
+      .decision h3 {
+        color: var(--gold);
+      }
+
+      .encounter-head {
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 12px;
+      }
+      @media (max-width: 820px) {
+        .encounter-head {
+          grid-template-columns: 1fr;
+        }
+      }
+      .encounter-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        margin-top: 12px;
+      }
+      @media (max-width: 900px) {
+        .encounter-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .stat {
+        border: 1px solid var(--line);
+        background: #0f1218;
+        border-radius: 12px;
+        padding: 15px;
+        position: relative;
+      }
+      .stat h3 {
+        margin: 0 0 3px;
+      }
+      .stat .role {
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: var(--gold);
+        margin-bottom: 10px;
+      }
+      .stat .origin {
+        font-size: 0.72rem;
+        color: var(--violet);
+        margin-bottom: 10px;
+      }
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        margin: 10px 0;
+      }
+      @media (max-width: 560px) {
+        .stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      .stats div {
+        border: 1px solid #292d36;
+        border-radius: 8px;
+        padding: 7px;
+        background: #0c0e13;
+      }
+      .stats b {
+        display: block;
+        color: var(--text);
+        font-size: 0.88rem;
+      }
+      .stats span {
+        display: block;
+        color: var(--dim);
+        font-size: 0.63rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .stat ul {
+        margin: 0.35rem 0;
+      }
+      .stat .move {
+        color: var(--blue);
+        font-size: 0.82rem;
+      }
+      .stat .exit {
+        border-top: 1px dashed #2a2d35;
+        margin-top: 9px;
+        padding-top: 9px;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .clock {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .clock label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 7px 9px;
+        background: #0e1015;
+        color: var(--muted);
+        font-size: 0.78rem;
+      }
+      .clock input {
+        accent-color: var(--red);
+      }
+      .objective {
+        border: 1px solid rgba(138, 160, 199, 0.38);
+        background: rgba(138, 160, 199, 0.055);
+        border-radius: 10px;
+        padding: 12px;
+      }
+      .objective b {
+        color: #bac9e4;
+      }
+      .source-note {
+        font-size: 0.76rem;
+        color: var(--dim);
+        margin-top: 9px;
+      }
+
+      textarea {
+        width: 100%;
+        min-height: 130px;
+        resize: vertical;
+        background: #0d0f14;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        color: var(--text);
+        padding: 12px;
+      }
+      .savebar {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-top: 8px;
+      }
+      .btn {
+        background: #171a22;
+        border: 1px solid var(--line);
+        color: var(--text);
+        border-radius: 8px;
+        padding: 8px 11px;
+      }
+      .btn:hover {
+        border-color: var(--gold2);
+      }
+      .btn.warn {
+        color: #e8adb5;
+      }
+      .status {
+        font-size: 0.78rem;
+        color: var(--muted);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.86rem;
+      }
+      th,
+      td {
+        text-align: left;
+        padding: 9px 8px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      th {
+        color: var(--gold);
+        font-weight: 650;
+      }
+      td {
+        color: var(--muted);
+      }
+      footer {
+        margin-top: 28px;
+        color: var(--dim);
+        font-size: 0.75rem;
+        text-align: center;
+      }
+      @media print {
+        nav,
+        .savebar {
+          display: none;
+        }
+        .wrap {
+          max-width: none;
+          padding: 0;
+        }
+        .card,
+        .scene,
+        header.hero {
+          box-shadow: none;
+          break-inside: avoid;
+        }
+        body {
+          background: white;
+          color: black;
+        }
+        .card,
+        .scene,
+        header.hero,
+        .route {
+          background: white;
+          border-color: #bbb;
+        }
+        .small,
+        td,
+        .subtitle,
+        .step p,
+        .clue span {
+          color: #444;
+        }
+        .readaloud {
+          background: #faf6ed;
+          color: #111;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="hero">
+        <div class="kicker">KALLISTIS · Geek Wizards · Superfície do Mestre</div>
+        <h1>A Intenção da Guarda</h1>
+        <div class="subtitle">
+          Continuação direta da conversa com 004. Os personagens deixam o refúgio dela com uma
+          missão simples na forma e perigosa nas implicações: descobrir o que a Guarda realmente
+          pretende fazer a respeito do assalto.
+        </div>
+        <div class="meta">
+          <span class="chip"><b>Mesa:</b> Geek Wizards</span>
+          <span class="chip"><b>Local-base:</b> Silmari / Refúgio dos Outros</span>
+          <span class="chip"><b>Mandante:</b> 004</span>
+          <span class="chip"><b>Objetivo:</b> Contrainteligência</span>
+          <span class="chip"><b>Status:</b> Preparada · não jogada</span>
+        </div>
+        <div class="topgrid">
+          <div class="card">
+            <h2>Premissa</h2>
+            <p class="lead">
+              004 não pede que recuperem o objeto. Ela pede que descubram
+              <strong>o que a Guarda sabe, o que procura e até onde pretende ir</strong>.
+            </p>
+            <div class="alert">
+              A sessão deve começar com os personagens já de posse dessa missão. Não há novo
+              briefing intermediário.
+            </div>
+          </div>
+          <div class="card">
+            <h2>Regra de continuidade</h2>
+            <p class="small">
+              <strong>PLAYED ≠ PLANNED.</strong> Este HTML contém possibilidades de cena. Só vira
+              crônica o que realmente acontecer na mesa.
+            </p>
+          </div>
+        </div>
+      </header>
+
+      <nav>
+        <a href="#estado">Estado</a><a href="#objetivo">Objetivo</a><a href="#abertura">Abertura</a
+        ><a href="#rotas">Rotas</a><a href="#escolta">A Escolta</a><a href="#pistas">Pistas</a
+        ><a href="#guarda">Guarda</a><a href="#004">004</a><a href="#final">Fechamento</a
+        ><a href="#mestre">Mestre</a><a href="#notas">Notas</a>
+      </nav>
+
+      <section id="estado">
+        <div class="section-title">
+          <span class="num">01</span>
+          <h2>Estado de continuidade</h2>
+        </div>
+        <div class="flow">
+          <div class="step">
+            <div class="t">Já aconteceu</div>
+            <p>Os personagens chegaram ao refúgio de 004.</p>
+          </div>
+          <div class="step">
+            <div class="t">Já aconteceu</div>
+            <p>Conversaram com 004 e descobriram superficialmente que ela é uma das irmãs.</p>
+          </div>
+          <div class="step">
+            <div class="t">Já aconteceu</div>
+            <p>Descobriram que houve um assalto.</p>
+          </div>
+          <div class="step">
+            <div class="t">Já aconteceu</div>
+            <p>004 pediu que investigassem a verdadeira intenção da Guarda.</p>
+          </div>
+          <div class="step">
+            <div class="t">Começa aqui</div>
+            <p>Os personagens deixam o refúgio de 004 e escolhem como investigar.</p>
+          </div>
+        </div>
+        <div class="unknown" style="margin-top: 12px">
+          <b>Slot de continuidade pendente:</b> existe um gancho/“flanger” da sessão anterior que
+          ainda não foi recuperado pelo mestre. Não preencher automaticamente. Inserir quando for
+          lembrado.
+        </div>
+      </section>
+
+      <section id="objetivo">
+        <div class="section-title">
+          <span class="num">02</span>
+          <h2>Objetivo dramático</h2>
+        </div>
+        <div class="cols">
+          <div class="card">
+            <h3>Pergunta inicial</h3>
+            <p><strong>“O que a Guarda realmente pretende?”</strong></p>
+            <p class="small">
+              A investigação começa sobre a instituição, não sobre o assalto em si.
+            </p>
+          </div>
+          <div class="card">
+            <h3>Pergunta que deve emergir</h3>
+            <p><strong>“Que diabos foi roubado?”</strong></p>
+            <p class="small">Essa mudança de pergunta é o avanço principal da sessão.</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="abertura">
+        <div class="section-title">
+          <span class="num">03</span>
+          <h2>Abertura</h2>
+        </div>
+        <details class="scene" open>
+          <summary>Saída do refúgio de 004</summary>
+          <div class="scene-body">
+            <div class="readaloud">
+              A porta se fecha atrás de vocês. O Refúgio continua vivo ao redor — passos nas
+              galerias, vozes baixas, água correndo por algum canal antigo — mas a conversa com 004
+              mudou a textura de tudo. Houve um assalto. A Guarda está atrás de alguma coisa. E 004
+              quer saber por quê.
+            </div>
+            <p>
+              <strong>Primeira pergunta aos jogadores:</strong> “Como vocês pretendem descobrir a
+              intenção da Guarda?”
+            </p>
+            <p class="small">
+              Não oferecer imediatamente um caminho correto. A escolha dos jogadores define a
+              abordagem.
+            </p>
+          </div>
+        </details>
+      </section>
+
+      <section id="rotas">
+        <div class="section-title">
+          <span class="num">04</span>
+          <h2>Rotas de investigação</h2>
+        </div>
+        <div class="route-grid">
+          <div class="route">
+            <div class="tag">Via social</div>
+            <h3>Ouvir quem já foi abordado</h3>
+            <p>
+              Comerciantes, viajantes, mensageiros, moradores ou gente de passagem podem revelar
+              <em>que tipo de pergunta</em> a Guarda está fazendo.
+            </p>
+            <ul class="tight">
+              <li>Quem foi interrogado?</li>
+              <li>O que perguntaram?</li>
+              <li>Que nomes evitaram dizer?</li>
+              <li>O que repetiram em todos os interrogatórios?</li>
+            </ul>
+          </div>
+          <div class="route">
+            <div class="tag">Via institucional</div>
+            <h3>Observar a operação</h3>
+            <p>
+              Postos, patrulhas, ordens, trocas de turno, documentos, rotas e hierarquia revelam se
+              a reação é compatível com um roubo comum.
+            </p>
+            <ul class="tight">
+              <li>Quais recursos foram mobilizados?</li>
+              <li>Há ordens incomuns?</li>
+              <li>Quem comanda?</li>
+              <li>O que é tratado como prioridade?</li>
+            </ul>
+          </div>
+          <div class="route">
+            <div class="tag">Via clandestina</div>
+            <h3>Seguir sem ser visto</h3>
+            <p>
+              Usar túneis, corredores, redes informais ou vigilância discreta para acompanhar
+              agentes e mensagens.
+            </p>
+            <ul class="tight">
+              <li>Quem a Guarda segue?</li>
+              <li>Que lugares ela observa?</li>
+              <li>Que mensagem não circula pelos canais normais?</li>
+              <li>O Refúgio está sendo mapeado?</li>
+            </ul>
+          </div>
+        </div>
+        <div class="alert" style="margin-top: 12px">
+          As três rotas devem poder convergir. Nenhuma é “a certa”. Uma boa investigação entrega
+          informação; uma investigação excelente entrega contexto e risco.
+        </div>
+      </section>
+
+      <section id="escolta">
+        <div class="section-title">
+          <span class="num">05</span>
+          <h2>A Escolta — o informante levado pela Guarda</h2>
+        </div>
+        <div class="encounter-head">
+          <div class="card">
+            <h3>Função da cena</h3>
+            <p class="lead">
+              O informante que poderia esclarecer a operação já foi localizado pela Guarda. Quando
+              os personagens o encontram, ele está sendo transferido sob escolta para um posto de
+              custódia institucional de Silmari.
+            </p>
+            <div class="readaloud">
+              O grupo aparece antes de vocês na curva da galeria: dois vigias com visores
+              prismáticos, uma técnica carregando um emissor dobrável e, no centro, alguém de mãos
+              presas por uma cinta clara demais para ser corda. A pessoa reconhece vocês antes que
+              consiga esconder. Um dos guardas percebe o olhar. A formação para.
+            </div>
+            <p>
+              <strong>Frase inicial da Guarda:</strong> “Transferência autorizada. Continuem
+              andando.”
+            </p>
+            <div class="objective">
+              <b>Objetivo dos personagens:</b> impedir a remoção do informante ou obter dele
+              informação suficiente antes da extração. Matar a escolta não é requisito.
+            </div>
+          </div>
+          <div class="card">
+            <h3>Pressão de cena</h3>
+            <p>
+              <strong>Relógio de reforços: 4 segmentos.</strong> Cada uso de <em>Sinalizar</em> por
+              um Vigia de Quartzo preenche 1 segmento. Ao completar 4, chegam reforços e a cena muda
+              de natureza: fugir, negociar a entrega ou aceitar uma perseguição.
+            </p>
+            <div class="clock">
+              <label><input type="checkbox" data-save="clock1" /> 1</label>
+              <label><input type="checkbox" data-save="clock2" /> 2</label>
+              <label><input type="checkbox" data-save="clock3" /> 3</label>
+              <label><input type="checkbox" data-save="clock4" /> 4 · reforços</label>
+            </div>
+            <p class="small" style="margin-top: 10px">
+              <strong>Vitória da Guarda:</strong> o Operador de Captura leva o informante até o
+              ponto de extração ou os personagens abandonam a perseguição.
+            </p>
+            <p class="small">
+              <strong>Vitória dos personagens:</strong> libertam o informante, quebram a cadeia de
+              comando ou conseguem o testemunho antes que ele seja removido.
+            </p>
+          </div>
+        </div>
+
+        <details class="scene" open>
+          <summary>Quando a tensão vira combate</summary>
+          <div class="scene-body">
+            <p>
+              A escolta não ataca primeiro sem motivo. Ela bloqueia passagem, ordena afastamento e
+              tenta concluir a transferência. O combate começa se os personagens tentarem retirar o
+              informante, romper a contenção, impedir a marcha ou atacarem.
+            </p>
+            <ul class="tight">
+              <li><strong>Prioridade dos Vigias:</strong> marcar, atrasar e pedir reforço.</li>
+              <li><strong>Prioridade da Assistente:</strong> fechar corredores e impedir fuga.</li>
+              <li>
+                <strong>Prioridade do Operador:</strong> manter o informante imobilizado e
+                deslocá-lo até a extração.
+              </li>
+              <li>
+                <strong>Doutrina:</strong> força de contenção; preferem captura e retirada a matar.
+              </li>
+            </ul>
+            <div class="alert danger">
+              <strong>Pista em combate:</strong> sob pressão, o Operador pode gritar: “A ordem é
+              recuperar intacto. Não transformem isso em outra ocorrência.” A fala não identifica o
+              objeto; apenas prova que a operação tem uma prioridade material específica.
+            </div>
+          </div>
+        </details>
+
+        <div class="encounter-grid">
+          <article class="stat">
+            <h3>Vigia de Quartzo ×2</h3>
+            <div class="role">Lacaio · sentinela e marcador de alvo</div>
+            <div class="origin">BLOCO CANÔNICO DO BESTIÁRIO</div>
+            <div class="stats">
+              <div><b>+5</b><span>Ofensiva</span></div>
+              <div><b>13</b><span>Guarda</span></div>
+              <div><b>12</b><span>Fortitude</span></div>
+              <div><b>12</b><span>Integridade</span></div>
+              <div><b>1 golpe</b><span>Vitalidade</span></div>
+              <div><b>1</b><span>Proteção</span></div>
+              <div><b>6</b><span>Movimento</span></div>
+              <div><b>3</b><span>Dano-base</span></div>
+            </div>
+            <ul class="tight">
+              <li>
+                <strong>Registro prismático:</strong> a primeira personagem observada fica Marcada;
+                ataques de aliados científicos contra ela recebem +1 até o visor ser quebrado.
+              </li>
+              <li>
+                <strong>Bastão de contenção:</strong> corpo a corpo, dano 3; em sucesso forte,
+                Abalado.
+              </li>
+              <li>
+                <strong>Sinalizar:</strong> em vez de atacar, +1 segmento no relógio de reforços.
+              </li>
+              <li>
+                <strong>Reação — Registrar agressor:</strong> ao sofrer dano, transmite imagem
+                curta. Apagar/falsificar: 2d10 + Intelecto + Ofício contra Dificuldade 13.
+              </li>
+              <li>
+                <strong>Moral frágil:</strong> após dois Vigias caírem ou diante de ordem contradita
+                por evidência pública, podem recuar.
+              </li>
+            </ul>
+            <div class="exit">
+              <strong>Saída além da morte:</strong> prova de irregularidade, cadeia de comando
+              rompida ou uma rota segura para recuar.
+            </div>
+          </article>
+
+          <article class="stat">
+            <h3>Assistente de Contenção ×1</h3>
+            <div class="role">Lacaio · controle de área</div>
+            <div class="origin">BLOCO CANÔNICO DO BESTIÁRIO</div>
+            <div class="stats">
+              <div><b>+4</b><span>Ofensiva</span></div>
+              <div><b>12</b><span>Guarda</span></div>
+              <div><b>12</b><span>Fortitude</span></div>
+              <div><b>13</b><span>Integridade</span></div>
+              <div><b>1 golpe</b><span>Vitalidade</span></div>
+              <div><b>1</b><span>Proteção</span></div>
+              <div><b>5</b><span>Movimento</span></div>
+              <div><b>3</b><span>Dano-base</span></div>
+            </div>
+            <ul class="tight">
+              <li>
+                <strong>Emissor portátil:</strong> enquanto consciente, uma célula adjacente conta
+                como terreno difícil para inimigos.
+              </li>
+              <li>
+                <strong>Treinamento de evacuação:</strong> pode arrastar aliado Caído 3 células sem
+                custo adicional.
+              </li>
+              <li>
+                <strong>Pulso curto:</strong> alcance 4, dano 3; em sucesso forte, empurra 1 célula.
+              </li>
+              <li>
+                <strong>Fechar corredor:</strong> ergue cobertura forte de 2 células até o início do
+                próximo turno.
+              </li>
+            </ul>
+            <div class="exit">
+              <strong>Saída além da morte:</strong> desligar o emissor ou convencê-la de que o
+              protocolo põe uma pessoa em risco.
+            </div>
+          </article>
+
+          <article class="stat">
+            <h3>Operador de Captura ×1</h3>
+            <div class="role">Comum · extração e imobilização</div>
+            <div class="origin">ADAPTAÇÃO DE ENCONTRO · NÃO É BLOCO CANÔNICO PRÉ-EXISTENTE</div>
+            <div class="stats">
+              <div><b>+6</b><span>Ofensiva</span></div>
+              <div><b>14</b><span>Guarda</span></div>
+              <div><b>13</b><span>Fortitude</span></div>
+              <div><b>13</b><span>Integridade</span></div>
+              <div><b>13</b><span>Vitalidade</span></div>
+              <div><b>1</b><span>Proteção</span></div>
+              <div><b>6</b><span>Movimento</span></div>
+              <div><b>5</b><span>Dano-base</span></div>
+            </div>
+            <ul class="tight">
+              <li>
+                <strong>Cinta prismática:</strong> alcance 5, dano 5; em sucesso forte, Imobilizado.
+              </li>
+              <li>
+                <strong>Técnica I — Rede de extração (x2, 1/cena):</strong> ataque contra Fortitude.
+                Dano-base 5 ×2; pode trocar metade do dano final por Imobilizado e puxar o alvo 2
+                células.
+              </li>
+              <li>
+                <strong>Procedimento de retirada:</strong> se estiver adjacente ao informante
+                Imobilizado, pode usar a Ação para movê-lo até 3 células junto consigo. Esse
+                deslocamento é o objetivo tático da cena.
+              </li>
+              <li>
+                <strong>Reação — Fechar formação:</strong> quando alguém entra adjacente ao
+                informante, o Operador pode mover 1 célula para interpor-se, se houver espaço.
+              </li>
+            </ul>
+            <div class="exit">
+              <strong>Fraqueza contextual:</strong> o Operador depende de uma ordem escrita de
+              transferência. Se a ordem for exposta como irregular ou contraditória, perde a
+              segurança institucional: -2 Integridade até o fim da cena e pode aceitar negociação.
+            </div>
+            <div class="source-note">
+              Construído dentro das faixas de adversário Comum e adaptado de Agente
+              Científico/Rastreador de Correspondência. Só se torna parte da crônica se aparecer na
+              mesa.
+            </div>
+          </article>
+
+          <article class="stat">
+            <h3>Informante sob custódia</h3>
+            <div class="role">Não-combatente · objetivo móvel</div>
+            <div class="origin">FICHA FUNCIONAL DE CENA · NÃO É ADVERSÁRIO</div>
+            <div class="stats">
+              <div><b>—</b><span>Ofensiva</span></div>
+              <div><b>11</b><span>Guarda</span></div>
+              <div><b>11</b><span>Fortitude</span></div>
+              <div><b>12</b><span>Integridade</span></div>
+              <div><b>8</b><span>Vitalidade</span></div>
+              <div><b>0</b><span>Proteção</span></div>
+              <div><b>6</b><span>Movimento livre</span></div>
+              <div><b>—</b><span>Dano</span></div>
+            </div>
+            <ul class="tight">
+              <li>
+                <strong>Contido:</strong> começa Imobilizado pela cinta. Enquanto preso, não se
+                desloca sem o Operador.
+              </li>
+              <li>
+                <strong>Testemunha assustada:</strong> não luta. Se libertado, procura cobertura e
+                segue quem lhe oferecer rota segura.
+              </li>
+              <li>
+                <strong>O que sabe:</strong> a Guarda fez perguntas sobre
+                <em>quem tocou, transportou ou teve contato posterior com o objeto</em>; não
+                demonstrou a mesma urgência em identificar todos os autores do assalto.
+              </li>
+              <li>
+                <strong>O que não sabe:</strong> natureza real do objeto, relação com 4NN13 ou o
+                segredo do cérebro positrônico.
+              </li>
+            </ul>
+            <div class="exit">
+              <strong>Pista forte se resgatado:</strong> “Eles não perguntavam quem roubou.
+              Perguntavam quem encostou naquilo depois.”
+            </div>
+          </article>
+        </div>
+
+        <div class="card" style="margin-top: 12px">
+          <h3>Balanceamento do encontro</h3>
+          <p>
+            Com <strong>2 Vigias + 1 Assistente + 1 Operador Comum</strong>, a cena fica acima de um
+            encontro leve puro, mas abaixo de quatro adversários Comuns. O objetivo não é extermínio
+            e parte da oposição é composta por lacaios de 1 golpe.
+          </p>
+          <ul class="tight">
+            <li><strong>Base recomendada:</strong> 2 Vigias.</li>
+            <li>
+              <strong>Adicionar 3º Vigia:</strong> somente se o grupo for numeroso, estiver com
+              muitos recursos ou estiver vencendo sem pressão.
+            </li>
+            <li>
+              <strong>Não aumentar Vitalidade dos lacaios:</strong> a pressão deve vir do relógio,
+              contenção, posicionamento e objetivo de extração.
+            </li>
+            <li>
+              <strong>Não lutar até a morte:</strong> quando o informante escapar ou a ordem perder
+              validade, a Guarda tem motivo para recuar e preservar registros.
+            </li>
+          </ul>
+          <div class="source-note">
+            Regras usadas: teste 2d10 + Atributo + Perícia contra Defesa; turno com 1 Movimento + 1
+            Ação + 1 Reação; lacaio cai em 1 golpe; adversário Comum costuma ter 10–16 Vitalidade. O
+            orçamento canônico para quatro personagens usa 4 lacaios ou 2 comuns como encontro leve
+            e 4 comuns como padrão.
+          </div>
+        </div>
+      </section>
+
+      <section id="pistas">
+        <div class="section-title">
+          <span class="num">06</span>
+          <h2>Escada de pistas</h2>
+        </div>
+        <div class="card">
+          <div class="clue">
+            <input type="checkbox" data-save="clue1" />
+            <div>
+              <b>Nível 1 — A Guarda trata o caso como prioridade incomum.</b
+              ><span>Mobilização, sigilo ou insistência não combinam com um roubo banal.</span>
+            </div>
+          </div>
+          <div class="clue">
+            <input type="checkbox" data-save="clue2" />
+            <div>
+              <b>Nível 2 — O interesse principal não são os assaltantes.</b
+              ><span>Prender os responsáveis não encerra a operação.</span>
+            </div>
+          </div>
+          <div class="clue">
+            <input type="checkbox" data-save="clue3" />
+            <div>
+              <b>Nível 3 — A prioridade é recuperar o objeto.</b
+              ><span>A Guarda quer localizar a coisa roubada acima de tudo.</span>
+            </div>
+          </div>
+          <div class="clue">
+            <input type="checkbox" data-save="clue4" />
+            <div>
+              <b>Nível 4 — O objeto deve ser recuperado intacto.</b
+              ><span
+                >Esse detalhe deve soar estranho e deslocar a investigação para a natureza do
+                objeto.</span
+              >
+            </div>
+          </div>
+          <div class="clue">
+            <input type="checkbox" data-save="clue5" />
+            <div>
+              <b>Nível 5 — O Refúgio entra no mapa operacional da Guarda.</b
+              ><span
+                >Não significa invasão imediata. Significa risco crescente e motivo para agir antes
+                dela.</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="guarda">
+        <div class="section-title">
+          <span class="num">07</span>
+          <h2>A Guarda</h2>
+        </div>
+        <div class="cols">
+          <div class="card">
+            <h3>Versão pública</h3>
+            <p>
+              Houve um roubo. A Guarda procura recuperar propriedade subtraída e restabelecer a
+              ordem.
+            </p>
+            <p class="small">A formulação pública deve permanecer simples.</p>
+          </div>
+          <div class="card">
+            <h3>Comportamento observável</h3>
+            <ul class="tight">
+              <li>evita nomear o objeto;</li>
+              <li>reconstrói rotas e contatos;</li>
+              <li>trata informação sobre o objeto como sensível;</li>
+              <li>mantém a operação mesmo sem foco imediato nos assaltantes;</li>
+              <li>age como se o tempo importasse.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="decision" style="margin-top: 12px">
+          <h3>Princípio de interpretação</h3>
+          <p>
+            A Guarda não precisa ser caricaturalmente maligna. O desconforto deve nascer da
+            discrepância entre a versão oficial e a intensidade da operação.
+          </p>
+        </div>
+      </section>
+
+      <section id="004">
+        <div class="section-title">
+          <span class="num">08</span>
+          <h2>004 nesta sessão</h2>
+        </div>
+        <div class="cols">
+          <div class="card">
+            <h3>O que está estabelecido</h3>
+            <ul class="tight">
+              <li>004 é a pessoa que pediu a investigação.</li>
+              <li>Ela está ligada ao assalto.</li>
+              <li>Ela é uma das irmãs.</li>
+              <li>O contato anterior foi superficial.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>O que não deve ser inventado</h3>
+            <ul class="tight">
+              <li>não criar um “grupo da 004” separado;</li>
+              <li>não presumir novos cúmplices;</li>
+              <li>não presumir que 004 conhece a natureza real do objeto;</li>
+              <li>não preencher o gancho esquecido.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="final">
+        <div class="section-title">
+          <span class="num">09</span>
+          <h2>Fechamento possível</h2>
+        </div>
+        <details class="scene" open>
+          <summary>Quando a pergunta muda</summary>
+          <div class="scene-body">
+            <p>O fechamento ideal não é uma resposta completa. É uma inversão de prioridade.</p>
+            <div class="readaloud">
+              A essa altura, uma coisa já está clara: a Guarda não está caçando apenas quem roubou.
+              Ela está procurando o que foi levado. E, por algum motivo, quer aquilo inteiro.
+            </div>
+            <div class="decision">
+              <h3>Última pergunta aos jogadores</h3>
+              <p>
+                <strong
+                  >Vocês continuam investigando a Guarda — ou tentam chegar ao objeto antes
+                  dela?</strong
+                >
+              </p>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <section id="mestre">
+        <div class="section-title">
+          <span class="num">10</span>
+          <h2>Informação exclusiva do mestre</h2>
+        </div>
+        <div class="master">
+          <div class="label">Mestre apenas</div>
+          <p><strong>Objeto roubado:</strong> o cérebro positrônico de 4NN13.</p>
+          <p>
+            <strong>Não revelar nesta sessão por padrão.</strong> A investigação deve conduzir
+            primeiro à percepção de que o objeto é mais importante que os assaltantes.
+          </p>
+          <p>
+            <strong>Assimetria:</strong> 002 não sabe que procura os restos de 4NN13. 004 não sabe
+            que o grupo está carregando 4NN13. Não antecipar essa verdade por conveniência de
+            exposição.
+          </p>
+        </div>
+      </section>
+
+      <section>
+        <div class="section-title">
+          <span class="num">11</span>
+          <h2>Controle de canonização</h2>
+        </div>
+        <div class="card">
+          <table>
+            <thead>
+              <tr>
+                <th>Elemento</th>
+                <th>Estado antes da sessão</th>
+                <th>Quando vira crônica</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>004 pediu a investigação</td>
+                <td>PLAYED</td>
+                <td>Já confirmado</td>
+              </tr>
+              <tr>
+                <td>Informante levado pela Guarda / cena da escolta</td>
+                <td>PLANNED</td>
+                <td>Somente se entrar efetivamente em jogo</td>
+              </tr>
+              <tr>
+                <td>Operador de Captura</td>
+                <td>ADAPTAÇÃO PREPARADA</td>
+                <td>Canonizar apenas se aparecer na sessão</td>
+              </tr>
+              <tr>
+                <td>Intenção exata da Guarda</td>
+                <td>PLANNED / A DESCOBRIR</td>
+                <td>Quando os jogadores obtiverem evidência em cena</td>
+              </tr>
+              <tr>
+                <td>Objeto deve ser recuperado intacto</td>
+                <td>PISTA PREPARADA</td>
+                <td>Quando surgir por investigação</td>
+              </tr>
+              <tr>
+                <td>Refúgio sob interesse operacional</td>
+                <td>POSSIBILIDADE DE CENA</td>
+                <td>Somente se efetivamente revelado</td>
+              </tr>
+              <tr>
+                <td>Cérebro de 4NN13</td>
+                <td>SEGREDO DE MESTRE</td>
+                <td>Não revelar automaticamente</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="notas">
+        <div class="section-title">
+          <span class="num">12</span>
+          <h2>Notas da mesa</h2>
+        </div>
+        <div class="card">
+          <p class="small">Use durante a sessão. O conteúdo fica salvo apenas neste navegador.</p>
+          <textarea
+            id="notes"
+            placeholder="Decisões dos jogadores, NPCs improvisados, pistas entregues, consequências, gancho/flanger recuperado..."
+          ></textarea>
+          <div class="savebar">
+            <button class="btn" id="save">Salvar notas</button
+            ><button class="btn warn" id="clear">Limpar</button
+            ><span class="status" id="status"></span>
+          </div>
+        </div>
+      </section>
+
+      <footer>
+        KALLISTIS · Geek Wizards · “A Intenção da Guarda” · material de preparação do mestre
+      </footer>
+    </div>
+    <script>
+      const KEY = "kallistis.geek.intencao-guarda.v2";
+      const state = JSON.parse(localStorage.getItem(KEY) || "{}");
+      document.querySelectorAll("[data-save]").forEach((el) => {
+        el.checked = !!state[el.dataset.save];
+        el.addEventListener("change", () => {
+          state[el.dataset.save] = el.checked;
+          localStorage.setItem(KEY, JSON.stringify(state));
+        });
+      });
+      const notes = document.getElementById("notes"),
+        status = document.getElementById("status");
+      notes.value = state.notes || "";
+      document.getElementById("save").onclick = () => {
+        state.notes = notes.value;
+        localStorage.setItem(KEY, JSON.stringify(state));
+        status.textContent = "Salvo.";
+        setTimeout(() => (status.textContent = ""), 1200);
+      };
+      document.getElementById("clear").onclick = () => {
+        if (confirm("Limpar notas e checks desta sessão?")) {
+          localStorage.removeItem(KEY);
+          location.reload();
+        }
+      };
+      window.addEventListener("beforeunload", () => {
+        state.notes = notes.value;
+        localStorage.setItem(KEY, JSON.stringify(state));
+      });
+    </script>
+  </body>
+</html>

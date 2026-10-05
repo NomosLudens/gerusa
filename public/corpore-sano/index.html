@@ -1,0 +1,2482 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#08080e" />
+    <title>Corpore Sano</title>
+    <style>
+      :root {
+        --bg: #08080e;
+        --card: #111016;
+        --card-soft: #0b0a10;
+        --border: rgba(255, 255, 255, 0.06);
+        --khora: #c98a65; /* --khora do domínio (cobre-terra), variante clara para legibilidade */
+        --khora-bright: #d9a441;
+        --khora-dim: rgba(201, 138, 101, 0.1);
+        --text: #f3ebdd;
+        --text-dim: rgba(243, 235, 221, 0.55);
+        --text-faint: rgba(243, 235, 221, 0.35);
+        --green: #16a34a;
+        --red: #be123c;
+        --blue: #2563eb;
+        --radius: 16px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+        padding-bottom: 90px;
+      }
+      .app {
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 18px 14px 32px;
+      }
+      h1 {
+        font-family: Georgia, serif;
+        font-size: 1.05rem;
+        letter-spacing: 0.16em;
+        color: var(--khora-bright);
+        margin: 0;
+        text-transform: uppercase;
+      }
+      h2 {
+        font-family: Georgia, serif;
+        font-size: 1.15rem;
+        color: var(--text);
+        margin: 0 0 10px;
+        font-weight: 500;
+      }
+      p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      .dim {
+        color: var(--text-dim);
+      }
+      .faint {
+        color: var(--text-faint);
+      }
+      .small {
+        font-size: 0.78rem;
+      }
+      .italic {
+        font-style: italic;
+      }
+      .hide {
+        display: none !important;
+      }
+      .eyebrow {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.24em;
+        color: var(--text-faint);
+        margin-bottom: 8px;
+      }
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 15;
+        background: rgba(8, 8, 14, 0.92);
+        backdrop-filter: blur(6px);
+        border-bottom: 1px solid var(--border);
+        padding: calc(10px + env(safe-area-inset-top)) 14px 10px 14px;
+      }
+      header.top .sub {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--text-faint);
+      }
+      nav.tabs {
+        position: sticky;
+        top: 45px;
+        z-index: 14;
+        display: flex;
+        gap: 4px;
+        background: rgba(8, 8, 14, 0.95);
+        border-bottom: 1px solid var(--border);
+        padding: 0 14px;
+      }
+      nav.tabs button {
+        background: none;
+        border: 0;
+        color: var(--text-faint);
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        padding: 12px 14px;
+        cursor: pointer;
+        position: relative;
+      }
+      nav.tabs button[aria-current="true"] {
+        color: var(--text);
+      }
+      nav.tabs button[aria-current="true"]::after {
+        content: "";
+        position: absolute;
+        left: 12px;
+        right: 12px;
+        bottom: -1px;
+        height: 1px;
+        background: var(--khora);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 16px;
+        margin-bottom: 16px;
+      }
+      .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .row-between {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      .btn {
+        border: 0;
+        border-radius: 10px;
+        padding: 11px 16px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--khora);
+        color: #08080e;
+      }
+      .btn.success {
+        background: var(--green);
+      }
+      .btn.outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .btn.ghost {
+        background: transparent;
+        color: var(--text-dim);
+        padding: 6px 10px;
+        font-size: 0.78rem;
+      }
+      .btn.quick {
+        height: 44px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        background: transparent;
+        color: rgba(243, 235, 221, 0.85);
+        font-size: 0.88rem;
+      }
+      .btn.quick:hover {
+        border-color: var(--khora);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+      }
+      .icon-btn {
+        background: none;
+        border: 0;
+        color: var(--text-faint);
+        cursor: pointer;
+        padding: 4px;
+        font-size: 1rem;
+      }
+      .icon-btn:hover {
+        color: var(--red);
+      }
+      input,
+      textarea,
+      select {
+        width: 100%;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--card-soft);
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 0.88rem;
+        font-family: inherit;
+      }
+      textarea {
+        min-height: 70px;
+        resize: vertical;
+      }
+      label.field {
+        display: block;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--text-faint);
+        margin-bottom: 4px;
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        height: 26px;
+        padding: 0 10px;
+        border-radius: 999px;
+        border: 1px solid var(--border);
+        font-size: 0.7rem;
+        color: var(--text-dim);
+        cursor: pointer;
+        background: none;
+      }
+      .pill.active {
+        border-color: var(--khora);
+        color: var(--text);
+        background: var(--khora-dim);
+      }
+      .semaphore-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+        flex-shrink: 0;
+      }
+      .list-plain {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+      .divider-list > li {
+        border-bottom: 1px solid var(--border);
+        padding: 8px 0;
+      }
+      .divider-list > li:last-child {
+        border-bottom: 0;
+      }
+      .chip-pr {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 999px;
+        border: 1px solid rgba(217, 164, 65, 0.4);
+        background: rgba(217, 164, 65, 0.06);
+        padding: 5px 10px;
+        font-size: 0.72rem;
+        color: var(--text);
+        margin: 2px 4px 2px 0;
+      }
+      .chip-pr .name {
+        color: var(--khora-bright);
+      }
+      details.template summary {
+        cursor: pointer;
+        list-style: none;
+      }
+      details.template summary::-webkit-details-marker {
+        display: none;
+      }
+      .template-ex-row {
+        display: grid;
+        grid-template-columns: 1fr 3.4rem 3.4rem 3.6rem auto;
+        gap: 6px;
+        align-items: end;
+        margin-bottom: 8px;
+      }
+      @media (max-width: 460px) {
+        .template-ex-row {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .week-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 0;
+      }
+      .week-row .day {
+        width: 30px;
+        font-size: 0.68rem;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--text-faint);
+      }
+      .week-row input {
+        flex: 1;
+        border: 0;
+        border-bottom: 1px solid var(--border);
+        border-radius: 0;
+        background: none;
+        padding: 4px 0;
+      }
+      .status-chip {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        padding: 3px 8px;
+        border-radius: 999px;
+        border: 1px solid;
+        background: none;
+        cursor: pointer;
+      }
+      .status-chip.planned {
+        border-color: rgba(255, 255, 255, 0.15);
+        color: var(--text-dim);
+      }
+      .status-chip.done {
+        border-color: rgba(22, 163, 74, 0.5);
+        color: var(--green);
+      }
+      .status-chip.rest {
+        border-color: rgba(37, 99, 235, 0.5);
+        color: var(--blue);
+      }
+      #focus-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        background: var(--bg);
+        overflow-y: auto;
+        padding: 14px;
+      }
+      .focus-card {
+        border: 1px solid rgba(201, 138, 101, 0.3);
+        background: linear-gradient(to bottom, #16131a, #0f0d14);
+        border-radius: var(--radius);
+        padding: 16px;
+        max-width: 640px;
+        margin: 0 auto;
+        box-shadow: 0 0 40px rgba(201, 138, 101, 0.08);
+      }
+      .numfield {
+        min-width: 0;
+      }
+      .numfield .box {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        height: 46px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--card-soft);
+        padding: 0 4px;
+      }
+      .numfield .box button {
+        background: none;
+        border: 0;
+        color: var(--text-dim);
+        font-size: 1rem;
+        width: 32px;
+        height: 100%;
+        cursor: pointer;
+      }
+      .numfield .box input {
+        border: 0;
+        background: none;
+        text-align: center;
+        padding: 0;
+        font-size: 1rem;
+      }
+      .rest-timer {
+        font-variant-numeric: tabular-nums;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: var(--khora-bright);
+      }
+      .rest-timer.done {
+        color: var(--green);
+      }
+      #khora-fab {
+        position: fixed;
+        bottom: 18px;
+        right: 18px;
+        z-index: 30;
+        width: 54px;
+        height: 54px;
+        border-radius: 999px;
+        background: var(--khora);
+        color: #08080e;
+        border: 0;
+        font-size: 1.3rem;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+      }
+      #khora-panel {
+        position: fixed;
+        bottom: 82px;
+        right: 18px;
+        z-index: 30;
+        width: min(360px, calc(100vw - 32px));
+        border: 1px solid var(--border);
+        background: #0c0b12;
+        border-radius: var(--radius);
+        padding: 16px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: #14100b;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        z-index: 60;
+        max-width: 90vw;
+        text-align: center;
+      }
+      #toast.error {
+        border-color: var(--red);
+        color: #fda4af;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="top">
+      <h1>Corpore Sano</h1>
+      <div class="sub">Mente clara. Corpo atento. Disciplina sem violência.</div>
+    </header>
+    <nav class="tabs" id="tabs" aria-label="Modos do treino">
+      <button data-tab="hoje" aria-current="true">Hoje</button>
+      <button data-tab="plano">Plano</button>
+      <button data-tab="historico">Histórico</button>
+    </nav>
+
+    <main class="app">
+      <section id="view-hoje" class="view">
+        <div class="row" style="margin-bottom: 14px">
+          <span id="sem-dot" class="semaphore-dot"></span>
+          <p class="small dim" style="flex: 1">
+            <span id="sem-label" style="color: var(--text)"></span>
+          </p>
+          <button id="btn-ajustar" class="btn ghost">ajustar</button>
+        </div>
+        <div class="card" id="workout-import-card">
+          <p
+            class="small faint"
+            style="
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              font-size: 0.62rem;
+              margin-bottom: 6px;
+            "
+          >
+            Importar treino por texto
+          </p>
+          <p class="small dim" style="margin-bottom: 10px">
+            Cole seu treino mesmo bagunçado. A Kaline organiza e preenche para você revisar.
+          </p>
+          <textarea
+            id="workout-import-text"
+            maxlength="6000"
+            rows="4"
+            placeholder="segunda peito e triceps supino 3 de 10 com 40kg..."
+          ></textarea>
+          <div class="row-between" style="margin-top: 10px; align-items: center">
+            <p id="workout-import-status" class="small faint" aria-live="polite"></p>
+            <button id="btn-import-workout-text" class="btn outline" style="white-space: nowrap">
+              Organizar e preencher
+            </button>
+          </div>
+        </div>
+        <div id="today-card" class="card"></div>
+      </section>
+
+      <section id="view-plano" class="view hide">
+        <div class="eyebrow">Sinais de hoje</div>
+        <div class="card">
+          <div class="row" style="margin-bottom: 10px">
+            <span id="plano-sem-dot" class="semaphore-dot"></span>
+            <div style="flex: 1">
+              <p
+                class="small faint"
+                style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.62rem"
+              >
+                Semáforo físico
+              </p>
+              <p id="plano-sem-label" style="font-family: Georgia, serif"></p>
+            </div>
+          </div>
+          <p class="small faint italic" style="margin-bottom: 10px">
+            Semáforo não é diagnóstico. É ritmo de treino.
+          </p>
+          <div class="grid2" id="signal-pills" style="grid-template-columns: 1fr 1fr"></div>
+        </div>
+        <div class="card">
+          <div class="row" style="margin-bottom: 8px">
+            <p
+              class="small faint"
+              style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.62rem"
+            >
+              Sinais do corpo
+            </p>
+          </div>
+          <textarea
+            id="signals-notes"
+            placeholder="Como o corpo está hoje? (dor, sono, tensão, humor)"
+          ></textarea>
+          <p class="small faint italic" style="margin-top: 8px">
+            Se houver dor forte, tontura, falta de ar ou sintoma preocupante, interrompa e procure
+            orientação profissional.
+          </p>
+        </div>
+
+        <div class="eyebrow">Modelos</div>
+        <div class="card">
+          <p
+            class="small faint"
+            style="text-transform: uppercase; letter-spacing: 0.2em; font-size: 0.62rem"
+          >
+            Meus modelos de treino
+          </p>
+          <p class="small dim" style="margin: 4px 0 10px">
+            Ajuste seus treinos aqui mesmo. Uso livre: escolha o modelo quando for treinar.
+          </p>
+          <div id="templates-list"></div>
+        </div>
+
+        <div class="eyebrow">Uso livre na semana</div>
+        <div class="card">
+          <div id="week-list"></div>
+        </div>
+      </section>
+
+      <section id="view-historico" class="view hide">
+        <div id="prs-wrap" class="card hide">
+          <p
+            class="small faint"
+            style="
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              font-size: 0.62rem;
+              margin-bottom: 8px;
+            "
+          >
+            Recordes
+          </p>
+          <div id="prs-list"></div>
+        </div>
+        <div class="card">
+          <p
+            class="small faint"
+            style="
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              font-size: 0.62rem;
+              margin-bottom: 8px;
+            "
+          >
+            Sessões
+          </p>
+          <div id="history-list"></div>
+        </div>
+        <div class="card">
+          <p
+            class="small faint"
+            style="
+              text-transform: uppercase;
+              letter-spacing: 0.2em;
+              font-size: 0.62rem;
+              margin-bottom: 8px;
+            "
+          >
+            Biblioteca de exercícios
+          </p>
+          <div
+            id="library-filters"
+            class="row"
+            style="flex-wrap: wrap; gap: 4px; margin-bottom: 10px"
+          ></div>
+          <ul
+            id="library-list"
+            class="list-plain divider-list small"
+            style="max-height: 220px; overflow-y: auto"
+          ></ul>
+        </div>
+        <p class="faint italic small" style="padding: 4px 6px">
+          Khora / Kaline não substitui médico, fisioterapeuta ou educador físico. Sugestões aqui são
+          ritmo de treino — não prescrição clínica.
+        </p>
+      </section>
+    </main>
+
+    <div id="focus-overlay" class="hide"></div>
+
+    <button id="khora-fab" aria-label="Khora" aria-expanded="false"></button>
+    <div id="khora-panel" class="hide" role="dialog" aria-label="Conversa com Khora"></div>
+
+    <div id="toast" class="hide" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        if (new URLSearchParams(location.search).get("embedded") === "1") {
+          document.documentElement.classList.add("embedded");
+        }
+
+        var STORAGE_KEY = "kaline.treinos.v1";
+
+        function $(id) {
+          return document.getElementById(id);
+        }
+        function esc(value) {
+          return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+        function emit(action, payload) {
+          window.parent?.postMessage(
+            {
+              source: "corpore-sano",
+              action: action,
+              payload: payload || {},
+              timestamp: Date.now(),
+            },
+            window.location.origin,
+          );
+        }
+        var toastTimer;
+        function toast(message, isError) {
+          var el = $("toast");
+          el.textContent = message;
+          el.className = isError ? "error" : "";
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () {
+            el.className = "hide";
+          }, 3000);
+        }
+        function uuid() {
+          return crypto.randomUUID
+            ? crypto.randomUUID()
+            : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+                var r = (Math.random() * 16) | 0;
+                var v = c === "x" ? r : (r & 0x3) | 0x8;
+                return v.toString(16);
+              });
+        }
+        function todayIso() {
+          return new Date().toISOString().slice(0, 10);
+        }
+
+        // ── Dados semente ───────────────────────────────────────────
+        var SEED_EXERCISES = [
+          {
+            id: "supino-inclinado-halter",
+            name: "Supino inclinado (halteres)",
+            muscle_group: "Peito",
+            equipment: "Halter",
+            default_rest: 50,
+          },
+          {
+            id: "peck-deck",
+            name: "Peck Deck",
+            muscle_group: "Peito",
+            equipment: "Máquina",
+            default_rest: 50,
+          },
+          {
+            id: "crossover",
+            name: "Crossover",
+            muscle_group: "Peito",
+            equipment: "Cabo",
+            default_rest: 50,
+          },
+          {
+            id: "puxada-alta-aberta",
+            name: "Puxada alta aberta",
+            muscle_group: "Costas",
+            equipment: "Cabo",
+            default_rest: 50,
+          },
+          {
+            id: "puxada-alta-triangulo",
+            name: "Puxada alta triângulo",
+            muscle_group: "Costas",
+            equipment: "Cabo",
+            default_rest: 50,
+          },
+          {
+            id: "remada-sentada",
+            name: "Remada sentada",
+            muscle_group: "Costas",
+            equipment: "Máquina",
+            default_rest: 50,
+          },
+          {
+            id: "encolhimento-halter",
+            name: "Encolhimento com halteres",
+            muscle_group: "Trapézio",
+            equipment: "Halter",
+            default_rest: 50,
+          },
+          {
+            id: "elevacao-lateral",
+            name: "Elevação lateral (halteres)",
+            muscle_group: "Ombro",
+            equipment: "Halter",
+            default_rest: 30,
+          },
+          {
+            id: "elevacao-frontal",
+            name: "Elevação frontal (halteres)",
+            muscle_group: "Ombro",
+            equipment: "Halter",
+            default_rest: 50,
+          },
+          {
+            id: "desenvolvimento-ombro-halter",
+            name: "Desenvolvimento de ombro (halteres)",
+            muscle_group: "Ombro",
+            equipment: "Halter",
+            default_rest: 50,
+          },
+          {
+            id: "rosca-pulley-barra",
+            name: "Rosca pulley (barra reta)",
+            muscle_group: "Bíceps",
+            equipment: "Cabo",
+            default_rest: 30,
+          },
+          {
+            id: "rosca-barra-w",
+            name: "Rosca barra W (em pé)",
+            muscle_group: "Bíceps",
+            equipment: "Barra W",
+            default_rest: 50,
+          },
+          {
+            id: "rosca-concentrada",
+            name: "Rosca concentrada unilateral",
+            muscle_group: "Bíceps",
+            equipment: "Halter",
+            default_rest: 50,
+          },
+          {
+            id: "triceps-corda",
+            name: "Tríceps corda (polia alta)",
+            muscle_group: "Tríceps",
+            equipment: "Cabo",
+            default_rest: 30,
+          },
+          {
+            id: "triceps-frances",
+            name: "Tríceps francês",
+            muscle_group: "Tríceps",
+            equipment: "Halter",
+            default_rest: 50,
+          },
+          {
+            id: "agachamento-livre",
+            name: "Agachamento livre (peso corporal)",
+            muscle_group: "Pernas",
+            equipment: "Peso corporal",
+            default_rest: 60,
+          },
+          {
+            id: "cadeira-extensora",
+            name: "Cadeira extensora",
+            muscle_group: "Pernas",
+            equipment: "Máquina",
+            default_rest: 50,
+          },
+          {
+            id: "mesa-flexora",
+            name: "Mesa flexora",
+            muscle_group: "Posterior",
+            equipment: "Máquina",
+            default_rest: 50,
+          },
+          {
+            id: "leg-press",
+            name: "Leg press (amplitude máxima)",
+            muscle_group: "Pernas",
+            equipment: "Máquina",
+            default_rest: 120,
+          },
+          {
+            id: "cadeira-abdutora",
+            name: "Cadeira abdutora",
+            muscle_group: "Glúteos",
+            equipment: "Máquina",
+            default_rest: 50,
+          },
+          {
+            id: "cadeira-adutora",
+            name: "Cadeira adutora",
+            muscle_group: "Pernas",
+            equipment: "Máquina",
+            default_rest: 50,
+          },
+          {
+            id: "panturrilha-sentado",
+            name: "Panturrilha gêmeos sentado",
+            muscle_group: "Pernas",
+            equipment: "Máquina",
+            default_rest: 50,
+          },
+          {
+            id: "agachamento-sumo",
+            name: "Agachamento sumô (respeite amplitude)",
+            muscle_group: "Pernas",
+            equipment: "Halter",
+            default_rest: 50,
+          },
+          {
+            id: "abdominais-escolha",
+            name: "Abdominais à escolha (peso corporal)",
+            muscle_group: "Core",
+            equipment: "Peso corporal",
+            default_rest: 40,
+          },
+          {
+            id: "hiit-d321-moderado",
+            name: "HIIT D:321 · 3 min moderado (base aeróbica, controle de respiração)",
+            muscle_group: "Cardio",
+            equipment: "Livre",
+            default_rest: 0,
+          },
+          {
+            id: "hiit-d321-intenso",
+            name: "HIIT D:321 · 2 min intenso (zona de queima)",
+            muscle_group: "Cardio",
+            equipment: "Livre",
+            default_rest: 0,
+          },
+          {
+            id: "hiit-d321-allout",
+            name: "HIIT D:321 · 1 min all-out (esforço total, foco na potência)",
+            muscle_group: "Cardio",
+            equipment: "Livre",
+            default_rest: 0,
+          },
+        ];
+        var MUSCLE_FILTERS = [
+          "Peito",
+          "Costas",
+          "Ombro",
+          "Bíceps",
+          "Tríceps",
+          "Pernas",
+          "Posterior",
+          "Glúteos",
+          "Trapézio",
+          "Core",
+          "Cardio",
+        ];
+        var WEEK_DAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+        var SEMAPHORE_META = {
+          neutral: { label: "Sem leitura", color: "rgba(243,235,221,0.3)" },
+          green: { label: "Pronto para treinar", color: "#16A34A" },
+          yellow: { label: "Atenção", color: "#D9A441" },
+          red: { label: "Contenção", color: "#BE123C" },
+          blue: { label: "Recolhimento", color: "#2563EB" },
+        };
+        var SEM_TEXT = {
+          neutral: "registre os sinais pra calibrar",
+          green: "pode puxar forte",
+          yellow: "ritmo moderado",
+          red: "descanso ativo recomendado",
+          blue: "mobilidade e respiração",
+        };
+        var DEFAULT_TEMPLATE_SPECS = {
+          treinoA: {
+            key: "treinoA",
+            name: "Treino A",
+            day: null,
+            goal: "hipertrofia",
+            estimated_min: 60,
+            exercises: [
+              {
+                exercise_id: "supino-inclinado-halter",
+                sets: 3,
+                target_reps: 13,
+                rest_seconds: 50,
+              },
+              { exercise_id: "puxada-alta-aberta", sets: 3, target_reps: 13, rest_seconds: 50 },
+              { exercise_id: "peck-deck", sets: 3, target_reps: 13, rest_seconds: 50 },
+            ],
+          },
+          treinoB: {
+            key: "treinoB",
+            name: "Treino B",
+            day: null,
+            goal: "hipertrofia",
+            estimated_min: 55,
+            exercises: [
+              { exercise_id: "elevacao-lateral", sets: 3, target_reps: 13, rest_seconds: 30 },
+              { exercise_id: "triceps-corda", sets: 3, target_reps: 13, rest_seconds: 30 },
+              { exercise_id: "rosca-pulley-barra", sets: 3, target_reps: 13, rest_seconds: 30 },
+            ],
+          },
+          treinoC: {
+            key: "treinoC",
+            name: "Treino C",
+            day: null,
+            goal: "hipertrofia",
+            estimated_min: 70,
+            exercises: [
+              {
+                exercise_id: "agachamento-livre",
+                sets: 3,
+                target_reps: 25,
+                rest_seconds: 60,
+                block_type: "warmup",
+              },
+              { exercise_id: "cadeira-extensora", sets: 3, target_reps: 16, rest_seconds: 50 },
+              { exercise_id: "leg-press", sets: 4, target_reps: 16, rest_seconds: 120 },
+            ],
+          },
+          treinoD: {
+            key: "treinoD",
+            name: "Treino D",
+            day: null,
+            goal: "mobilidade",
+            estimated_min: 40,
+            exercises: [
+              {
+                exercise_id: "desenvolvimento-ombro-halter",
+                sets: 3,
+                target_reps: 12,
+                rest_seconds: 60,
+              },
+              { exercise_id: "remada-sentada", sets: 3, target_reps: 12, rest_seconds: 60 },
+              {
+                exercise_id: "abdominais-escolha",
+                sets: 3,
+                target_reps: 30,
+                rest_seconds: 45,
+                block_type: "mobility",
+              },
+            ],
+          },
+        };
+        var TEMPLATE_KEYS = ["treinoA", "treinoB", "treinoC", "treinoD"];
+        var CHIPS = [
+          "Ajustar treino de hoje",
+          "Substituir exercício",
+          "Estou sem energia hoje",
+          "Tenho 20 minutos só",
+          "Registrar treino livre",
+          "Ver minha evolução",
+        ];
+
+        // ── Persistência local (mesma chave do app React) ───────────
+        function defaultTemplates() {
+          var out = {};
+          Object.keys(DEFAULT_TEMPLATE_SPECS).forEach(function (key) {
+            var t = DEFAULT_TEMPLATE_SPECS[key];
+            out[key] = Object.assign({}, t, {
+              exercises: t.exercises.map(function (e) {
+                return Object.assign({}, e, { id: uuid() });
+              }),
+            });
+          });
+          return out;
+        }
+        function weekFromTemplates(templates) {
+          var week = { 0: null, 1: null, 2: null, 3: null, 4: null, 5: null, 6: null };
+          Object.keys(templates).forEach(function (key) {
+            var t = templates[key];
+            if (t.day !== null && t.day !== undefined)
+              week[t.day] = { name: t.name, status: "planned" };
+          });
+          return week;
+        }
+        function defaultState() {
+          var templates = defaultTemplates();
+          return {
+            exercises: SEED_EXERCISES,
+            todayWorkout: null,
+            history: [],
+            signals: null,
+            week: weekFromTemplates(templates),
+            templates: templates,
+          };
+        }
+        function loadState() {
+          try {
+            var raw = window.localStorage.getItem(STORAGE_KEY);
+            if (!raw) return defaultState();
+            var parsed = JSON.parse(raw);
+            if (!parsed.exercises || parsed.exercises.length === 0)
+              parsed.exercises = SEED_EXERCISES;
+            var existingIds = {};
+            parsed.exercises.forEach(function (e) {
+              existingIds[e.id] = true;
+            });
+            var missing = SEED_EXERCISES.filter(function (e) {
+              return !existingIds[e.id];
+            });
+            if (missing.length > 0) parsed.exercises = parsed.exercises.concat(missing);
+            parsed.templates = Object.assign(defaultTemplates(), parsed.templates || {});
+            parsed.week = weekFromTemplates(parsed.templates);
+            return parsed;
+          } catch (e) {
+            return defaultState();
+          }
+        }
+        function saveState(s) {
+          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
+        }
+        function normalizeImportedWorkout(workout) {
+          if (!workout || !Array.isArray(workout.blocks) || workout.blocks.length === 0)
+            return null;
+          var exerciseIds = {};
+          state.exercises.forEach(function (e) {
+            exerciseIds[e.id] = true;
+          });
+          var unmatched = [];
+          var blocks = workout.blocks
+            .filter(function (b) {
+              var ok =
+                b && exerciseIds[b.exercise_id] && Array.isArray(b.planned) && b.planned.length;
+              if (!ok && b && b.exercise_id) unmatched.push(b.exercise_id);
+              return ok;
+            })
+            .map(function (b) {
+              return {
+                id: uuid(),
+                block_type: b.block_type || "exercise",
+                exercise_id: b.exercise_id,
+                planned: b.planned.map(function (set, i) {
+                  return {
+                    set_number: i + 1,
+                    target_reps: Number(set.target_reps) || 0,
+                    target_weight: Number(set.target_weight) || 0,
+                    target_rir: Number(set.target_rir) || 0,
+                    rest_seconds: Number(set.rest_seconds) || 60,
+                  };
+                }),
+                logged: [],
+              };
+            });
+          if (!blocks.length) return null;
+          return {
+            id: uuid(),
+            date: todayIso(),
+            name: workout.name || "Treino importado",
+            goal: workout.goal || "hipertrofia",
+            estimated_min: Number(workout.estimated_min) || 60,
+            status: "planned",
+            blocks: blocks,
+            unmatched: unmatched,
+          };
+        }
+
+        function setWorkoutImportStatus(message, isError) {
+          var el = $("workout-import-status");
+          if (!el) return;
+          el.textContent = message || "";
+          el.style.color = isError ? "var(--red)" : "var(--text-faint)";
+        }
+
+        function bindWorkoutImport() {
+          var btn = $("btn-import-workout-text");
+          var input = $("workout-import-text");
+          if (!btn || !input) return;
+          btn.disabled = importingWorkoutText;
+          btn.textContent = importingWorkoutText ? "Organizando..." : "Organizar e preencher";
+          btn.onclick = function () {
+            var text = input.value.trim();
+            if (!text) return setWorkoutImportStatus("Cole o treino primeiro.", true);
+            if (text.length > 6000)
+              return setWorkoutImportStatus("Texto grande demais. Limite: 6000 caracteres.", true);
+            importingWorkoutText = true;
+            btn.disabled = true;
+            btn.textContent = "Organizando...";
+            setWorkoutImportStatus("Kaline está organizando o treino...", false);
+            emit("corpore-sano:parse-workout-text", { text: text });
+          };
+        }
+
+        function makeBlocksDetailed(specs) {
+          return specs.map(function (sp) {
+            return {
+              id: uuid(),
+              block_type: sp.block_type || "exercise",
+              exercise_id: sp.exercise_id,
+              planned: Array.from({ length: sp.sets }, function (_, i) {
+                return {
+                  set_number: i + 1,
+                  target_reps: sp.target_reps,
+                  target_weight: 0,
+                  target_rir: 0,
+                  rest_seconds: sp.rest_seconds,
+                };
+              }),
+              logged: [],
+            };
+          });
+        }
+        function inferSemaphore(s) {
+          if (!s) return "neutral";
+          if (s.pain === "relevante") return "red";
+          if (s.energy === "baixa" && s.sleep === "ruim") return "red";
+          if (s.sleep === "ruim" || s.energy === "baixa" || s.pain === "leve") return "yellow";
+          if (s.available === 20) return "blue";
+          if (s.energy === "alta" && s.sleep === "bom") return "green";
+          return "yellow";
+        }
+
+        // ── Estado ──────────────────────────────────────────────────
+        var state = loadState();
+        var remoteHistory = [];
+        var prs = {};
+        var focusBlockId = null;
+        var focusForm = { weight: 0, reps: 10, rir: 2, rest: 90 };
+        var importingWorkoutText = false;
+        var timerLeft = null;
+        var timerInterval = null;
+        var libraryFilter = "Todos";
+        var khoraIntent = CHIPS[0];
+        var khoraOpen = false;
+        var signalDebounce = null;
+        var lastSignalSent = null;
+
+        function persist() {
+          saveState(state);
+        }
+        function semaphore() {
+          return inferSemaphore(state.signals);
+        }
+
+        // ── Navegação de abas ───────────────────────────────────────
+        function showTab(tab) {
+          ["hoje", "plano", "historico"].forEach(function (t) {
+            $("view-" + t).classList.toggle("hide", t !== tab);
+          });
+          $("tabs")
+            .querySelectorAll("button")
+            .forEach(function (b) {
+              b.setAttribute("aria-current", String(b.getAttribute("data-tab") === tab));
+            });
+        }
+        $("tabs")
+          .querySelectorAll("button")
+          .forEach(function (b) {
+            b.onclick = function () {
+              showTab(b.getAttribute("data-tab"));
+            };
+          });
+        $("btn-ajustar").onclick = function () {
+          showTab("plano");
+        };
+
+        // ── Sync com o Host ─────────────────────────────────────────
+        function requestSync() {
+          emit("corpore-sano:sync-request");
+        }
+
+        // ── Aba Hoje ────────────────────────────────────────────────
+        function renderSemaphoreLine() {
+          var sem = semaphore();
+          var meta = SEMAPHORE_META[sem];
+          $("sem-dot").style.background = meta.color;
+          $("sem-dot").style.boxShadow = "0 0 8px " + meta.color;
+          $("sem-label").textContent = "Hoje: " + SEM_TEXT[sem];
+        }
+
+        function renderTodayCard() {
+          var w = state.todayWorkout;
+          var el = $("today-card");
+          if (!w) {
+            el.innerHTML =
+              '<p class="small dim italic" style="margin-bottom:14px">Nenhum treino ativo. Escolha um modelo de treino ou comece um treino livre.</p>' +
+              '<div class="grid2">' +
+              ["treinoA", "treinoB", "treinoC", "treinoD"]
+                .map(function (k) {
+                  return (
+                    '<button class="btn quick" data-create="' +
+                    k +
+                    '">' +
+                    state.templates[k].name +
+                    "</button>"
+                  );
+                })
+                .join("") +
+              '<button class="btn quick" data-create="livre" style="grid-column:1/-1">Treino livre</button>' +
+              "</div>";
+            el.querySelectorAll("[data-create]").forEach(function (btn) {
+              btn.onclick = function () {
+                createQuickWorkout(btn.getAttribute("data-create"));
+              };
+            });
+            return;
+          }
+
+          var totalSets = w.blocks.reduce(function (acc, b) {
+            return acc + b.planned.length;
+          }, 0);
+          var doneSets = w.blocks.reduce(function (acc, b) {
+            return (
+              acc +
+              b.logged.filter(function (l) {
+                return l.status === "completed";
+              }).length
+            );
+          }, 0);
+
+          var blocksHtml =
+            w.blocks.length === 0
+              ? '<li class="small dim italic" style="padding:8px 0">Sem blocos. Adicione exercícios pela biblioteca ou registre como notas.</li>'
+              : w.blocks
+                  .map(function (b, idx) {
+                    var ex = state.exercises.find(function (e) {
+                      return e.id === b.exercise_id;
+                    });
+                    var completed = b.logged.filter(function (l) {
+                      return l.status === "completed";
+                    }).length;
+                    var pr = ex ? prs[ex.name] : null;
+                    return (
+                      '<li style="display:flex;align-items:center;gap:10px">' +
+                      '<span class="faint small" style="width:18px">' +
+                      (idx + 1) +
+                      ".</span>" +
+                      '<div style="flex:1;min-width:0">' +
+                      '<p style="font-size:0.88rem">' +
+                      esc(ex ? ex.name : "Exercício") +
+                      "</p>" +
+                      '<p class="small faint">' +
+                      completed +
+                      "/" +
+                      b.planned.length +
+                      " séries · " +
+                      esc(ex ? ex.muscle_group : "") +
+                      (pr
+                        ? ' · <span style="color:var(--khora-bright)">PR ' +
+                          pr.weight +
+                          "kg × " +
+                          pr.reps +
+                          "</span>"
+                        : "") +
+                      "</p></div>" +
+                      '<button class="btn ghost" data-foco="' +
+                      b.id +
+                      '" style="text-transform:uppercase;letter-spacing:0.18em;font-size:0.68rem">Foco</button>' +
+                      "</li>"
+                    );
+                  })
+                  .join("");
+
+          el.innerHTML =
+            '<div class="row-between" style="align-items:flex-start;margin-bottom:12px">' +
+            '<div style="flex:1;min-width:0">' +
+            '<p class="small faint" style="text-transform:uppercase;letter-spacing:0.2em;font-size:0.62rem">Treino de hoje</p>' +
+            '<p style="font-family:Georgia,serif;font-size:1.2rem">' +
+            esc(w.name) +
+            "</p>" +
+            '<p class="small faint">' +
+            esc(w.goal) +
+            " · ~" +
+            w.estimated_min +
+            "min · " +
+            doneSets +
+            "/" +
+            totalSets +
+            " séries · " +
+            esc(w.status) +
+            "</p>" +
+            "</div>" +
+            '<button class="icon-btn" id="btn-discard" aria-label="Descartar">✕</button>' +
+            "</div>" +
+            '<ul class="list-plain divider-list" style="margin-bottom:14px">' +
+            blocksHtml +
+            "</ul>" +
+            (w.status !== "in_progress"
+              ? '<button class="btn" id="btn-start" style="width:100%">▶ Iniciar Modo Foco</button>'
+              : '<button class="btn success" id="btn-finish" style="width:100%"' +
+                (finishingWorkout ? " disabled" : "") +
+                ">" +
+                (finishingWorkout ? "Salvando…" : "✓ Encerrar treino") +
+                "</button>");
+
+          var discardBtn = $("btn-discard");
+          if (discardBtn) discardBtn.onclick = discardToday;
+          var startBtn = $("btn-start");
+          if (startBtn)
+            startBtn.onclick = function () {
+              patchToday(function (ww) {
+                return Object.assign({}, ww, { status: "in_progress" });
+              });
+              if (w.blocks[0]) openFocus(w.blocks[0].id);
+              renderAll();
+            };
+          var finishBtn = $("btn-finish");
+          if (finishBtn) finishBtn.onclick = finishWorkout;
+          el.querySelectorAll("[data-foco]").forEach(function (btn) {
+            btn.onclick = function () {
+              openFocus(btn.getAttribute("data-foco"));
+            };
+          });
+        }
+
+        function patchToday(updater) {
+          if (!state.todayWorkout) return;
+          state.todayWorkout = updater(state.todayWorkout);
+          persist();
+        }
+
+        function createQuickWorkout(template) {
+          var date = todayIso();
+          if (template !== "livre") {
+            var configured = state.templates[template];
+            state.week = weekFromTemplates(state.templates);
+            state.todayWorkout = {
+              id: uuid(),
+              date: date,
+              name: configured.name,
+              goal: configured.goal,
+              estimated_min: configured.estimated_min,
+              status: "planned",
+              blocks: makeBlocksDetailed(configured.exercises),
+            };
+          } else {
+            state.todayWorkout = {
+              id: uuid(),
+              date: date,
+              name: "Treino livre",
+              goal: "hipertrofia",
+              estimated_min: 40,
+              status: "planned",
+              blocks: [],
+            };
+          }
+          persist();
+          renderAll();
+        }
+
+        function discardToday() {
+          state.todayWorkout = null;
+          focusBlockId = null;
+          persist();
+          renderAll();
+        }
+
+        var finishingWorkout = false;
+        var pendingFinishedWorkout = null;
+
+        function finishWorkout() {
+          var current = state.todayWorkout;
+          if (!current || finishingWorkout) return;
+          var finished = Object.assign({}, current, { status: "completed" });
+          var blocks = finished.blocks.map(function (b) {
+            var meta = state.exercises.find(function (e) {
+              return e.id === b.exercise_id;
+            });
+            return {
+              exercise_id: b.exercise_id,
+              exercise_name: meta ? meta.name : b.exercise_id,
+              muscle_group: meta ? meta.muscle_group : undefined,
+              logged: b.logged,
+            };
+          });
+          // Não otimista: só limpa o treino ativo e grava no histórico local
+          // depois que o servidor confirmar (corpore-sano:workout-finished).
+          // Antes disso, uma falha de rede/persistência descartava o treino
+          // silenciosamente — ele saía do estado ativo mas nunca era
+          // sincronizado, e o usuário não tinha como refazer o encerramento.
+          finishingWorkout = true;
+          pendingFinishedWorkout = finished;
+          renderTodayCard();
+          emit("corpore-sano:finish-workout", {
+            name: finished.name,
+            semaforo: semaphore(),
+            blocks: blocks,
+          });
+        }
+
+        // ── Aba Plano ───────────────────────────────────────────────
+        function renderPlan() {
+          var sem = semaphore();
+          var meta = SEMAPHORE_META[sem];
+          $("plano-sem-dot").style.background = meta.color;
+          $("plano-sem-dot").style.boxShadow = "0 0 8px " + meta.color;
+          $("plano-sem-label").textContent = meta.label;
+
+          var s = state.signals || {
+            date: todayIso(),
+            energy: "media",
+            sleep: "ok",
+            pain: "nenhuma",
+            available: 40,
+          };
+          function pillGroup(label, field, options, fmt) {
+            return (
+              '<div><p class="small faint" style="text-transform:uppercase;letter-spacing:0.18em;font-size:0.62rem;margin-bottom:4px">' +
+              label +
+              "</p>" +
+              '<div class="row" style="flex-wrap:wrap;gap:4px">' +
+              options
+                .map(function (o) {
+                  var active = String(s[field]) === String(o);
+                  return (
+                    '<button class="pill' +
+                    (active ? " active" : "") +
+                    '" data-signal="' +
+                    field +
+                    '" data-value="' +
+                    o +
+                    '">' +
+                    (fmt ? fmt(o) : o) +
+                    "</button>"
+                  );
+                })
+                .join("") +
+              "</div></div>"
+            );
+          }
+          $("signal-pills").innerHTML =
+            pillGroup("Energia", "energy", ["baixa", "media", "alta"]) +
+            pillGroup("Sono", "sleep", ["ruim", "ok", "bom"]) +
+            pillGroup("Dor", "pain", ["nenhuma", "leve", "relevante"]) +
+            pillGroup("Tempo", "available", [20, 40, 60], function (o) {
+              return o + "min";
+            });
+          $("signal-pills")
+            .querySelectorAll("[data-signal]")
+            .forEach(function (btn) {
+              btn.onclick = function () {
+                var field = btn.getAttribute("data-signal");
+                var value = btn.getAttribute("data-value");
+                var next = Object.assign({}, s);
+                next[field] = field === "available" ? Number(value) : value;
+                setSignals(next);
+              };
+            });
+          $("signals-notes").value = s.notes || "";
+          $("signals-notes").oninput = function () {
+            var next = Object.assign({}, state.signals || s, { notes: $("signals-notes").value });
+            setSignals(next);
+          };
+
+          renderTemplates();
+          renderWeek();
+        }
+
+        function setSignals(next) {
+          state.signals = next;
+          persist();
+          renderSemaphoreLine();
+          renderPlano();
+          scheduleSignalSync();
+        }
+
+        function scheduleSignalSync() {
+          var serialized = JSON.stringify(state.signals);
+          if (serialized === lastSignalSent) return;
+          clearTimeout(signalDebounce);
+          signalDebounce = setTimeout(function () {
+            lastSignalSent = serialized;
+            emit("corpore-sano:signals-save", state.signals);
+          }, 1200);
+        }
+
+        function renderTemplates() {
+          var html = TEMPLATE_KEYS.map(function (key) {
+            var t = state.templates[key];
+            var rows = t.exercises
+              .map(function (item) {
+                return (
+                  '<div class="template-ex-row" data-item="' +
+                  item.id +
+                  '">' +
+                  '<label class="field">Exercício<select data-field="exercise_id">' +
+                  state.exercises
+                    .map(function (ex) {
+                      return (
+                        '<option value="' +
+                        ex.id +
+                        '"' +
+                        (ex.id === item.exercise_id ? " selected" : "") +
+                        ">" +
+                        esc(ex.name) +
+                        "</option>"
+                      );
+                    })
+                    .join("") +
+                  "</select></label>" +
+                  '<label class="field">Séries<input type="number" min="1" data-field="sets" value="' +
+                  item.sets +
+                  '"></label>' +
+                  '<label class="field">Reps<input type="number" min="1" data-field="target_reps" value="' +
+                  item.target_reps +
+                  '"></label>' +
+                  '<label class="field">Desc<input type="number" min="0" data-field="rest_seconds" value="' +
+                  item.rest_seconds +
+                  '"></label>' +
+                  '<button class="icon-btn" data-remove-ex aria-label="Remover exercício">✕</button>' +
+                  "</div>"
+                );
+              })
+              .join("");
+            return (
+              '<details class="template" style="margin-bottom:10px;border:1px solid var(--border);border-radius:12px;padding:10px" data-key="' +
+              key +
+              '">' +
+              '<summary><strong style="font-family:Georgia,serif">' +
+              esc(t.name) +
+              "</strong></summary>" +
+              '<div style="margin-top:10px">' +
+              '<div class="grid2" style="margin-bottom:10px">' +
+              '<label class="field">Nome<input data-field="name" value="' +
+              esc(t.name) +
+              '"></label>' +
+              '<label class="field">Duração (min)<input type="number" min="10" data-field="estimated_min" value="' +
+              t.estimated_min +
+              '"></label>' +
+              "</div>" +
+              rows +
+              '<button class="btn outline" data-add-ex style="font-size:0.78rem;padding:8px 12px">+ adicionar exercício</button>' +
+              "</div></details>"
+            );
+          }).join("");
+          $("templates-list").innerHTML = html;
+
+          $("templates-list")
+            .querySelectorAll("[data-key]")
+            .forEach(function (details) {
+              var key = details.getAttribute("data-key");
+              var nameInput = details.querySelector('[data-field="name"]');
+              nameInput.onchange = function () {
+                updateTemplate(key, function (t) {
+                  return Object.assign({}, t, { name: nameInput.value });
+                });
+              };
+              var minInput = details.querySelector('[data-field="estimated_min"]');
+              minInput.onchange = function () {
+                updateTemplate(key, function (t) {
+                  return Object.assign({}, t, { estimated_min: Number(minInput.value) || 40 });
+                });
+              };
+              details.querySelectorAll("[data-item]").forEach(function (row) {
+                var itemId = row.getAttribute("data-item");
+                row.querySelectorAll("[data-field]").forEach(function (input) {
+                  var field = input.getAttribute("data-field");
+                  input.onchange = function () {
+                    var value = field === "exercise_id" ? input.value : Number(input.value) || 1;
+                    var patch = {};
+                    patch[field] = value;
+                    updateTemplate(key, function (t) {
+                      return Object.assign({}, t, {
+                        exercises: t.exercises.map(function (x) {
+                          return x.id === itemId ? Object.assign({}, x, patch) : x;
+                        }),
+                      });
+                    });
+                  };
+                });
+                row.querySelector("[data-remove-ex]").onclick = function () {
+                  removeTemplateExercise(key, itemId);
+                };
+              });
+              details.querySelector("[data-add-ex]").onclick = function () {
+                addTemplateExercise(key);
+              };
+            });
+        }
+
+        function updateTemplate(key, updater) {
+          state.templates = Object.assign({}, state.templates);
+          state.templates[key] = updater(state.templates[key]);
+          state.week = weekFromTemplates(state.templates);
+          persist();
+          renderTemplates();
+          renderWeek();
+        }
+        function addTemplateExercise(key) {
+          updateTemplate(key, function (t) {
+            return Object.assign({}, t, {
+              exercises: t.exercises.concat([
+                {
+                  id: uuid(),
+                  exercise_id: state.exercises[0] ? state.exercises[0].id : "",
+                  sets: 3,
+                  target_reps: 12,
+                  rest_seconds: 60,
+                },
+              ]),
+            });
+          });
+        }
+        function removeTemplateExercise(key, id) {
+          updateTemplate(key, function (t) {
+            return Object.assign({}, t, {
+              exercises: t.exercises.filter(function (x) {
+                return x.id !== id;
+              }),
+            });
+          });
+        }
+
+        function renderWeek() {
+          $("week-list").innerHTML = WEEK_DAYS.map(function (d, i) {
+            var v = state.week[i];
+            var statusChip = v
+              ? '<button class="status-chip ' +
+                v.status +
+                '" data-week-status="' +
+                i +
+                '">' +
+                v.status +
+                "</button>"
+              : "";
+            return (
+              '<div class="week-row">' +
+              '<span class="day">' +
+              d +
+              "</span>" +
+              '<input data-week-name="' +
+              i +
+              '" value="' +
+              esc(v ? v.name : "") +
+              '" placeholder="—">' +
+              statusChip +
+              "</div>"
+            );
+          }).join("");
+          $("week-list")
+            .querySelectorAll("[data-week-name]")
+            .forEach(function (input) {
+              input.onchange = function () {
+                var i = Number(input.getAttribute("data-week-name"));
+                var name = input.value;
+                var v = state.week[i];
+                state.week[i] = name ? { name: name, status: v ? v.status : "planned" } : null;
+                persist();
+                renderWeek();
+              };
+            });
+          $("week-list")
+            .querySelectorAll("[data-week-status]")
+            .forEach(function (btn) {
+              btn.onclick = function () {
+                var i = Number(btn.getAttribute("data-week-status"));
+                var v = state.week[i];
+                if (!v) return;
+                var next =
+                  v.status === "rest" ? "planned" : v.status === "planned" ? "done" : "rest";
+                state.week[i] = Object.assign({}, v, { status: next });
+                persist();
+                renderWeek();
+              };
+            });
+        }
+
+        // ── Aba Histórico ───────────────────────────────────────────
+        function renderHistory() {
+          var prEntries = Object.keys(prs).slice(0, 6);
+          $("prs-wrap").classList.toggle("hide", prEntries.length === 0);
+          $("prs-list").innerHTML = prEntries
+            .map(function (name) {
+              var pr = prs[name];
+              return (
+                '<span class="chip-pr"><span class="name">' +
+                esc(name) +
+                "</span> · " +
+                pr.weight +
+                "kg</span>"
+              );
+            })
+            .join("");
+
+          var items =
+            remoteHistory.length > 0
+              ? remoteHistory.map(function (r) {
+                  return {
+                    id: r.id,
+                    name: r.name,
+                    date: r.date,
+                    sets: r.totalSets,
+                    volume: r.totalVolume,
+                    names: r.exerciseNames,
+                  };
+                })
+              : state.history.slice(0, 6).map(function (w) {
+                  return {
+                    id: w.id,
+                    name: w.name,
+                    date: w.date,
+                    sets: w.blocks.reduce(function (acc, b) {
+                      return (
+                        acc +
+                        b.logged.filter(function (l) {
+                          return l.status === "completed";
+                        }).length
+                      );
+                    }, 0),
+                    volume: w.blocks.reduce(function (acc, b) {
+                      return (
+                        acc +
+                        b.logged.reduce(function (s, l) {
+                          return s + (l.status === "completed" ? l.weight * l.reps : 0);
+                        }, 0)
+                      );
+                    }, 0),
+                    names: w.blocks
+                      .map(function (b) {
+                        var e = state.exercises.find(function (x) {
+                          return x.id === b.exercise_id;
+                        });
+                        return e ? e.name : "";
+                      })
+                      .filter(Boolean),
+                  };
+                });
+
+          if (items.length === 0) {
+            $("history-list").innerHTML =
+              '<p class="small dim italic">Ainda não há histórico real. O histórico nasce quando você registra séries no Modo Foco.</p>';
+          } else {
+            $("history-list").innerHTML =
+              '<ul class="list-plain divider-list small">' +
+              items
+                .slice(0, 6)
+                .map(function (w) {
+                  return (
+                    "<li><p>" +
+                    esc(w.name) +
+                    "</p>" +
+                    '<p class="faint">' +
+                    esc(w.date) +
+                    " · " +
+                    w.sets +
+                    " séries · vol " +
+                    Math.round(w.volume) +
+                    "kg</p>" +
+                    '<p class="faint" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' +
+                    esc(w.names.join(" · ")) +
+                    "</p>" +
+                    '<button class="btn ghost" data-del-hist="' +
+                    w.id +
+                    '" style="margin-top:4px;padding:2px 0">Apagar</button></li>'
+                  );
+                })
+                .join("") +
+              "</ul>" +
+              '<p class="faint italic small" style="margin-top:10px">Sincronizado com sua conta · histórico privado por usuário.</p>';
+            $("history-list")
+              .querySelectorAll("[data-del-hist]")
+              .forEach(function (btn) {
+                btn.onclick = function () {
+                  var id = btn.getAttribute("data-del-hist");
+                  state.history = state.history.filter(function (w) {
+                    return w.id !== id;
+                  });
+                  persist();
+                  emit("corpore-sano:history-delete", { id: id });
+                  renderHistorico();
+                };
+              });
+          }
+
+          $("library-filters").innerHTML = ["Todos"]
+            .concat(MUSCLE_FILTERS)
+            .map(function (m) {
+              return (
+                '<button class="pill' +
+                (libraryFilter === m ? " active" : "") +
+                '" data-filter="' +
+                m +
+                '">' +
+                m +
+                "</button>"
+              );
+            })
+            .join("");
+          $("library-filters")
+            .querySelectorAll("[data-filter]")
+            .forEach(function (btn) {
+              btn.onclick = function () {
+                libraryFilter = btn.getAttribute("data-filter");
+                renderHistorico();
+              };
+            });
+          var list = state.exercises.filter(function (e) {
+            return libraryFilter === "Todos" || e.muscle_group === libraryFilter;
+          });
+          $("library-list").innerHTML = list
+            .map(function (e) {
+              return (
+                '<li style="display:flex;justify-content:space-between;gap:8px"><span>' +
+                esc(e.name) +
+                '</span><span class="faint">' +
+                esc(e.equipment) +
+                "</span></li>"
+              );
+            })
+            .join("");
+        }
+
+        // ── Focus Mode ──────────────────────────────────────────────
+        function openFocus(blockId) {
+          focusBlockId = blockId;
+          var w = state.todayWorkout;
+          var block =
+            w &&
+            w.blocks.find(function (b) {
+              return b.id === blockId;
+            });
+          if (!block) return;
+          var exercise = state.exercises.find(function (e) {
+            return e.id === block.exercise_id;
+          });
+          var nextIdx = block.logged.length;
+          var planned = block.planned[nextIdx];
+          var last = block.logged[block.logged.length - 1];
+          focusForm = {
+            weight: last ? last.weight : planned ? planned.target_weight : 0,
+            reps: planned ? planned.target_reps : 10,
+            rir: planned ? planned.target_rir : 2,
+            rest: planned ? planned.rest_seconds : exercise ? exercise.default_rest : 90,
+          };
+          timerLeft = null;
+          clearInterval(timerInterval);
+          renderFocus();
+          $("focus-overlay").classList.remove("hide");
+        }
+        function closeFocus() {
+          $("focus-overlay").classList.add("hide");
+          clearInterval(timerInterval);
+          timerLeft = null;
+          focusBlockId = null;
+          renderAll();
+        }
+        function startTimer(seconds) {
+          clearInterval(timerInterval);
+          timerLeft = seconds;
+          renderFocusTimer();
+          timerInterval = setInterval(function () {
+            if (timerLeft === null) return;
+            if (timerLeft <= 1) {
+              clearInterval(timerInterval);
+              timerLeft = 0;
+              if (navigator.vibrate) {
+                try {
+                  navigator.vibrate(200);
+                } catch (e) {}
+              }
+            } else {
+              timerLeft -= 1;
+            }
+            renderFocusTimer();
+          }, 1000);
+        }
+        function renderFocusTimer() {
+          var el = $("focus-timer-value");
+          if (!el) return;
+          if (timerLeft === null) {
+            el.textContent = "";
+            return;
+          }
+          var m = Math.floor(timerLeft / 60);
+          var s = String(timerLeft % 60).padStart(2, "0");
+          el.textContent = m + ":" + s;
+          el.className = "rest-timer" + (timerLeft === 0 ? " done" : "");
+        }
+
+        function renderFocus() {
+          var w = state.todayWorkout;
+          var block =
+            w &&
+            w.blocks.find(function (b) {
+              return b.id === focusBlockId;
+            });
+          if (!w || !block) {
+            closeFocus();
+            return;
+          }
+          var exercise = state.exercises.find(function (e) {
+            return e.id === block.exercise_id;
+          });
+          if (!exercise) {
+            closeFocus();
+            return;
+          }
+          var idx = w.blocks.findIndex(function (b) {
+            return b.id === focusBlockId;
+          });
+          var done = block.logged.filter(function (l) {
+            return l.status === "completed";
+          }).length;
+          var pr = prs[exercise.name];
+          var currentE1rm =
+            focusForm.weight > 0 && focusForm.reps > 0
+              ? focusForm.weight * (1 + focusForm.reps / 30)
+              : 0;
+          var beatsPR = pr && currentE1rm > pr.e1rm;
+          var isFirstPR = !pr && focusForm.weight > 0 && focusForm.reps > 0;
+
+          var loggedHtml = block.logged.length
+            ? '<ul class="list-plain small" style="margin-top:14px">' +
+              block.logged
+                .map(function (l) {
+                  var color =
+                    l.status === "completed"
+                      ? "var(--green)"
+                      : l.status === "failed"
+                        ? "var(--red)"
+                        : "var(--text-faint)";
+                  return (
+                    '<li style="display:flex;gap:10px;padding:2px 0">' +
+                    '<span class="faint" style="width:16px;text-align:right">' +
+                    l.set_number +
+                    "</span>" +
+                    "<span>" +
+                    l.weight +
+                    "kg</span><span>×" +
+                    l.reps +
+                    "</span>" +
+                    '<span class="faint">RIR ' +
+                    (l.rir != null ? l.rir : "-") +
+                    "</span>" +
+                    '<span style="color:' +
+                    color +
+                    '">' +
+                    l.status +
+                    "</span></li>"
+                  );
+                })
+                .join("") +
+              "</ul>"
+            : "";
+
+          $("focus-overlay").innerHTML =
+            '<div class="focus-card">' +
+            '<div class="row" style="margin-bottom:10px">' +
+            '<span style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.2em;color:var(--khora)">Modo Foco</span>' +
+            '<span class="faint small">' +
+            (idx + 1) +
+            "/" +
+            w.blocks.length +
+            "</span>" +
+            '<div style="margin-left:auto;display:flex;gap:4px">' +
+            '<button class="icon-btn" id="focus-prev" aria-label="Anterior" ' +
+            (idx === 0 ? "disabled" : "") +
+            ">←</button>" +
+            '<button class="icon-btn" id="focus-next" aria-label="Próximo">→</button>' +
+            '<button class="icon-btn" id="focus-close" aria-label="Fechar">✕</button>' +
+            "</div></div>" +
+            '<div style="border:1px solid rgba(201,138,101,0.2);background:var(--khora-dim);border-radius:10px;padding:8px 12px;margin-bottom:10px">' +
+            '<p style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.16em;color:var(--khora)">Treino atual: ' +
+            esc(w.name) +
+            "</p>" +
+            '<p class="small faint">Exercícios deste treino: ' +
+            w.blocks.length +
+            ". Você está vendo o treino em andamento, não a biblioteca inteira.</p></div>" +
+            '<p style="font-family:Georgia,serif;font-size:1.3rem">' +
+            esc(exercise.name) +
+            "</p>" +
+            '<p class="small faint" style="margin-bottom:10px">' +
+            esc(exercise.muscle_group) +
+            " · " +
+            esc(exercise.equipment) +
+            " · " +
+            done +
+            "/" +
+            block.planned.length +
+            " séries</p>" +
+            '<select id="focus-replace" aria-label="Substituir por exercício da biblioteca" style="margin-bottom:10px">' +
+            state.exercises
+              .map(function (e) {
+                return (
+                  '<option value="' +
+                  e.id +
+                  '"' +
+                  (e.id === block.exercise_id ? " selected" : "") +
+                  ">" +
+                  esc(e.name) +
+                  "</option>"
+                );
+              })
+              .join("") +
+            "</select>" +
+            '<div class="row" style="flex-wrap:wrap;margin-bottom:10px">' +
+            (pr
+              ? '<span class="chip-pr">PR ' +
+                pr.weight +
+                "kg × " +
+                pr.reps +
+                " · e1RM " +
+                Math.round(pr.e1rm) +
+                "kg</span>"
+              : '<span class="faint small italic">Sem PR registrado para este exercício.</span>') +
+            (beatsPR
+              ? '<span class="chip-pr" style="border-color:rgba(22,163,74,0.4);color:var(--green)">🔥 Novo PR a caminho</span>'
+              : "") +
+            (isFirstPR ? '<span class="chip-pr">Primeiro registro</span>' : "") +
+            "</div>" +
+            '<div class="grid2" style="grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">' +
+            numField("Carga (kg)", "weight", focusForm.weight, 2.5) +
+            numField("Reps", "reps", focusForm.reps, 1) +
+            numField("RIR", "rir", focusForm.rir, 1) +
+            "</div>" +
+            '<div style="border:1px solid var(--border);border-radius:8px;padding:8px;margin-bottom:12px">' +
+            '<div class="row" style="flex-wrap:wrap">' +
+            '<label class="faint small">Descanso</label>' +
+            '<input id="focus-rest" type="number" value="' +
+            focusForm.rest +
+            '" style="width:64px">' +
+            '<span class="faint small">s</span>' +
+            '<span id="focus-timer-value" class="rest-timer" style="margin-left:auto"></span>' +
+            "</div>" +
+            '<div class="row" style="margin-top:8px;flex-wrap:wrap">' +
+            '<button class="btn outline" id="timer-minus" style="padding:8px 10px;font-size:0.78rem">-15s</button>' +
+            '<button class="btn outline" id="timer-plus" style="padding:8px 10px;font-size:0.78rem">+15s</button>' +
+            '<button class="btn outline" id="timer-toggle" aria-label="' +
+            (timerInterval ? "Pausar" : "Iniciar") +
+            ' timer" style="padding:8px 10px;font-size:0.78rem">' +
+            (timerInterval ? "⏸" : "▶") +
+            "</button>" +
+            "</div></div>" +
+            '<div style="display:grid;grid-template-columns:1fr auto auto auto;gap:8px;margin-bottom:10px">' +
+            '<button class="btn success" id="log-completed">✓ Registrar série</button>' +
+            '<button class="btn outline" id="log-failed" style="color:var(--red);border-color:rgba(190,18,60,0.4)">Falha</button>' +
+            '<button class="btn outline" id="log-skip" aria-label="Pular série">⏭</button>' +
+            '<button class="btn outline" id="log-undo" aria-label="Desfazer última série">↺</button>' +
+            "</div>" +
+            '<button class="btn ghost" id="focus-add-set" style="text-transform:uppercase;letter-spacing:0.18em;font-size:0.68rem">+ adicionar série</button>' +
+            loggedHtml +
+            "</div>";
+
+          renderFocusTimer();
+
+          function numField(label, field, value, step) {
+            return (
+              '<div class="numfield"><p class="small faint" style="margin-bottom:4px">' +
+              label +
+              "</p>" +
+              '<div class="box"><button data-num-dec="' +
+              field +
+              '" aria-label="diminuir">−</button>' +
+              '<input type="number" step="' +
+              step +
+              '" value="' +
+              value +
+              '" data-num="' +
+              field +
+              '">' +
+              '<button data-num-inc="' +
+              field +
+              '" aria-label="aumentar">+</button></div></div>'
+            );
+          }
+
+          $("focus-close").onclick = closeFocus;
+          $("focus-prev").onclick = function () {
+            var i = w.blocks.findIndex(function (b) {
+              return b.id === focusBlockId;
+            });
+            var prev = w.blocks[i - 1];
+            if (prev) openFocus(prev.id);
+          };
+          $("focus-next").onclick = function () {
+            var i = w.blocks.findIndex(function (b) {
+              return b.id === focusBlockId;
+            });
+            var next = w.blocks[i + 1];
+            if (next) openFocus(next.id);
+            else closeFocus();
+          };
+          $("focus-replace").onchange = function () {
+            var newId = $("focus-replace").value;
+            patchToday(function (ww) {
+              return Object.assign({}, ww, {
+                blocks: ww.blocks.map(function (b) {
+                  return b.id === focusBlockId
+                    ? Object.assign({}, b, { exercise_id: newId, logged: [] })
+                    : b;
+                }),
+              });
+            });
+            renderFocus();
+          };
+          document.querySelectorAll("[data-num]").forEach(function (input) {
+            input.onchange = function () {
+              focusForm[input.getAttribute("data-num")] = Number(input.value) || 0;
+              renderFocus();
+            };
+          });
+          document.querySelectorAll("[data-num-dec]").forEach(function (btn) {
+            btn.onclick = function () {
+              var f = btn.getAttribute("data-num-dec");
+              var step = f === "weight" ? 2.5 : 1;
+              var min = f === "rir" ? 0 : -Infinity;
+              focusForm[f] = Math.max(min, focusForm[f] - step);
+              renderFocus();
+            };
+          });
+          document.querySelectorAll("[data-num-inc]").forEach(function (btn) {
+            btn.onclick = function () {
+              var f = btn.getAttribute("data-num-inc");
+              var step = f === "weight" ? 2.5 : 1;
+              var max = f === "rir" ? 5 : Infinity;
+              focusForm[f] = Math.min(max, focusForm[f] + step);
+              renderFocus();
+            };
+          });
+          $("focus-rest").onchange = function () {
+            focusForm.rest = Number($("focus-rest").value) || 0;
+          };
+          $("timer-minus").onclick = function () {
+            startTimer(Math.max(0, (timerLeft === null ? focusForm.rest : timerLeft) - 15));
+          };
+          $("timer-plus").onclick = function () {
+            startTimer((timerLeft === null ? focusForm.rest : timerLeft) + 15);
+          };
+          $("timer-toggle").onclick = function () {
+            if (timerInterval) {
+              clearInterval(timerInterval);
+              timerInterval = null;
+              renderFocus();
+            } else {
+              startTimer(timerLeft === null ? focusForm.rest : timerLeft);
+              renderFocus();
+            }
+          };
+          $("log-completed").onclick = function () {
+            logSet("completed");
+          };
+          $("log-failed").onclick = function () {
+            logSet("failed");
+          };
+          $("log-skip").onclick = function () {
+            logSet("skipped");
+          };
+          $("log-undo").onclick = function () {
+            patchToday(function (ww) {
+              return Object.assign({}, ww, {
+                blocks: ww.blocks.map(function (b) {
+                  return b.id === focusBlockId
+                    ? Object.assign({}, b, { logged: b.logged.slice(0, -1) })
+                    : b;
+                }),
+              });
+            });
+            renderFocus();
+          };
+          $("focus-add-set").onclick = function () {
+            patchToday(function (ww) {
+              return Object.assign({}, ww, {
+                blocks: ww.blocks.map(function (b) {
+                  if (b.id !== focusBlockId) return b;
+                  var last = b.planned[b.planned.length - 1];
+                  return Object.assign({}, b, {
+                    planned: b.planned.concat([
+                      Object.assign({}, last, { set_number: b.planned.length + 1 }),
+                    ]),
+                  });
+                }),
+              });
+            });
+            renderFocus();
+          };
+        }
+
+        function logSet(status) {
+          var w = state.todayWorkout;
+          var block =
+            w &&
+            w.blocks.find(function (b) {
+              return b.id === focusBlockId;
+            });
+          if (!block) return;
+          var nextIdx = block.logged.length;
+          patchToday(function (ww) {
+            return Object.assign({}, ww, {
+              blocks: ww.blocks.map(function (b) {
+                if (b.id !== focusBlockId) return b;
+                return Object.assign({}, b, {
+                  logged: b.logged.concat([
+                    {
+                      set_number: nextIdx + 1,
+                      weight: focusForm.weight,
+                      reps: focusForm.reps,
+                      rir: focusForm.rir,
+                      rest_seconds: focusForm.rest,
+                      status: status,
+                      logged_at: new Date().toISOString(),
+                    },
+                  ]),
+                });
+              }),
+            });
+          });
+          if (status === "completed") startTimer(focusForm.rest);
+          renderFocus();
+        }
+
+        // ── Khora ───────────────────────────────────────────────────
+        function exerciseNamesFor(workout) {
+          if (!workout) return [];
+          return workout.blocks
+            .map(function (b) {
+              var e = state.exercises.find(function (x) {
+                return x.id === b.exercise_id;
+              });
+              return e ? e.name : null;
+            })
+            .filter(Boolean);
+        }
+        function buildKhoraReply(intent, workout, names) {
+          var first = names[0] || "o primeiro exercício";
+          var second = names[1] || "o segundo exercício";
+          if (!workout) {
+            if (intent === "Tenho 20 minutos só")
+              return "Escolha um modelo primeiro. Para 20 minutos, eu usaria 2 exercícios principais, 2 séries cada e descanso curto.";
+            if (intent === "Estou sem energia hoje")
+              return "Sem treino ativo, a melhor saída é treino livre leve: 2 exercícios, 2 séries, sem falha.";
+            if (intent === "Substituir exercício")
+              return "Ainda não há treino ativo. Escolha primeiro um modelo ou comece um treino livre para eu sugerir uma troca do mesmo grupo muscular.";
+            if (intent === "Ver minha evolução")
+              return "Para evolução, olhe consistência, carga e sensação corporal. Vá ao Histórico para comparar os treinos registrados.";
+            return "Ainda não há treino ativo. Escolha primeiro um modelo de treino ou comece um treino livre. Depois eu consigo ajustar carga, volume e tempo.";
+          }
+          if (intent === "Tenho 20 minutos só")
+            return (
+              "Versão curta do " +
+              workout.name +
+              ":\n1. Faça " +
+              first +
+              ".\n2. Faça " +
+              second +
+              ", se der tempo.\n3. Use 2 séries por exercício.\n4. Descanse 40–60s.\n5. Corte acessórios hoje."
+            );
+          if (intent === "Estou sem energia hoje")
+            return "Hoje faça manutenção:\n- reduza 1 série de cada exercício;\n- evite falha;\n- mantenha técnica limpa;\n- registre como treino leve.";
+          if (intent === "Substituir exercício")
+            return (
+              "Escolha qual exercício incomodou. No seu treino atual há: " +
+              (names.join(", ") || "exercícios planejados") +
+              ". Qual deles você quer substituir?"
+            );
+          if (intent === "Ver minha evolução")
+            return "Para evolução, olhe consistência, carga e sensação corporal. Vá ao Histórico para comparar os treinos registrados.";
+          if (intent === "Registrar treino livre")
+            return (
+              "Registre só o essencial no " +
+              workout.name +
+              ": exercício, carga, reps e sensação. Depois ajuste o plano com calma."
+            );
+          return (
+            "Ajuste do " +
+            workout.name +
+            ": faça " +
+            first +
+            " e " +
+            second +
+            ". Se o tempo apertar, corte acessórios. Use 2 séries por exercício e descanso de 40–60s."
+          );
+        }
+        function buildKhoraSeed(workout, names, signals) {
+          var body = signals
+            ? " Energia: " +
+              signals.energy +
+              "; sono: " +
+              signals.sleep +
+              "; dor: " +
+              signals.pain +
+              "; tempo disponível: " +
+              signals.available +
+              " minutos."
+            : "";
+          if (!workout)
+            return (
+              "Khora, estou no Corpore Sano. Ainda não há treino ativo." +
+              body +
+              " Quero ajuda para escolher uma versão segura do treino de hoje."
+            );
+          return (
+            "Khora, estou no Corpore Sano e quero ajuda com meu treino. Treino atual: " +
+            workout.name +
+            ". Exercícios: " +
+            (names.join(", ") || "ainda não listados") +
+            ". Séries planejadas: " +
+            workout.blocks
+              .map(function (b) {
+                return b.planned.length;
+              })
+              .join("/") +
+            ". Descansos: " +
+            workout.blocks
+              .map(function (b) {
+                return b.planned[0] ? b.planned[0].rest_seconds : null;
+              })
+              .filter(Boolean)
+              .join("/") +
+            "s." +
+            body +
+            " Monte uma orientação curta e prática."
+          );
+        }
+        function renderKhora() {
+          var w = state.todayWorkout;
+          var names = exerciseNamesFor(w);
+          var context = w
+            ? w.name + (names.length ? " · " + names.slice(0, 3).join(" · ") : "")
+            : "Ainda não há treino ativo.";
+          var reply = buildKhoraReply(khoraIntent, w, names);
+          $("khora-panel").innerHTML =
+            '<div class="row" style="margin-bottom:8px">' +
+            '<p class="small faint" style="text-transform:uppercase;letter-spacing:0.2em;font-size:0.62rem">Khora</p></div>' +
+            '<div style="border:1px solid rgba(201,138,101,0.2);background:var(--khora-dim);border-radius:10px;padding:10px;margin-bottom:10px">' +
+            '<p style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.14em;color:var(--khora)">' +
+            esc(khoraIntent) +
+            "</p>" +
+            '<p class="small" style="white-space:pre-line;margin-top:4px">' +
+            esc(reply) +
+            "</p>" +
+            '<p class="faint small" style="margin-top:6px">' +
+            esc(context) +
+            "</p></div>" +
+            '<p class="small dim" style="margin-bottom:8px">Toque para uma orientação rápida sem sair do treino.</p>' +
+            '<div class="row" style="flex-wrap:wrap;gap:4px;margin-bottom:10px">' +
+            CHIPS.map(function (c) {
+              return (
+                '<button class="pill' +
+                (c === khoraIntent ? " active" : "") +
+                '" data-chip="' +
+                esc(c) +
+                '">' +
+                esc(c) +
+                "</button>"
+              );
+            }).join("") +
+            "</div>" +
+            '<button class="btn ghost" id="khora-full" style="text-transform:uppercase;letter-spacing:0.16em;font-size:0.7rem">↗ abrir chat completo</button>';
+          $("khora-panel")
+            .querySelectorAll("[data-chip]")
+            .forEach(function (btn) {
+              btn.onclick = function () {
+                khoraIntent = btn.getAttribute("data-chip");
+                renderKhora();
+              };
+            });
+          $("khora-full").onclick = function () {
+            var seed = buildKhoraSeed(w, names, state.signals);
+            emit("corpore-sano:khora-chat-open", { seed: seed });
+          };
+        }
+        $("khora-fab").onclick = function () {
+          khoraOpen = !khoraOpen;
+          $("khora-panel").classList.toggle("hide", !khoraOpen);
+          $("khora-fab").setAttribute("aria-expanded", String(khoraOpen));
+          if (khoraOpen) renderKhora();
+        };
+
+        // ── Render geral ────────────────────────────────────────────
+        function renderAll() {
+          bindWorkoutImport();
+          renderSemaphoreLine();
+          renderTodayCard();
+          renderPlano();
+          renderHistorico();
+          if (khoraOpen) renderKhora();
+        }
+
+        // ── Mensagens do host ───────────────────────────────────────
+        window.addEventListener("message", function (event) {
+          if (event.origin !== window.location.origin) return;
+          var msg = event.data;
+          if (!msg || msg.source !== "kaline-host") return;
+          var p = msg.payload || {};
+
+          if (msg.action === "corpore-sano:sync-ready") {
+            remoteHistory = p.history || [];
+            prs = p.prs || {};
+            if (p.signal && !state.signals) {
+              state.signals = p.signal;
+              persist();
+            }
+            renderAll();
+            return;
+          }
+          if (msg.action === "corpore-sano:workout-text-parsed") {
+            var imported = normalizeImportedWorkout(p.workout);
+            var unmatched = (Array.isArray(p.unmatched) ? p.unmatched : []).concat(
+              imported && imported.unmatched ? imported.unmatched : [],
+            );
+            importingWorkoutText = false;
+            if (!imported) {
+              setWorkoutImportStatus("Não consegui organizar esse treino agora.", true);
+              bindWorkoutImport();
+              return;
+            }
+            state.todayWorkout = imported;
+            delete state.todayWorkout.unmatched;
+            focusBlockId = null;
+            // rascunho local: evita perder o treino importado, mas o salvamento definitivo continua no botão existente.
+            persist();
+            renderAll();
+            var okMsg = unmatched.length
+              ? "Treino preenchido. Alguns exercícios não foram reconhecidos e ficaram de fora."
+              : "Treino preenchido. Revise antes de salvar.";
+            setWorkoutImportStatus(okMsg, false);
+            toast(okMsg);
+            return;
+          }
+          if (msg.action === "corpore-sano:workout-finished") {
+            remoteHistory = p.history || [];
+            prs = p.prs || {};
+            if (finishingWorkout && pendingFinishedWorkout) {
+              state.todayWorkout = null;
+              state.history = [pendingFinishedWorkout].concat(state.history).slice(0, 80);
+              focusBlockId = null;
+              persist();
+            }
+            finishingWorkout = false;
+            pendingFinishedWorkout = null;
+            toast("Treino salvo. Nenhuma memória foi criada automaticamente além do histórico.");
+            renderAll();
+            return;
+          }
+          if (msg.action === "corpore-sano:signals-saved") {
+            return;
+          }
+          if (msg.action === "corpore-sano:history-deleted") {
+            remoteHistory = p.history || [];
+            renderHistorico();
+            return;
+          }
+          if (msg.action === "corpore-sano:error") {
+            if (importingWorkoutText) {
+              importingWorkoutText = false;
+              setWorkoutImportStatus("Não consegui organizar esse treino agora.", true);
+              bindWorkoutImport();
+              return;
+            }
+            if (finishingWorkout) {
+              finishingWorkout = false;
+              pendingFinishedWorkout = null;
+              renderTodayCard();
+            }
+            toast(p.message || "Algo falhou no Corpore Sano.", true);
+            return;
+          }
+        });
+
+        renderAll();
+        emit("microapp:ready");
+        requestSync();
+      })();
+    </script>
+  </body>
+</html>

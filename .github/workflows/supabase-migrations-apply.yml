@@ -1,0 +1,53 @@
+# Desativado em 2026-07-02: mesmo motivo do supabase-migrations-check.yml —
+# supabase/migrations/ agora é o baseline único para deploys NOVOS, não a
+# produção atual. `supabase db push` automático em push para main faria
+# "migration repair" e tentaria reconciliar contra um histórico remoto que
+# não bate mais com os arquivos locais. Ver supabase/migrations_legacy/README.md.
+# Reative via workflow_dispatch manual se reconciliar o histórico remoto
+# (supabase migration repair) ou redesenhar para outro projeto.
+name: Supabase migrations apply
+
+on:
+  workflow_dispatch: {}
+
+concurrency:
+  group: supabase-migrations-apply
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref "$SUPABASE_PROJECT_REF"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Reconcile migration history
+        # Migrações antigas foram aplicadas manualmente (SQL Editor), então o histórico de
+        # versões do CLI no banco remoto fica vazio. Sem isso, `supabase db push` tenta
+        # reaplicar tudo do zero (CREATE TABLE em tabelas que já existem). `migration repair`
+        # marca cada versão já presente no diretório local como aplicada; é idempotente, então
+        # rodar em toda execução é seguro.
+        run: |
+          set -e
+          for f in supabase/migrations/*.sql; do
+            version=$(basename "$f" | cut -d'_' -f1)
+            supabase migration repair --status applied "$version"
+          done
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+
+      - name: Apply pending migrations
+        run: supabase db push
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}

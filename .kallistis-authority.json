@@ -1,0 +1,10 @@
+{
+  "project": "KALLISTIS",
+  "authority": "RECOVERY",
+  "repo_path": "/home/tonyus-dev/Portifolio/KALLISTIS_RECOVERY/kallistis-clean",
+  "worker_name": "kallistis-recovery",
+  "supabase_project_ref": "gidsdflkjuaoxhejudna",
+  "hyperdrive_id": "3efd826cb1dd4fc7afdd91b8a8cc702a",
+  "r2_bucket": "kallistis-media",
+  "legacy_allowed": false
+}

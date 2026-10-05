@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#08080e" />
+    <title>Revisão</title>
+    <style>
+      :root {
+        --bg: #08080e;
+        --card: #111016;
+        --card-alt: #0b0a10;
+        --border: rgba(255, 255, 255, 0.06);
+        --gold: #c98a65;
+        --gold-bright: #d9a441;
+        --gold-dim: rgba(201, 138, 101, 0.15);
+        --text: #f3ebdd;
+        --text-dim: rgba(243, 235, 221, 0.55);
+        --text-faint: rgba(243, 235, 221, 0.35);
+        --danger: #be123c;
+        --danger-soft: #fca5a5;
+        --success: #16a34a;
+        --radius: 16px;
+        --radius-sm: 10px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      .app {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px 14px 90px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, "Times New Roman", serif;
+        margin: 0;
+        font-weight: 500;
+      }
+      h1 {
+        font-size: 1.6rem;
+        color: var(--text);
+      }
+      h2 {
+        font-size: 1.1rem;
+        color: var(--text);
+      }
+      p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      .eyebrow {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.28em;
+        color: var(--gold-bright);
+      }
+      .dim {
+        color: var(--text-dim);
+      }
+      .faint {
+        color: var(--text-faint);
+      }
+      .small {
+        font-size: 0.82rem;
+      }
+      .header {
+        display: flex;
+        gap: 12px;
+        align-items: flex-start;
+        margin-bottom: 24px;
+      }
+      .header .icon {
+        color: var(--gold);
+        font-size: 1.3rem;
+        line-height: 1;
+        margin-top: 4px;
+      }
+      .section {
+        margin-top: 28px;
+      }
+      .section-head {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .empty {
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: var(--card);
+        padding: 18px;
+        font-size: 0.88rem;
+        color: var(--text-dim);
+      }
+      .empty a {
+        color: var(--gold-bright);
+        text-decoration: underline;
+      }
+      .grid-candidatos {
+        display: grid;
+        gap: 12px;
+      }
+      @media (min-width: 900px) {
+        .grid-candidatos {
+          grid-template-columns: 1fr 1fr;
+        }
+      }
+      .candidato {
+        border-radius: 14px;
+        border: 1px solid var(--border);
+        background: var(--card);
+        padding: 14px 16px;
+      }
+      .candidato .meta {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: rgba(217, 164, 65, 0.8);
+        margin-bottom: 8px;
+      }
+      .candidato .meta .ts {
+        margin-left: auto;
+        color: var(--text-faint);
+        text-transform: none;
+        letter-spacing: normal;
+      }
+      .candidato .titulo {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.05rem;
+        color: var(--text);
+      }
+      .candidato .conteudo {
+        margin-top: 8px;
+        font-size: 0.88rem;
+        color: rgba(243, 235, 221, 0.75);
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .candidato .motivo {
+        margin-top: 8px;
+        font-size: 0.78rem;
+        font-style: italic;
+        color: var(--text-faint);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+      .btn {
+        border: 0;
+        border-radius: var(--radius-sm);
+        padding: 0 12px;
+        height: 32px;
+        font-size: 0.85rem;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: transparent;
+        color: var(--text);
+      }
+      .btn.primary {
+        background: var(--gold);
+        color: #08080e;
+      }
+      .btn.primary:hover {
+        background: var(--gold-bright);
+      }
+      .btn.outline {
+        border: 1px solid var(--border);
+      }
+      .btn.outline:hover {
+        border-color: rgba(201, 138, 101, 0.5);
+      }
+      .btn.danger {
+        border: 1px solid rgba(190, 18, 60, 0.35);
+        color: var(--danger-soft);
+      }
+      .btn.ghost {
+        color: var(--text-dim);
+        border: 1px solid var(--border);
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: default;
+      }
+      .edit-panel {
+        margin-top: 20px;
+        border-radius: var(--radius);
+        border: 1px solid rgba(201, 138, 101, 0.3);
+        background: var(--card);
+        padding: 16px 18px;
+      }
+      input,
+      textarea,
+      select {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: var(--card-alt);
+        color: var(--text);
+        padding: 9px 12px;
+        font-size: 0.9rem;
+        font-family: inherit;
+        width: 100%;
+      }
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--gold);
+      }
+      textarea {
+        resize: vertical;
+      }
+      .edit-panel input,
+      .edit-panel textarea {
+        margin-top: 12px;
+      }
+      .edit-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .edit-row select {
+        width: auto;
+        min-width: 130px;
+        height: 36px;
+      }
+      .flashcard {
+        border-radius: var(--radius);
+        border: 1px solid rgba(201, 138, 101, 0.3);
+        background: linear-gradient(to bottom, #16131a, #0f0d14);
+        box-shadow: 0 0 40px rgba(201, 138, 101, 0.08);
+        padding: 20px 22px;
+      }
+      .flashcard .meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: rgba(217, 164, 65, 0.8);
+        margin-bottom: 8px;
+      }
+      .flashcard .meta .n {
+        margin-left: auto;
+        color: var(--text-faint);
+      }
+      .flashcard .titulo {
+        font-family: Georgia, "Times New Roman", serif;
+        font-size: 1.3rem;
+        color: var(--text);
+      }
+      .flashcard .corpo {
+        margin-top: 16px;
+        font-size: 0.9rem;
+        color: rgba(243, 235, 221, 0.85);
+        white-space: pre-wrap;
+      }
+      .quality-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+        margin-top: 20px;
+      }
+      @media (min-width: 480px) {
+        .quality-grid {
+          grid-template-columns: repeat(4, 1fr);
+        }
+      }
+      .quality-btn {
+        border-radius: var(--radius-sm);
+        border: 1px solid;
+        background: transparent;
+        height: 48px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.85rem;
+        cursor: pointer;
+      }
+      .quality-btn .hint {
+        font-size: 0.62rem;
+        opacity: 0.7;
+      }
+      .quality-btn.q0 {
+        border-color: rgba(190, 18, 60, 0.4);
+        color: var(--danger);
+      }
+      .quality-btn.q1 {
+        border-color: rgba(217, 164, 65, 0.4);
+        color: var(--gold-bright);
+      }
+      .quality-btn.q2 {
+        border-color: rgba(255, 255, 255, 0.15);
+        color: rgba(243, 235, 221, 0.8);
+      }
+      .quality-btn.q3 {
+        border-color: rgba(22, 163, 74, 0.4);
+        color: var(--success);
+      }
+      .hide {
+        display: none !important;
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: #140a05;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        z-index: 60;
+        max-width: 90vw;
+        text-align: center;
+      }
+      #toast.error {
+        border-color: var(--danger);
+        color: var(--danger-soft);
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <div class="header">
+        <span class="icon">🌱</span>
+        <div>
+          <p class="eyebrow">Revisão</p>
+          <h1>Ritual de memória</h1>
+          <p class="small dim" style="margin-top: 4px">
+            Candidatos ainda não são memórias. Revise antes de aprovar.
+          </p>
+        </div>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow" style="opacity: 0.8">Candidatos à memória</p>
+            <p class="small dim">Aprovar, editar, recusar ou arquivar.</p>
+          </div>
+          <span class="small faint" id="candidatos-count">0 pendente(s)</span>
+        </div>
+
+        <div id="candidatos-vazio" class="empty hide">
+          Nenhum candidato pendente. Códice, Registro Vivo e chat podem preparar novos candidatos
+          para este ritual.
+        </div>
+        <div id="candidatos-lista" class="grid-candidatos"></div>
+      </section>
+
+      <section id="edit-panel" class="edit-panel hide">
+        <p class="eyebrow" style="opacity: 0.8">Editar antes de aprovar</p>
+        <input id="edit-title" type="text" />
+        <textarea id="edit-content" rows="5"></textarea>
+        <div class="edit-row">
+          <select id="edit-domain">
+            <option value="memory">memory</option>
+            <option value="kaline">kaline</option>
+            <option value="kharis">kharis</option>
+            <option value="kuanyin">kuanyin</option>
+            <option value="drive">drive</option>
+          </select>
+          <select id="edit-sensitivity">
+            <option value="low">Baixa</option>
+            <option value="medium" selected>Média</option>
+            <option value="high">Alta</option>
+          </select>
+          <button id="btn-aprovar-editado" class="btn primary">Aprovar versão editada</button>
+          <button id="btn-cancelar-edicao" class="btn ghost">Cancelar</button>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow" style="opacity: 0.8">Memórias que vencem hoje</p>
+            <p class="small dim">Revisão espaçada do Jardim.</p>
+          </div>
+          <span class="small faint" id="due-count" style="font-variant-numeric: tabular-nums"
+            >0/0</span
+          >
+        </div>
+
+        <div id="due-vazio" class="empty hide">
+          Nada vencido agora. Você pode visitar o <a href="/jardim" target="_top">Jardim</a>.
+        </div>
+
+        <article id="flashcard" class="flashcard hide">
+          <div class="meta">
+            <span id="fc-categoria"></span>
+            <span class="faint" id="fc-importancia"></span>
+            <span class="n" id="fc-contagem"></span>
+          </div>
+          <p class="titulo" id="fc-titulo"></p>
+          <button id="btn-revelar" class="btn outline" style="margin-top: 16px">
+            Mostrar resposta
+          </button>
+          <p id="fc-corpo" class="corpo hide"></p>
+          <div id="quality-grid" class="quality-grid hide">
+            <button class="quality-btn q0" data-q="0">
+              <span>errei</span><span class="hint">volta amanhã</span>
+            </button>
+            <button class="quality-btn q1" data-q="1">
+              <span>difícil</span><span class="hint">intervalo curto</span>
+            </button>
+            <button class="quality-btn q2" data-q="2">
+              <span>ok</span><span class="hint">cresce</span>
+            </button>
+            <button class="quality-btn q3" data-q="3">
+              <span>fácil</span><span class="hint">grande salto</span>
+            </button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <div id="toast" class="hide" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        if (new URLSearchParams(location.search).get("embedded") === "1") {
+          document.documentElement.classList.add("embedded");
+        }
+
+        var SENSITIVITY_LABEL = { low: "Baixa", medium: "Média", high: "Alta" };
+
+        var candidatos = [];
+        var editingId = null;
+        var queue = [];
+        var idx = 0;
+        var revealed = false;
+
+        function $(id) {
+          return document.getElementById(id);
+        }
+        function esc(value) {
+          return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+        function emit(action, payload) {
+          window.parent?.postMessage(
+            { source: "revisao", action: action, payload: payload || {}, timestamp: Date.now() },
+            window.location.origin,
+          );
+        }
+        var toastTimer;
+        function toast(message, isError) {
+          var el = $("toast");
+          el.textContent = message;
+          el.className = isError ? "error" : "";
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () {
+            el.className = "hide";
+          }, 3000);
+        }
+
+        function renderCandidatos() {
+          $("candidatos-count").textContent = candidatos.length + " pendente(s)";
+          $("candidatos-vazio").classList.toggle("hide", candidatos.length > 0);
+          $("candidatos-lista").innerHTML = candidatos
+            .map(function (c) {
+              var motivo = c.reason ? '<p class="motivo">' + esc(c.reason) + "</p>" : "";
+              return (
+                '<article class="candidato" data-id="' +
+                esc(c.id) +
+                '"><div class="meta"><span>' +
+                esc(c.source) +
+                "</span><span>" +
+                esc(c.domain) +
+                "</span><span>" +
+                esc(SENSITIVITY_LABEL[c.sensitivity] || c.sensitivity) +
+                '</span><span class="ts">' +
+                esc(new Date(c.createdAt).toLocaleString("pt-BR")) +
+                '</span></div><p class="titulo">' +
+                esc(c.title) +
+                '</p><p class="conteudo">' +
+                esc(c.content) +
+                "</p>" +
+                motivo +
+                '<div class="actions">' +
+                '<button class="btn primary" data-act="aprovar">✓ Aprovar</button>' +
+                '<button class="btn outline" data-act="editar">Editar e aprovar</button>' +
+                '<button class="btn danger" data-act="recusar">✕ Recusar</button>' +
+                '<button class="btn ghost" data-act="arquivar">Arquivar</button>' +
+                "</div></article>"
+              );
+            })
+            .join("");
+
+          $("candidatos-lista")
+            .querySelectorAll(".candidato")
+            .forEach(function (el) {
+              var id = el.dataset.id;
+              el.querySelector('[data-act="aprovar"]').onclick = function () {
+                emit("revisao:candidato-aprovar", { id: id });
+              };
+              el.querySelector('[data-act="editar"]').onclick = function () {
+                abrirEdicao(id);
+              };
+              el.querySelector('[data-act="recusar"]').onclick = function () {
+                emit("revisao:candidato-recusar", { id: id });
+              };
+              el.querySelector('[data-act="arquivar"]').onclick = function () {
+                emit("revisao:candidato-arquivar", { id: id });
+              };
+            });
+        }
+
+        function abrirEdicao(id) {
+          var c = candidatos.filter(function (x) {
+            return x.id === id;
+          })[0];
+          if (!c) return;
+          editingId = id;
+          $("edit-title").value = c.title;
+          $("edit-content").value = c.content;
+          $("edit-domain").value = c.domain;
+          $("edit-sensitivity").value = c.sensitivity;
+          $("edit-panel").classList.remove("hide");
+        }
+        function fecharEdicao() {
+          editingId = null;
+          $("edit-panel").classList.add("hide");
+        }
+        $("btn-cancelar-edicao").onclick = fecharEdicao;
+        $("btn-aprovar-editado").onclick = function () {
+          var title = $("edit-title").value.trim();
+          var content = $("edit-content").value.trim();
+          if (!title || !content || !editingId) return;
+          emit("revisao:candidato-aprovar-editado", {
+            id: editingId,
+            title: title,
+            content: content,
+            domain: $("edit-domain").value,
+            sensitivity: $("edit-sensitivity").value,
+          });
+        };
+
+        function renderFlashcard() {
+          var current = queue[idx];
+          $("due-count").textContent = (queue.length === 0 ? 0 : idx + 1) + "/" + queue.length;
+          $("due-vazio").classList.toggle("hide", queue.length > 0);
+          $("flashcard").classList.toggle("hide", !current);
+          if (!current) return;
+
+          $("fc-categoria").textContent = current.category;
+          $("fc-importancia").textContent = "imp " + current.importance;
+          $("fc-contagem").textContent =
+            current.review_count === 0 ? "primeira revisão" : current.review_count + "ª";
+          $("fc-titulo").textContent = current.title;
+          $("fc-corpo").textContent = current.body;
+          $("fc-corpo").classList.toggle("hide", !revealed);
+          $("btn-revelar").classList.toggle("hide", revealed);
+          $("quality-grid").classList.toggle("hide", !revealed);
+        }
+
+        $("btn-revelar").onclick = function () {
+          revealed = true;
+          renderFlashcard();
+        };
+
+        document.querySelectorAll(".quality-btn").forEach(function (btn) {
+          btn.onclick = function () {
+            var current = queue[idx];
+            if (!current) return;
+            emit("revisao:memoria-revisar", { id: current.id, quality: Number(btn.dataset.q) });
+          };
+        });
+
+        window.addEventListener("message", function (event) {
+          if (event.origin !== window.location.origin) return;
+          var msg = event.data;
+          if (!msg || msg.source !== "kaline-host") return;
+          var p = msg.payload || {};
+
+          if (msg.action === "revisao:candidatos-ready") {
+            candidatos = p.candidatos || [];
+            if (
+              editingId &&
+              !candidatos.find(function (c) {
+                return c.id === editingId;
+              })
+            ) {
+              fecharEdicao();
+            }
+            renderCandidatos();
+            return;
+          }
+          if (msg.action === "revisao:due-ready") {
+            queue = p.due || [];
+            idx = 0;
+            revealed = false;
+            renderFlashcard();
+            return;
+          }
+          if (msg.action === "revisao:memoria-revisada") {
+            revealed = false;
+            if (idx + 1 >= queue.length) {
+              emit("revisao:due-request");
+            } else {
+              idx += 1;
+              renderFlashcard();
+            }
+            return;
+          }
+          if (msg.action === "revisao:error") {
+            toast(p.message || "Algo falhou na Revisão.", true);
+            return;
+          }
+        });
+
+        emit("microapp:ready");
+        emit("revisao:candidatos-request");
+        emit("revisao:due-request");
+      })();
+    </script>
+  </body>
+</html>

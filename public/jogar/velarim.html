@@ -1,0 +1,3522 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#070709" />
+    <meta
+      name="description"
+      content="VELARIM — Dicionário, Tradutor e Construtor Linguístico da língua primordial de KALLISTIS. Instrumento determinístico, offline, sem invenção de formas."
+    />
+    <title>VELARIM — Dicionário · Tradutor · Construtor</title>
+    <style>
+      :root {
+        --bg: #17151a;
+        --bg-soft: #1c1920;
+        --panel: rgba(33, 30, 36, 0.86);
+        --panel-2: #2a2730;
+        --text: #f1edf2;
+        --muted: #b8b3bc;
+        --line: rgba(72, 67, 77, 0.78);
+        --gold: #b79ac5;
+        --gold-soft: rgba(84, 40, 105, 0.24);
+        --indigo: #ded2e3;
+        --indigo-soft: rgba(107, 59, 130, 0.2);
+        --amber: #8dbd51;
+        --amber-soft: rgba(81, 138, 27, 0.14);
+        --fresta: #ded2e3;
+        --fresta-soft: rgba(183, 154, 197, 0.16);
+        --serif: Georgia, "Times New Roman", serif;
+        --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--bg);
+        color: var(--text);
+        font-family: var(--sans);
+        font-size: 15px;
+        overflow-x: hidden;
+      }
+      body {
+        position: relative;
+        isolation: isolate;
+      }
+      body {
+        background:
+          radial-gradient(circle at 50% -8%, rgba(84, 40, 105, 0.28), transparent 38%),
+          linear-gradient(180deg, #17151a 0%, #1c1920 60%, #17151a 100%);
+        background-attachment: fixed;
+      }
+      .brand-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+          linear-gradient(180deg, rgba(23, 21, 26, 0.62), rgba(23, 21, 26, 0.88)),
+          url("/brand-assets/kallistis-canon-background.png?v=20260830") center/cover no-repeat;
+        opacity: 0.82;
+      }
+      a {
+        color: inherit;
+      }
+      nav[aria-label="Navegação JOGAR"] {
+        top: 72px !important;
+        pointer-events: none;
+      }
+      nav[aria-label="Navegação JOGAR"] a {
+        pointer-events: auto;
+      }
+      @media (max-width: 860px) {
+        nav[aria-label="Navegação JOGAR"] {
+          top: 12px !important;
+        }
+      }
+      @media (max-width: 640px) {
+        .top-in {
+          padding-top: 48px;
+        }
+        nav[aria-label="Navegação JOGAR"] {
+          top: 8px !important;
+          right: 12px;
+          left: 12px;
+          justify-content: center;
+          flex-wrap: nowrap;
+          max-width: calc(100vw - 24px);
+          overflow-x: auto;
+          font-size: 10px;
+        }
+        nav[aria-label="Navegação JOGAR"] a {
+          white-space: nowrap;
+          padding-inline: 5px !important;
+        }
+      }
+      :focus-visible {
+        outline: 2px solid var(--gold);
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      .hide {
+        display: none !important;
+      }
+
+      header.top {
+        position: sticky;
+        top: 0;
+        z-index: 30;
+        backdrop-filter: blur(12px);
+        background: linear-gradient(180deg, rgba(23, 21, 26, 0.96), rgba(23, 21, 26, 0.84));
+        border-bottom: 1px solid var(--line);
+      }
+      .top-in {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 14px 20px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 12px;
+      }
+      @media (min-width: 900px) {
+        .top-in {
+          grid-template-columns: minmax(0, 1fr) auto;
+          align-items: center;
+          gap: 24px;
+        }
+      }
+      .brand {
+        position: relative;
+        padding-left: 38px;
+      }
+      .brand:before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 28px;
+        height: 34px;
+        background: url("/brand-assets/kallistis-canon-crystal.png?v=20260830") center/cover
+          no-repeat;
+        filter: grayscale(1) contrast(1.08) drop-shadow(0 0 10px rgba(183, 154, 197, 0.28));
+      }
+      .brand h1 {
+        display: block;
+        width: 142px;
+        height: 31px;
+        margin: 0;
+        background: url("/brand-assets/kallistis-canon-wordmark.png?v=20260830") center/cover
+          no-repeat;
+        mix-blend-mode: screen;
+        filter: brightness(1.15) contrast(1.08);
+        font-size: 0;
+        letter-spacing: 0;
+        text-transform: none;
+      }
+      .brand p {
+        margin: 3px 0 0;
+        color: var(--muted);
+        font-size: 0.64rem;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+      }
+      nav.tabs {
+        display: flex;
+        gap: 2px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 3px;
+        background: var(--panel);
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      nav.tabs::-webkit-scrollbar {
+        display: none;
+      }
+      nav.tabs button {
+        appearance: none;
+        background: none;
+        border: 0;
+        color: var(--muted);
+        font: inherit;
+        font-size: 0.74rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        padding: 10px 16px;
+        border-radius: 999px;
+        cursor: pointer;
+        transition: 0.15s;
+        white-space: nowrap;
+        min-height: 44px;
+      }
+      nav.tabs button:hover {
+        color: var(--text);
+      }
+      nav.tabs button[aria-pressed="true"] {
+        background: rgba(255, 255, 255, 0.09);
+        color: #fff;
+      }
+
+      .layout {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 24px 20px 80px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 400px;
+        gap: 24px;
+        align-items: start;
+      }
+      @media (max-width: 1080px) {
+        .layout {
+          grid-template-columns: minmax(0, 1fr);
+          padding: 18px 16px 90px;
+        }
+      }
+
+      .panel {
+        border: 1px solid var(--line);
+        background: var(--panel);
+        border-radius: 4px;
+        padding: 22px;
+      }
+      @media (max-width: 640px) {
+        .panel {
+          padding: 16px;
+        }
+      }
+      .panel + .panel {
+        margin-top: 18px;
+      }
+      h2.sec {
+        margin: 0 0 6px;
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 1rem;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+      }
+      p.hint {
+        margin: 0 0 16px;
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.6;
+        max-width: 62ch;
+      }
+
+      label.fl {
+        display: block;
+        font-size: 0.62rem;
+        letter-spacing: 0.22em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin: 0 0 8px;
+      }
+      input[type="search"],
+      input[type="text"],
+      select,
+      textarea {
+        width: 100%;
+        background: rgba(0, 0, 0, 0.4);
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 13px 14px;
+        font: inherit;
+        font-size: 1rem;
+        min-height: 48px;
+      }
+      input[type="search"] {
+        font-family: var(--serif);
+        letter-spacing: 0.04em;
+      }
+      textarea {
+        min-height: 104px;
+        resize: vertical;
+        font-family: var(--serif);
+        font-size: 1rem;
+      }
+      select {
+        cursor: pointer;
+      }
+      .row {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .row > * {
+        flex: 1 1 200px;
+        min-width: 0;
+      }
+      button.btn {
+        appearance: none;
+        font: inherit;
+        font-size: 0.72rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        min-height: 44px;
+        border: 1px solid var(--line);
+        background: var(--panel-2);
+        color: var(--text);
+        border-radius: 999px;
+        padding: 11px 18px;
+        cursor: pointer;
+        transition: 0.15s;
+      }
+      button.btn:hover {
+        border-color: rgba(255, 255, 255, 0.35);
+        background: rgba(255, 255, 255, 0.08);
+      }
+      button.btn.primary {
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+      button.btn.ghost {
+        background: none;
+      }
+
+      .chips {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 12px;
+      }
+      .chip {
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        padding: 9px 13px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--muted);
+        cursor: pointer;
+        min-height: 38px;
+      }
+      .chip[aria-pressed="true"] {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.09);
+      }
+
+      .tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.6rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .tag.mark {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.34);
+      }
+      .tag.warn {
+        color: #efe9dd;
+        border-color: rgba(255, 255, 255, 0.5);
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      ul.results {
+        list-style: none;
+        margin: 16px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      li.entry {
+        background: #0a0a0c;
+        padding: 16px 16px;
+        cursor: pointer;
+        transition: 0.14s;
+        min-height: 56px;
+      }
+      li.entry:hover,
+      li.entry:focus-visible {
+        background: #101013;
+      }
+      .entry-head {
+        display: flex;
+        gap: 10px;
+        align-items: baseline;
+        flex-wrap: wrap;
+      }
+      .form {
+        font-family: var(--serif);
+        font-size: 1.22rem;
+        letter-spacing: 0.06em;
+      }
+      .ipa {
+        font-family: var(--mono);
+        font-size: 0.8rem;
+        color: var(--muted);
+      }
+      .cls {
+        font-size: 0.7rem;
+        color: var(--muted);
+        font-style: italic;
+      }
+      .mean {
+        margin: 6px 0 0;
+        font-size: 0.9rem;
+        color: #cfcac2;
+        line-height: 1.5;
+      }
+      .entry-tags {
+        margin-left: auto;
+        display: flex;
+        gap: 5px;
+        flex-wrap: wrap;
+      }
+
+      .note {
+        border-left: 1px solid var(--line);
+        padding: 10px 0 10px 14px;
+        color: var(--muted);
+        font-size: 0.84rem;
+        line-height: 1.6;
+        margin: 12px 0;
+      }
+      .note strong {
+        color: var(--text);
+        font-weight: 500;
+        letter-spacing: 0.06em;
+      }
+      .note.gold {
+        border-left-width: 2px;
+        border-color: rgba(255, 255, 255, 0.45);
+        color: #d8d3ca;
+      }
+      .note.alert {
+        border-left-width: 2px;
+        border-color: #fff;
+        color: #efece6;
+        background: rgba(255, 255, 255, 0.07);
+        padding: 14px;
+      }
+      .note.block {
+        border-left-width: 2px;
+        border-color: rgba(255, 255, 255, 0.32);
+        color: #cbc5bb;
+      }
+
+      .kv {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 2px 16px;
+        font-size: 0.88rem;
+        margin-top: 14px;
+      }
+      @media (min-width: 480px) {
+        .kv {
+          grid-template-columns: 118px minmax(0, 1fr);
+          gap: 8px 16px;
+        }
+      }
+      .kv dt {
+        color: var(--muted);
+        font-size: 0.6rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        padding-top: 4px;
+      }
+      .kv dd {
+        margin: 0 0 8px;
+        line-height: 1.6;
+      }
+      @media (min-width: 480px) {
+        .kv dd {
+          margin: 0;
+        }
+      }
+
+      pre.deriv {
+        font-family: var(--mono);
+        font-size: 0.84rem;
+        line-height: 1.9;
+        background: rgba(0, 0, 0, 0.4);
+        border: 1px solid var(--line);
+        border-radius: 3px;
+        padding: 16px;
+        overflow-x: auto;
+        color: #ddd8ce;
+        white-space: pre-wrap;
+        text-align: center;
+      }
+
+      aside#side {
+        position: sticky;
+        top: 96px;
+      }
+      @media (max-width: 1080px) {
+        aside#side {
+          position: fixed;
+          inset: auto 0 0 0;
+          top: auto;
+          max-height: 86vh;
+          overflow: auto;
+          z-index: 40;
+          border: 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.18);
+          background: #0a0a0c;
+          border-radius: 14px 14px 0 0;
+          box-shadow: 0 -24px 60px rgba(0, 0, 0, 0.8);
+          padding: 16px 16px 28px;
+        }
+        aside#side.closed {
+          display: none;
+        }
+        aside#side::before {
+          content: "";
+          display: block;
+          width: 38px;
+          height: 3px;
+          border-radius: 2px;
+          background: rgba(255, 255, 255, 0.22);
+          margin: 0 auto 12px;
+        }
+      }
+      .side-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .side-head h3 {
+        margin: 0;
+        font-family: var(--serif);
+        font-weight: 400;
+        font-size: 0.9rem;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .side-close {
+        margin-left: auto;
+      }
+
+      .grammar-sec {
+        border-bottom: 1px solid var(--line);
+      }
+      .grammar-sec > button {
+        width: 100%;
+        text-align: left;
+        background: none;
+        border: 0;
+        color: var(--text);
+        font: inherit;
+        padding: 18px 4px;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 0.82rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        min-height: 56px;
+      }
+      .grammar-sec > button:after {
+        content: "+";
+        margin-left: auto;
+        color: var(--muted);
+        font-size: 1rem;
+      }
+      .grammar-sec > button[aria-expanded="true"]:after {
+        content: "–";
+      }
+      .grammar-sec > button:hover {
+        color: #fff;
+      }
+      .grammar-body {
+        padding: 0 4px 22px;
+        font-size: 0.9rem;
+        line-height: 1.75;
+        color: #c8c3ba;
+        max-width: 70ch;
+      }
+      .grammar-body code {
+        font-family: var(--mono);
+        color: #fff;
+        font-size: 0.85em;
+      }
+      .grammar-body ul {
+        margin: 8px 0;
+        padding-left: 18px;
+      }
+      .grammar-body li {
+        margin: 6px 0;
+      }
+
+      table.mini {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        margin-top: 10px;
+        display: block;
+        overflow-x: auto;
+      }
+      table.mini th,
+      table.mini td {
+        text-align: left;
+        padding: 9px 10px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+      }
+      table.mini th {
+        color: var(--muted);
+        font-size: 0.6rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 400;
+      }
+
+      .hist {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin-top: 10px;
+      }
+      .hist button {
+        font-size: 0.82rem;
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--line);
+        background: var(--panel);
+        color: var(--muted);
+        cursor: pointer;
+        font-family: var(--serif);
+        min-height: 38px;
+      }
+      .hist button:hover {
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.35);
+      }
+      .count {
+        color: var(--muted);
+        font-size: 0.68rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-top: 14px;
+        display: block;
+      }
+      footer.foot {
+        max-width: 1280px;
+        margin: 0 auto;
+        padding: 0 20px 48px;
+        color: #6b6862;
+        font-size: 0.64rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        line-height: 2.2;
+      }
+      .sr {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+
+      /* Paleta KALLISTIS: o idioma recebe o lilás do cristal e o verde de orientação. */
+      :root {
+        --purple: #542869;
+        --purple-2: #6b3b82;
+        --purple-dark: #3d1c4d;
+        --lilac: #b79ac5;
+        --lilac-soft: #ded2e3;
+        --green: #518a1b;
+        --green-soft: #8dbd51;
+      }
+      ::selection {
+        background: var(--purple);
+        color: var(--text);
+      }
+      nav[aria-label="Navegação JOGAR"] {
+        background: rgba(23, 21, 26, 0.96) !important;
+        border-color: rgba(183, 154, 197, 0.45) !important;
+      }
+      nav[aria-label="Navegação JOGAR"] a {
+        color: var(--lilac-soft) !important;
+      }
+      nav.tabs button[aria-pressed="true"] {
+        background: rgba(84, 40, 105, 0.42);
+        color: var(--lilac-soft);
+        box-shadow: inset 0 -2px var(--lilac);
+      }
+      button.btn:hover,
+      .chip[aria-pressed="true"],
+      .tag.mark {
+        border-color: var(--lilac);
+        background: rgba(84, 40, 105, 0.28);
+      }
+      button.btn.primary {
+        border-color: var(--lilac);
+        background: rgba(84, 40, 105, 0.45);
+        color: var(--lilac-soft);
+      }
+      button.btn.primary:hover {
+        background: var(--purple-dark);
+      }
+      li.entry:hover,
+      li.entry:focus-visible {
+        background: rgba(84, 40, 105, 0.18);
+      }
+      .note.gold {
+        border-color: var(--lilac);
+        color: var(--lilac-soft);
+      }
+      .note.alert {
+        border-color: var(--danger, #a95a70);
+        background: rgba(169, 90, 112, 0.14);
+      }
+      .note.block {
+        border-color: var(--green);
+        background: rgba(81, 138, 27, 0.1);
+      }
+      input[type="search"]:focus,
+      input[type="text"]:focus,
+      select:focus,
+      textarea:focus {
+        border-color: var(--lilac);
+        box-shadow: 0 0 0 2px rgba(183, 154, 197, 0.12);
+      }
+      .panel,
+      li.entry,
+      pre.deriv {
+        box-shadow: 0 12px 30px rgba(10, 7, 13, 0.16);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="brand-backdrop" aria-hidden="true"></div>
+
+    <header class="top">
+      <div class="top-in">
+        <div class="brand">
+          <h1>Velarim</h1>
+          <p>Língua primordial de Kallistis</p>
+        </div>
+        <nav class="tabs" aria-label="Superfícies">
+          <button type="button" id="tab-dic" aria-pressed="true" data-surface="dic">
+            Dicionário
+          </button>
+          <button type="button" id="tab-trd" aria-pressed="false" data-surface="trd">
+            Tradutor
+          </button>
+          <button type="button" id="tab-cns" aria-pressed="false" data-surface="cns">
+            Construtor
+          </button>
+          <button type="button" id="tab-grm" aria-pressed="false" data-surface="grm">
+            Gramática
+          </button>
+        </nav>
+      </div>
+    </header>
+
+    <div class="layout">
+      <main id="main">
+        <!-- DICIONÁRIO -->
+        <section class="panel" id="s-dic" aria-labelledby="h-dic">
+          <h2 class="sec" id="h-dic">Dicionário</h2>
+          <p class="hint">
+            Busque em Velarim ou em português: forma, significado, conceito, campo semântico ou
+            classe.
+          </p>
+          <label class="fl" for="q">Busca</label>
+          <input
+            type="search"
+            id="q"
+            placeholder="silma · luz · alma · comunidade · verbo"
+            autocomplete="off"
+            spellcheck="false"
+          />
+          <div class="chips" role="group" aria-label="Filtro por classe">
+            <button type="button" class="chip" data-filter="ALL" aria-pressed="true">Todos</button>
+            <button type="button" class="chip" data-filter="substantivo" aria-pressed="false">
+              Substantivos
+            </button>
+            <button type="button" class="chip" data-filter="verbo" aria-pressed="false">
+              Verbos
+            </button>
+            <button type="button" class="chip" data-filter="raiz" aria-pressed="false">
+              Raízes
+            </button>
+            <button type="button" class="chip" data-filter="partícula" aria-pressed="false">
+              Partículas
+            </button>
+            <button type="button" class="chip" data-filter="pronome" aria-pressed="false">
+              Pronomes
+            </button>
+          </div>
+          <span class="count" id="count"></span>
+          <ul class="results" id="results"></ul>
+        </section>
+
+        <!-- TRADUTOR -->
+        <section class="panel hide" id="s-trd" aria-labelledby="h-trd">
+          <h2 class="sec" id="h-trd">Tradutor</h2>
+          <p class="hint">
+            Estritamente limitado ao corpus. Onde falta forma documentada, o sistema declara a
+            lacuna em vez de preenchê-la.
+          </p>
+          <div class="row">
+            <div>
+              <label class="fl" for="dir">Direção</label>
+              <select id="dir">
+                <option value="v2p">Velarim → Português</option>
+                <option value="p2v">Português → Velarim</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl" for="reg">Registro</label>
+              <select id="reg">
+                <option value="luz">Luz Cotidiano · SVO</option>
+                <option value="esc" selected>Escuridão Cotidiano · SOV</option>
+                <option value="rit">Ritual Comum · VSO</option>
+                <option value="cie">Científico Secreto · variável</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 12px">
+            <label class="fl" for="src">Texto</label>
+            <textarea id="src" spellcheck="false" placeholder="Na thuvel namath."></textarea>
+          </div>
+          <div class="row" style="margin-top: 12px">
+            <button type="button" class="btn primary" id="go-trd" style="flex: 0 0 auto">
+              Traduzir
+            </button>
+            <button type="button" class="btn ghost" id="ex1" style="flex: 0 0 auto">
+              Mi tal silma.
+            </button>
+            <button type="button" class="btn ghost" id="ex2" style="flex: 0 0 auto">
+              Vethari na mirveth!
+            </button>
+          </div>
+          <div id="trd-out"></div>
+        </section>
+
+        <!-- CONSTRUTOR -->
+        <section class="panel hide" id="s-cns" aria-labelledby="h-cns">
+          <h2 class="sec" id="h-cns">Construtor</h2>
+          <p class="hint">
+            Escolha uma palavra Velarim e uma operação. A base precisa existir na língua; nenhuma
+            raiz nova é criada.
+          </p>
+          <div class="row">
+            <div>
+              <label class="fl" for="root">Base</label>
+              <select id="root"></select>
+            </div>
+            <div>
+              <label class="fl" for="morph">Operação</label>
+              <select id="morph"></select>
+            </div>
+          </div>
+          <div id="cns-out" style="margin-top: 18px"></div>
+        </section>
+
+        <!-- GRAMÁTICA -->
+        <section class="panel hide" id="s-grm" aria-labelledby="h-grm">
+          <h2 class="sec" id="h-grm">Gramática</h2>
+          <p class="hint">
+            Referência da língua: escrita, pronúncia, formação de palavras, relações, sintaxe e
+            registros.
+          </p>
+          <div id="grm-out"></div>
+        </section>
+
+        <!-- VALIDADOR -->
+        <section class="panel" id="s-val" aria-labelledby="h-val">
+          <h2 class="sec" id="h-val">Validador</h2>
+          <p class="hint">
+            A escrita do Velarim usa apenas letras simples. Vogais longas por duplicação,
+            <code>eh</code> para o schwa, dígrafos <code>th sh zh nh</code>. Nada é corrigido por
+            adivinhação.
+          </p>
+          <label class="fl" for="val">Forma Velarim</label>
+          <input type="text" id="val" spellcheck="false" autocomplete="off" placeholder="vesilma" />
+          <div id="val-out"></div>
+        </section>
+      </main>
+
+      <aside id="side" class="panel closed" aria-live="polite" aria-label="Verbete">
+        <div class="side-head">
+          <h3>Verbete</h3>
+          <button type="button" class="btn ghost side-close" id="side-close">Fechar</button>
+        </div>
+        <div id="side-body">
+          <p class="hint" style="margin: 0">Selecione uma palavra para ver o verbete.</p>
+        </div>
+        <div
+          id="hist-wrap"
+          style="margin-top: 22px; border-top: 1px solid var(--line); padding-top: 16px"
+        >
+          <label class="fl">Consultas recentes</label>
+          <div class="hist" id="hist"></div>
+          <button type="button" class="btn ghost" id="clear-hist" style="margin-top: 12px">
+            Limpar
+          </button>
+        </div>
+      </aside>
+    </div>
+
+    <footer class="foot">
+      Velarim · Língua primordial de Kallistis<br />
+      Onde falta forma conhecida, o sistema diz que não sabe.
+    </footer>
+
+    <script>
+      "use strict";
+      /* =========================================================================
+   FONTE DE DADOS ÚNICA — extraída do MANUAL CANÔNICO VELARIM v2.4
+   Nenhuma forma abaixo foi inventada. Campos ausentes permanecem null.
+   ========================================================================= */
+
+      var STATUS_META = {
+        CANONICAL: { short: "CAN", label: "CANONICAL", cls: "can" },
+        LEXICALIZED_CANONICAL: { short: "LEX_CAN", label: "LEXICALIZED_CANONICAL", cls: "lex" },
+        SOURCE_ATTESTED: { short: "SRC", label: "SOURCE_ATTESTED", cls: "src" },
+        TECHNICAL_RECOMMENDATION: { short: "TECH", label: "TECHNICAL_RECOMMENDATION", cls: "tech" },
+        PROVISIONAL: { short: "PROV", label: "PROVISIONAL", cls: "prov" },
+        REJECTED: { short: "REJECTED", label: "REJECTED", cls: "rej" },
+        HUMAN_APPROVED: { short: "HUMAN_APPROVED", label: "HUMAN_APPROVED", cls: "human" },
+      };
+      /* Hierarquia: nenhum processamento pode elevar status. */
+      var STATUS_RANK = {
+        REJECTED: 0,
+        PROVISIONAL: 1,
+        TECHNICAL_RECOMMENDATION: 2,
+        SOURCE_ATTESTED: 3,
+        LEXICALIZED_CANONICAL: 4,
+        CANONICAL: 5,
+        HUMAN_APPROVED: 6,
+      };
+
+      /* --- 43 lexemas-base com glifo (Atlas de Silmain) --- */
+      var LEXICON = [
+        {
+          form: "silma",
+          ipa: "/ˈsil.ma/",
+          cls: "substantivo",
+          field: "Luminal",
+          meaning: "luz material; luminosidade física",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [
+            "Trava semântica: luz físico-material. Não é manesh (Luz cosmológica), não é thuvel, não é kav.",
+          ],
+        },
+        {
+          form: "manesh",
+          ipa: "/ˈma.neʃ/",
+          cls: "substantivo",
+          field: "Luminal",
+          meaning: "Luz cosmológica; manifestação; forma",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Trava semântica: Luz cosmológica. Não colapsar com silma."],
+        },
+        {
+          form: "velar",
+          ipa: "/ve.ˈlaɾ/",
+          cls: "verbo",
+          field: "Espaço / movimento",
+          meaning: "voar; transcender o espaço",
+          status: "CANONICAL",
+          valency: "INTRANSITIVE",
+          glyph: true,
+          notes: ["Forma oxítona documentada."],
+        },
+        {
+          form: "nooveth",
+          ipa: "/ˈnoː.veð/",
+          cls: "verbo",
+          field: "Magia",
+          meaning: "tecer magia; núcleo conceitual da magia",
+          status: "CANONICAL",
+          valency: "TRANSITIVE",
+          glyph: true,
+          notes: ["Funciona historicamente como unidade lexical própria."],
+        },
+        {
+          form: "mira",
+          ipa: "/ˈmi.ɾa/",
+          cls: "substantivo",
+          field: "Alma / origem",
+          meaning: "fonte; alma primordial",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Trava semântica: mira ≠ mirveth."],
+        },
+        {
+          form: "veth",
+          ipa: "/veð/",
+          cls: "qualidade relacional",
+          field: "Relação / paridade",
+          meaning: "paridade; igual legitimidade; identidade preservada",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "verth",
+          ipa: null,
+          cls: "qualidade relacional",
+          field: "Relação / distinção",
+          meaning: "diferença; distinção; identidade própria",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "tal",
+          ipa: null,
+          cls: "verbo",
+          field: "Domínio",
+          meaning: "possuir; deter como propriedade; exercer domínio (possuidor → possuído)",
+          status: "CANONICAL",
+          valency: "RELATIONAL",
+          glyph: true,
+          notes: [
+            "Grafia canônica; t isolado com distribuição OPEN.",
+            "TAL corre do possuidor para o possuído; KAJ corre na direção inversa.",
+          ],
+        },
+        {
+          form: "kaj",
+          ipa: null,
+          cls: "verbo",
+          field: "Domínio",
+          meaning: "pertencer a; estar sob domínio ou submissão (subordinado → dominante)",
+          status: "CANONICAL",
+          valency: "RELATIONAL",
+          glyph: true,
+          notes: ["Grafia canônica; j com fonologia OPEN. Não normalizar para kay."],
+        },
+        {
+          form: "haj",
+          ipa: null,
+          cls: "substantivo",
+          field: "Marca / memória",
+          meaning: "marca; sinal; testemunho; traço reconhecível",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Grafia canônica; h isolado e j com fonologia OPEN. Não normalizar para hay."],
+        },
+        {
+          form: "komm",
+          ipa: null,
+          cls: "dêitico",
+          field: "Espaço / presença",
+          meaning: "aqui; neste ponto de presença",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Fonotática geral de k permanece OPEN."],
+        },
+        {
+          form: "thuvel",
+          ipa: "/ˈðu.vel/",
+          cls: "substantivo",
+          field: "Escuridão",
+          meaning: "Escuridão cosmológica legítima; profundidade; repouso; potencial",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Trava semântica: Escuridão legítima. Não é kav (Sombra), não é vesilma."],
+        },
+        {
+          form: "kav",
+          ipa: "/kav/",
+          cls: "substantivo",
+          field: "Sombra",
+          meaning: "Sombra; corrupção; assimilação",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Trava semântica: Sombra/corrupção. Não é thuvel."],
+        },
+        {
+          form: "anir",
+          ipa: "/a.ˈniɾ/",
+          cls: "substantivo",
+          field: "Tempo / origem",
+          meaning: "começo; origem temporal",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Forma oxítona documentada."],
+        },
+        {
+          form: "tharen",
+          ipa: "/ˈða.ɾen/",
+          cls: "substantivo",
+          field: "Espaço / movimento",
+          meaning: "caminho; passagem",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "luumeh",
+          ipa: "/ˈluː.mə/",
+          cls: "substantivo",
+          field: "Tempo",
+          meaning: "tempo fluido; era",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Vogal longa por duplicação; eh = schwa /ə/."],
+        },
+        {
+          form: "nam",
+          ipa: "/nam/",
+          cls: "verbo",
+          field: "Existência",
+          meaning: "existir; permanecer em presença",
+          status: "CANONICAL",
+          valency: "RELATIONAL",
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "les",
+          ipa: null,
+          cls: "verbo",
+          field: "Reconhecimento",
+          meaning: "reconhecer; nomear com precisão",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [
+            "Pronúncia não explicitamente fechada nesta edição.",
+            "Valência não documentada.",
+          ],
+        },
+        {
+          form: "krav",
+          ipa: "/kɾav/",
+          cls: "substantivo",
+          field: "Matéria / Escuridão",
+          meaning: "pedra; rocha vinculada à Escuridão",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["A tradição da Escuridão preserva grupos consonantais como kr."],
+        },
+        {
+          form: "manuv",
+          ipa: "/ˈma.nuv/",
+          cls: "substantivo",
+          field: "Corpo / toque",
+          meaning: "mão; instrumento de toque",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "silar",
+          ipa: "/si.ˈlaɾ/",
+          cls: "verbo",
+          field: "Luminal",
+          meaning: "brilhar; emanar luz própria",
+          status: "CANONICAL",
+          valency: "INTRANSITIVE",
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "sib",
+          ipa: null,
+          cls: "verbo",
+          field: "Sombra / identidade",
+          meaning: "consumir identidade",
+          status: "CANONICAL",
+          valency: "TRANSITIVE",
+          glyph: true,
+          notes: [
+            "Grafia lexical canônica; /b/ permanece provisório como generalização fonológica.",
+          ],
+        },
+        {
+          form: "dur",
+          ipa: null,
+          cls: "verbo",
+          field: "Domínio",
+          meaning: "comandar; submeter pela força",
+          status: "CANONICAL",
+          valency: "TRANSITIVE",
+          glyph: true,
+          notes: [
+            "Grafia lexical canônica; /d/ permanece provisório como generalização fonológica.",
+          ],
+        },
+        {
+          form: "tav",
+          ipa: null,
+          cls: "verbo",
+          field: "Corpo / toque",
+          meaning: "tocar física ou magicamente",
+          status: "CANONICAL",
+          valency: "TRANSITIVE",
+          glyph: true,
+          notes: ["Grafia canônica; t isolado OPEN."],
+        },
+        {
+          form: "mi",
+          ipa: "/mi/",
+          cls: "pronome",
+          field: "Pronomes",
+          meaning: "eu",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "si",
+          ipa: "/si/",
+          cls: "pronome",
+          field: "Pronomes",
+          meaning: "ele; ela; isso",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "na",
+          ipa: "/na/",
+          cls: "pronome",
+          field: "Pronomes",
+          meaning: "nós",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "ve",
+          ipa: "/ve/",
+          cls: "partícula",
+          field: "Gramática",
+          meaning: "negação",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [
+            "ve- funciona como prefixo de negação; ve também aparece como partícula livre.",
+            "Entrada lexical exata tem precedência sobre decomposição (ex.: vesilma).",
+          ],
+        },
+        {
+          form: "kir",
+          ipa: "/kiɾ/",
+          cls: "partícula modal",
+          field: "Modalidade",
+          meaning: "poder; capacidade; permissão",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "van",
+          ipa: "/van/",
+          cls: "partícula modal",
+          field: "Modalidade",
+          meaning: "dever; obrigação",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "sen",
+          ipa: "/sen/",
+          cls: "partícula modal",
+          field: "Modalidade / desejo",
+          meaning: "querer; intenção; desejo intencional",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [],
+        },
+        {
+          form: "ol",
+          ipa: "/ol/",
+          cls: "preposição",
+          field: "Espaço / direção",
+          meaning: "a; para; direção",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [
+            "Coincidência gráfica com o sufixo -ol de lugar não autoriza segmentação automática.",
+          ],
+        },
+        {
+          form: "selun",
+          ipa: null,
+          cls: "lexema",
+          field: "Vida / morte",
+          meaning: "fim; cessação; morte como estado",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "zhar",
+          ipa: null,
+          cls: "lexema",
+          field: "Vida / existência",
+          meaning: "viver; campo semântico de vida/realidade",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "niva",
+          ipa: null,
+          cls: "substantivo",
+          field: "Natureza",
+          meaning: "água",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "velai",
+          ipa: null,
+          cls: "substantivo",
+          field: "Natureza / movimento",
+          meaning: "ar; vento",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "lar",
+          ipa: null,
+          cls: "raiz lexical",
+          field: "Afeto",
+          meaning: "amor; afeição; vínculo querido",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "rum",
+          ipa: null,
+          cls: "raiz lexical",
+          field: "Dor / experiência",
+          meaning: "dor sentida; padecimento corporal ou interior",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "shel",
+          ipa: null,
+          cls: "raiz lexical",
+          field: "Afeto",
+          meaning: "alegria; contentamento; elevação afetiva",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "nhel",
+          ipa: null,
+          cls: "raiz lexical",
+          field: "Afeto",
+          meaning: "tristeza; pesar; luto",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "mirath",
+          ipa: null,
+          cls: "raiz lexical",
+          field: "Alma / parentesco",
+          meaning: "parentesco; relação familiar reconhecida",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: [
+            "Pronúncia não explicitamente fechada nesta edição.",
+            "Semelhança com -ath não autoriza segmentação automática.",
+          ],
+        },
+        {
+          form: "zhel",
+          ipa: null,
+          cls: "raiz lexical",
+          field: "Música / cultura",
+          meaning: "música; canto organizado; expressão sonora",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+        {
+          form: "nim",
+          ipa: null,
+          cls: "raiz lexical",
+          field: "Possibilidade / acaso",
+          meaning: "acaso; contingência; indeterminação",
+          status: "CANONICAL",
+          valency: null,
+          glyph: true,
+          notes: ["Pronúncia não explicitamente fechada nesta edição."],
+        },
+
+        /* --- 6 formas lexicalizadas compostas com glifo --- */
+        {
+          form: "silmain",
+          ipa: "/sil.ˈmajn/",
+          cls: "substantivo",
+          field: "Luminal / escrita",
+          meaning:
+            "sistema de escrita nativa; por polissemia histórica, “luzes dispersas e autônomas”",
+          status: "LEXICALIZED_CANONICAL",
+          valency: null,
+          glyph: true,
+          etym: "Análise histórica: silma + -in (REG-MF-02, fusão em ditongo). A análise explica uma acepção; não cria segundo verbete.",
+          notes: [
+            "Uma identidade lexical com mais de uma acepção canônica. Polissemia preservada.",
+          ],
+        },
+        {
+          form: "silmol",
+          ipa: "/ˈsil.mol/",
+          cls: "substantivo",
+          field: "Luminal / lugar",
+          meaning: "santuário de luz",
+          status: "LEXICALIZED_CANONICAL",
+          valency: null,
+          glyph: true,
+          locked: true,
+          etym: "História lexical relacionada ao campo de lugar (-ol). Etimologia não autoriza produtividade automática de -ol sobre qualquer raiz.",
+          notes: [],
+        },
+        {
+          form: "silmov",
+          ipa: "/ˈsil.mov/",
+          cls: "substantivo",
+          field: "Luminal / assimilação",
+          meaning: "luz assimilada; massa luminosa fundida",
+          status: "LEXICALIZED_CANONICAL",
+          valency: null,
+          glyph: true,
+          locked: true,
+          etym: "Registra o morfema -ov (assimilação) em forma já lexicalizada.",
+          notes: [],
+        },
+        {
+          form: "mirveth",
+          ipa: "/miɾ.ˈveð/",
+          cls: "substantivo",
+          field: "Alma / relação",
+          meaning: "contraparte cosmológica integral",
+          status: "LEXICALIZED_CANONICAL",
+          valency: null,
+          glyph: true,
+          locked: true,
+          etym: "Leitura histórica aproximável de MIRA + VETH. O uso corrente trata mirveth como unidade lexical própria.",
+          notes: [
+            "Forma oxítona documentada.",
+            "Cada mirveth possui identidade, memória, vontade e legitimidade próprias.",
+            "Trava semântica: mira ≠ mirveth.",
+          ],
+        },
+        {
+          form: "mirin",
+          ipa: "/ˈmi.ɾin/",
+          cls: "substantivo",
+          field: "Alma / dispersão",
+          meaning: "origem fraturada da alma",
+          status: "LEXICALIZED_CANONICAL",
+          valency: null,
+          glyph: true,
+          locked: true,
+          etym: "Relacionada ao campo de -in (pluralidade dispersa), já lexicalizada.",
+          notes: [],
+        },
+        {
+          form: "mirim",
+          ipa: "/ˈmi.ɾim/",
+          cls: "substantivo",
+          field: "Alma / reciprocidade",
+          meaning: "reciprocidade da alma originária",
+          status: "LEXICALIZED_CANONICAL",
+          valency: null,
+          glyph: true,
+          locked: true,
+          etym: "Relacionada ao campo de -im (reciprocidade), já lexicalizada.",
+          notes: [],
+        },
+
+        /* --- Formas canônicas e ativas sem glifo dedicado --- */
+        {
+          form: "vesilma",
+          ipa: "/ve.ˈsil.ma/",
+          cls: "substantivo",
+          field: "Luminal / negação",
+          meaning: "ausência ou extinção de luz física",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          locked: true,
+          etym: "Relacionada a ve- + silma; a forma é lexicalizada e tem precedência sobre a decomposição.",
+          notes: [
+            "Trava semântica: não significa thuvel nem kav.",
+            "Entrada lexical exata vence a análise produtiva.",
+          ],
+        },
+        {
+          form: "mirvethin",
+          ipa: "/miɾ.ˈve.ðin/",
+          cls: "substantivo",
+          field: "Alma / número",
+          meaning: "contrapartes autônomas consideradas separadamente",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          etym: "mirveth + -in (pluralidade dispersa).",
+          notes: [],
+        },
+        {
+          form: "mirvethari",
+          ipa: "/miɾ.ve.ˈða.ɾi/",
+          cls: "substantivo",
+          field: "Alma / coletivo",
+          meaning: "relação viva entre contrapartes, preservando a identidade de cada participante",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          etym: "mirveth + -ari (coletivo vivo).",
+          notes: ["-ari ≠ assimilação."],
+        },
+        {
+          form: "vethari",
+          ipa: "/ve.ˈða.ɾi/",
+          cls: "substantivo/verbo relacional",
+          field: "Relação",
+          meaning: "Merge legítimo, com identidade, autonomia e consentimento preservados",
+          status: "CANONICAL",
+          valency: "RELATIONAL",
+          glyph: false,
+          etym: "veth + -ari (coletivo relacional).",
+          notes: ["Trava semântica: vethari ≠ assimilação, ≠ absorção, ≠ perda de identidade."],
+        },
+        {
+          form: "namol",
+          ipa: null,
+          cls: "substantivo",
+          field: "Espaço / pertencimento",
+          meaning: "casa; lar; morada",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          etym: "Relacionada ao campo de lugar. A Pedr’alma acrescenta espessura cultural, mas não altera o significado lexical nem cria a etimologia “lugar da Pedr’alma”.",
+          notes: ["Pronúncia não documentada nesta edição."],
+        },
+        {
+          form: "miran",
+          ipa: null,
+          cls: "substantivo",
+          field: "Alma / pessoa",
+          meaning: "pessoa; indivíduo dotado de identidade",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          notes: ["Pronúncia não documentada nesta edição."],
+        },
+        {
+          form: "mirari",
+          ipa: null,
+          cls: "substantivo coletivo",
+          field: "Alma / comunidade",
+          meaning: "comunidade viva de pessoas que se reconhecem em relação",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          notes: [
+            "A Pedr’alma pode testemunhar um mirari, mas não o substitui.",
+            "Pronúncia não documentada nesta edição.",
+          ],
+        },
+        {
+          form: "raar",
+          ipa: "[ʁaːʁ]",
+          cls: "verbo",
+          field: "Prosódia / presença",
+          meaning: "rugir; emitir brado de presença ou afirmação",
+          status: "CANONICAL",
+          valency: "INTRANSITIVE",
+          glyph: false,
+          notes: [
+            "Realização expressiva uvular; não generaliza o R uvular para o restante do léxico.",
+            "Não significa automaticamente gritar, ordenar, ameaçar ou atacar.",
+            "Exemplo canônico: MI NAM. MI RAAR.",
+          ],
+        },
+
+        /* --- Formas atestadas e reconstruídas --- */
+        {
+          form: "silmari",
+          ipa: "/sil.ˈma.ɾi/",
+          cls: "substantivo derivado",
+          field: "Luminal / coletivo",
+          meaning: "constelação; coletivo harmônico de luzes",
+          status: "SOURCE_ATTESTED",
+          valency: null,
+          glyph: false,
+          etym: "silma + -ari, com queda de vogal idêntica (REG-MF-01).",
+          notes: [
+            "Forma reconstruída registrada pelo manual. Produtividade não cria, por si só, novas entradas no núcleo.",
+          ],
+        },
+        {
+          form: "velareth",
+          ipa: "/ve.la.ˈɾeð/",
+          cls: "verbo",
+          field: "Espaço / movimento",
+          meaning: "voou; ação selada",
+          status: "SOURCE_ATTESTED",
+          valency: "INTRANSITIVE",
+          glyph: false,
+          etym: "velar + -eth (concatenação direta, REG-MF-04).",
+          notes: ["Forma reconstruída."],
+        },
+        {
+          form: "velaril",
+          ipa: "/ve.la.ˈɾil/",
+          cls: "verbo",
+          field: "Espaço / movimento",
+          meaning: "voará; ação possível ou desejada",
+          status: "SOURCE_ATTESTED",
+          valency: "INTRANSITIVE",
+          glyph: false,
+          etym: "velar + -il (concatenação direta, REG-MF-04).",
+          notes: ["Forma reconstruída."],
+        },
+        {
+          form: "velarvar",
+          ipa: "/ve.laɾ.ˈvaɾ/",
+          cls: "verbo",
+          field: "Espaço / movimento",
+          meaning: "está voando",
+          status: "SOURCE_ATTESTED",
+          valency: "INTRANSITIVE",
+          glyph: false,
+          etym: "velar + -ar com eco morfêmico (REG-MF-05).",
+          notes: ["Forma reconstruída."],
+        },
+        {
+          form: "noovethan",
+          ipa: "/ˈnoː.ve.ðan/",
+          cls: "substantivo derivado",
+          field: "Magia / agente",
+          meaning: "tecelão ou tecelã de magia",
+          status: "SOURCE_ATTESTED",
+          valency: null,
+          glyph: false,
+          etym: "nooveth + -an (agente).",
+          notes: ["Forma reconstruída."],
+        },
+        {
+          form: "annooveth",
+          ipa: "/an.ˈnoː.veð/",
+          cls: "verbo",
+          field: "Magia / agência",
+          meaning: "tecer magia com controle ativo",
+          status: "SOURCE_ATTESTED",
+          valency: "TRANSITIVE",
+          glyph: false,
+          etym: "an- (agência unilateral controlada) + nooveth.",
+          notes: ["Forma reconstruída."],
+        },
+        {
+          form: "silarun",
+          ipa: "/si.ˈla.ɾun/",
+          cls: "substantivo derivado",
+          field: "Luminal / abstração",
+          meaning: "brilho como qualidade",
+          status: "SOURCE_ATTESTED",
+          valency: null,
+          glyph: false,
+          etym: "silar + -un (abstração).",
+          notes: ["Forma reconstruída."],
+        },
+        {
+          form: "namath",
+          ipa: "/ˈna.mað/",
+          cls: "verbo relacional",
+          field: "Existência / relação",
+          meaning: "coexistir sem submissão",
+          status: "SOURCE_ATTESTED",
+          valency: "RELATIONAL",
+          glyph: false,
+          etym: "nam + -ath (coexistência).",
+          notes: ["Forma reconstruída."],
+        },
+
+        /* --- Nomes próprios documentados --- */
+        {
+          form: "Miranov",
+          ipa: "/mi.ˈɾa.nov/",
+          cls: "nome próprio",
+          field: "Nomes",
+          meaning: "nome tradicional",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          notes: ["Nome próprio registrado como arquivo de pronúncia."],
+        },
+        {
+          form: "Kraavira",
+          ipa: "/ˈkɾaː.vi.ɾa/",
+          cls: "nome próprio",
+          field: "Nomes",
+          meaning: "nome da Escuridão",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          notes: ["Vogal longa escrita por duplicação."],
+        },
+        {
+          form: "Silmaarien",
+          ipa: "/sil.ˈmaː.ɾi.en/",
+          cls: "nome próprio",
+          field: "Nomes",
+          meaning: "nome ritual",
+          status: "CANONICAL",
+          valency: null,
+          glyph: false,
+          notes: [],
+        },
+      ];
+
+      /* --- 13 morfemas / modificadores --- */
+      var MORPHEMES = [
+        {
+          id: "in",
+          label: "-in",
+          type: "suffix",
+          op: "Número — pluralidade dispersa",
+          meaning: "pluralidade dispersa; indivíduos tratados separadamente",
+          status: "CANONICAL",
+        },
+        {
+          id: "ari",
+          label: "-ari",
+          type: "suffix",
+          op: "Número — coletivo vivo",
+          meaning: "coletivo vivo; pluralidade relacionada (≠ assimilação)",
+          status: "CANONICAL",
+        },
+        {
+          id: "ov",
+          label: "-ov",
+          type: "suffix",
+          op: "Assimilação",
+          meaning: "assimilação; perda de fronteiras",
+          status: "CANONICAL",
+          warn: true,
+        },
+        {
+          id: "an_p",
+          label: "an-",
+          type: "prefix",
+          op: "Relação — agência unilateral",
+          meaning: "agência ou controle deliberado em posição prefixal",
+          status: "CANONICAL",
+        },
+        {
+          id: "an_s",
+          label: "-an",
+          type: "suffix",
+          op: "Nominalização — agente",
+          meaning: "agente ou pessoa relacionada ao conceito",
+          status: "CANONICAL",
+          base: ["substantivo", "verbo", "raiz lexical"],
+        },
+        {
+          id: "esh",
+          label: "-esh",
+          type: "suffix",
+          op: "Nominalização — instrumento",
+          meaning: "instrumento; meio",
+          status: "CANONICAL",
+          base: ["substantivo", "verbo", "raiz lexical"],
+        },
+        {
+          id: "un",
+          label: "-un",
+          type: "suffix",
+          op: "Nominalização — abstração",
+          meaning: "abstração; estado; qualidade",
+          status: "CANONICAL",
+          base: ["substantivo", "verbo", "raiz lexical", "qualidade relacional"],
+        },
+        {
+          id: "eth",
+          label: "-eth",
+          type: "suffix",
+          op: "Aspecto — concluído",
+          meaning: "ação concluída ou selada",
+          status: "CANONICAL",
+          base: ["verbo"],
+        },
+        {
+          id: "il",
+          label: "-il",
+          type: "suffix",
+          op: "Aspecto — possível/futuro",
+          meaning: "possibilidade; desejo; projeção futura",
+          status: "CANONICAL",
+          base: ["verbo"],
+        },
+        {
+          id: "ar",
+          label: "-ar",
+          type: "suffix",
+          op: "Aspecto — contínuo",
+          meaning: "continuidade; duração",
+          status: "CANONICAL",
+          base: ["verbo"],
+        },
+        {
+          id: "im",
+          label: "-im",
+          type: "suffix",
+          op: "Relação — reciprocidade",
+          meaning: "reciprocidade",
+          status: "CANONICAL",
+        },
+        {
+          id: "ath",
+          label: "-ath",
+          type: "suffix",
+          op: "Relação — coexistência",
+          meaning: "coexistência",
+          status: "CANONICAL",
+        },
+        {
+          id: "oi",
+          label: "-oi",
+          type: "suffix",
+          op: "Relação — ressonância",
+          meaning: "ressonância",
+          status: "CANONICAL",
+        },
+        {
+          id: "av",
+          label: "-av",
+          type: "suffix",
+          op: "Relação — domínio/submissão",
+          meaning: "domínio; submissão",
+          status: "CANONICAL",
+        },
+      ];
+      /* Nota do manual: o -ol de lugar é lido através de formas reconhecidas (silmol, namol);
+   sua produtividade geral NÃO é autorizada, por isso não é oferecido como operação livre. */
+      var NON_PRODUCTIVE = [
+        {
+          label: "-ol",
+          reason:
+            "O campo de lugar é lido através de formas já reconhecidas (silmol, namol). O manual não autoriza produtividade geral de -ol sobre qualquer raiz.",
+        },
+      ];
+
+      /* --- Regras morfofonológicas: TECHNICAL_RECOMMENDATION --- */
+      var MORPH_RULES = [
+        {
+          id: "REG-MF-01",
+          name: "Queda de vogal idêntica",
+          status: "TECHNICAL_RECOMMENDATION",
+          desc: "Quando duas vogais idênticas se encontram na fronteira morfológica, pode ocorrer redução.",
+          ex: "silma + -ari → silmari",
+        },
+        {
+          id: "REG-MF-02",
+          name: "Fusão em ditongo",
+          status: "TECHNICAL_RECOMMENDATION",
+          desc: "Vogais diferentes podem permanecer juntas e formar ditongo licenciado (ai, ei, oi, au, eu).",
+          ex: "silma + -in → silmain (reversão: silmain → silma; nunca silmai)",
+        },
+        {
+          id: "REG-MF-03",
+          name: "Epêntese de ligação",
+          status: "TECHNICAL_RECOMMENDATION",
+          desc: "O glide y pode ligar diante de e ou i; v pode ligar diante de o ou u. Não se cria ligação automática diante de a.",
+          ex: "ligação y / v conforme a vogal do sufixo",
+        },
+        {
+          id: "REG-MF-04",
+          name: "Concatenação direta",
+          status: "TECHNICAL_RECOMMENDATION",
+          desc: "Raízes terminadas em consoante podem receber diretamente sufixo iniciado por vogal.",
+          ex: "velar + -eth → velareth",
+        },
+        {
+          id: "REG-MF-05",
+          name: "Eco morfêmico",
+          status: "TECHNICAL_RECOMMENDATION",
+          desc: "Em encontros que produziriam repetição opaca, a história da língua registra consoante de ligação.",
+          ex: "velar + -ar → velarvar",
+        },
+      ];
+
+      /* --- Registros e sintaxe --- */
+      var REGISTERS = {
+        proto: {
+          name: "Proto-Velarim",
+          order: "reconstruída",
+          fn: "Estado anterior à Fratura",
+          status: "SOURCE_ATTESTED",
+        },
+        luz: {
+          name: "Luz Cotidiano",
+          order: "SVO",
+          fn: "Comunicação pragmática e manifestação",
+          status: "CANONICAL",
+          ex: "Mi tal silma. — Eu possuo a luz.",
+        },
+        esc: {
+          name: "Escuridão Cotidiano",
+          order: "SOV",
+          fn: "Comunicação contextual e relacional",
+          status: "CANONICAL",
+          ex: "Mi silma tal. — Eu possuo a luz.",
+        },
+        rit: {
+          name: "Ritual Comum",
+          order: "VSO",
+          fn: "Comando, pacto e ação cerimonial",
+          status: "CANONICAL",
+          ex: "Vethari na mirveth! — Que entremos em Vethari de modo legítimo, contraparte.",
+        },
+        cie: {
+          name: "Científico Secreto",
+          order: "variável",
+          fn: "Jargão técnico e manipulação institucional",
+          status: "CANONICAL",
+          note: "Pode ocultar ou ressignificar morfemas. Ordem variável não autoriza invenção de gramática: sem estrutura documentada, o resultado é “Construção não suportada.”",
+        },
+      };
+
+      /* --- Exemplos documentados --- */
+      var CANON_EXAMPLES = [
+        {
+          vel: "Mi tal silma.",
+          pt: "Eu possuo a luz.",
+          reg: "luz",
+          order: "SVO",
+          status: "CANONICAL",
+        },
+        {
+          vel: "Mi silma tal.",
+          pt: "Eu possuo a luz.",
+          reg: "esc",
+          order: "SOV",
+          status: "CANONICAL",
+        },
+        {
+          vel: "Vethari na mirveth!",
+          pt: "Que entremos em Vethari de modo legítimo, contraparte.",
+          reg: "rit",
+          order: "VSO",
+          status: "CANONICAL",
+        },
+        {
+          vel: "MI NAM. MI RAAR.",
+          pt: "Eu existo. Eu rujo.",
+          reg: "luz",
+          order: "SVO",
+          status: "CANONICAL",
+        },
+      ];
+
+      /* --- Travas lexicais e semânticas --- */
+      var LEXICAL_LOCKS = ["silmol", "silmov", "mirin", "mirim", "mirveth", "vesilma", "silmain"];
+      var SEMANTIC_LOCKS = [
+        { a: "silma", txt: "luz físico-material — não é manesh, thuvel, kav ou vesilma" },
+        { a: "manesh", txt: "Luz cosmológica; manifestação e forma — não é silma" },
+        { a: "thuvel", txt: "Escuridão legítima: profundidade, repouso, potencial — não é kav" },
+        { a: "kav", txt: "Sombra, corrupção, assimilação — não é thuvel" },
+        { a: "vesilma", txt: "ausência de luz física — não é thuvel nem kav" },
+        { a: "mira", txt: "fonte / alma primordial — mira ≠ mirveth" },
+        { a: "vethari", txt: "Merge legítimo — ≠ assimilação, ≠ absorção, ≠ perda de identidade" },
+      ];
+
+      /* --- Índice de conceitos PT (derivado exclusivamente dos significados documentados) --- */
+      function ptIndex() {
+        var idx = {};
+        LEXICON.forEach(function (e) {
+          splitConcepts(e.meaning).forEach(function (c) {
+            if (!idx[c]) idx[c] = [];
+            if (idx[c].indexOf(e.form) < 0) idx[c].push(e.form);
+          });
+        });
+        return idx;
+      }
+      function splitConcepts(meaning) {
+        return meaning
+          .toLowerCase()
+          .replace(/[“”"()]/g, "")
+          .split(/[;,]/)
+          .map(function (s) {
+            return s.trim();
+          })
+          .filter(Boolean);
+      }
+
+      /* ========================= UTIL ========================= */
+      var STOPWORDS = [
+        "o",
+        "a",
+        "os",
+        "as",
+        "um",
+        "uma",
+        "de",
+        "do",
+        "da",
+        "dos",
+        "das",
+        "em",
+        "no",
+        "na",
+        "nos",
+        "nas",
+        "que",
+        "e",
+        "com",
+        "por",
+        "para",
+        "ao",
+        "à",
+        "às",
+        "aos",
+        "se",
+        "é",
+        "the",
+      ];
+      function norm(s) {
+        return (s || "")
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "");
+      }
+      function byForm(f) {
+        var n = norm(f);
+        for (var i = 0; i < LEXICON.length; i++) {
+          if (norm(LEXICON[i].form) === n) return LEXICON[i];
+        }
+        return null;
+      }
+      function isLocked(f) {
+        return LEXICAL_LOCKS.indexOf(norm(f)) >= 0;
+      }
+      function el(tag, cls, txt) {
+        var e = document.createElement(tag);
+        if (cls) e.className = cls;
+        if (txt != null) e.textContent = txt;
+        return e;
+      }
+      /* Rótulos públicos: nenhum status editorial interno é exibido ao jogador. */
+      function tagEl(kind, label) {
+        var s = el("span", "tag " + (kind || ""), label);
+        return s;
+      }
+      function esc(s) {
+        return String(s).replace(/[&<>]/g, function (c) {
+          return { "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c];
+        });
+      }
+      function statusTagHTML(kind, label) {
+        return '<span class="tag ' + (kind || "") + '">' + esc(label || "") + "</span>";
+      }
+      var NO_IPA = "Pronúncia ainda não documentada.";
+
+      /* ========================= DICIONÁRIO ========================= */
+      var activeFilter = "ALL";
+      function matchesClass(e, f) {
+        if (f === "ALL") return true;
+        var c = norm(e.cls);
+        if (f === "raiz") return c.indexOf("raiz") >= 0 || c.indexOf("lexema") >= 0;
+        if (f === "partícula")
+          return (
+            c.indexOf("particula") >= 0 || c.indexOf("preposicao") >= 0 || c.indexOf("deitico") >= 0
+          );
+        return c.indexOf(norm(f)) >= 0;
+      }
+      function renderDict() {
+        var q = norm(document.getElementById("q").value.trim());
+        var list = LEXICON.filter(function (e) {
+          if (!matchesClass(e, activeFilter)) return false;
+          if (!q) return true;
+          return (
+            norm(e.form).indexOf(q) >= 0 ||
+            norm(e.meaning).indexOf(q) >= 0 ||
+            norm(e.cls).indexOf(q) >= 0 ||
+            norm(e.field).indexOf(q) >= 0 ||
+            (e.etym ? norm(e.etym).indexOf(q) >= 0 : false)
+          );
+        });
+        /* precedência: exata → prefixo → significado → demais */
+        list.sort(function (a, b) {
+          function rank(e) {
+            var f = norm(e.form);
+            if (q && f === q) return 0;
+            if (q && f.indexOf(q) === 0) return 1;
+            if (q && norm(e.meaning).indexOf(q) === 0) return 2;
+            if (q && norm(e.meaning).indexOf(q) >= 0) return 3;
+            return 4;
+          }
+          var d = rank(a) - rank(b);
+          if (d) return d;
+          return a.form.localeCompare(b.form);
+        });
+        var ul = document.getElementById("results");
+        ul.innerHTML = "";
+        document.getElementById("count").textContent =
+          list.length + " de " + LEXICON.length + " palavras";
+        if (!list.length) {
+          var li = el("li", "entry");
+          li.appendChild(el("p", "mean", "Não existe forma Velarim conhecida para este conceito."));
+          ul.appendChild(li);
+          return;
+        }
+        list.forEach(function (e) {
+          var li = el("li", "entry");
+          li.tabIndex = 0;
+          li.setAttribute("role", "button");
+          var h = el("div", "entry-head");
+          h.appendChild(el("span", "form", e.form));
+          if (e.ipa) h.appendChild(el("span", "ipa", e.ipa));
+          h.appendChild(el("span", "cls", e.cls));
+          li.appendChild(h);
+          li.appendChild(el("p", "mean", e.meaning));
+          li.addEventListener("click", function () {
+            openEntry(e);
+            pushHist(e.form);
+          });
+          li.addEventListener("keydown", function (ev) {
+            if (ev.key === "Enter" || ev.key === " ") {
+              ev.preventDefault();
+              openEntry(e);
+              pushHist(e.form);
+            }
+          });
+          ul.appendChild(li);
+        });
+      }
+
+      /* ========================= PAINEL DE VERBETE ========================= */
+      function openSide() {
+        var s = document.getElementById("side");
+        s.classList.remove("closed");
+        if (window.innerWidth <= 1080) s.scrollIntoView({ block: "nearest" });
+      }
+      function sideHTML(html) {
+        document.getElementById("side-body").innerHTML = html;
+        openSide();
+      }
+
+      /* Relações entre palavras — derivadas apenas do corpus documentado */
+      var CONFUSIONS = {
+        silma: ["manesh", "thuvel", "kav", "vesilma"],
+        manesh: ["silma"],
+        thuvel: ["kav", "vesilma"],
+        kav: ["thuvel", "silma"],
+        vesilma: ["silma", "thuvel", "kav"],
+        mira: ["mirveth"],
+        mirveth: ["mira"],
+        vethari: ["kav", "veth"],
+        veth: ["verth"],
+        verth: ["veth"],
+        tal: ["kaj"],
+        kaj: ["tal"],
+      };
+      function relatedHTML(e) {
+        var k = norm(e.form),
+          h = "";
+        var conf = (CONFUSIONS[k] || []).map(byForm).filter(Boolean);
+        if (conf.length) {
+          h +=
+            '<label class="fl" style="margin-top:18px">Não confundir com</label><ul class="results" style="margin-top:8px">';
+          conf.forEach(function (o) {
+            h +=
+              '<li class="entry" data-form="' +
+              esc(o.form) +
+              '"><div class="entry-head"><span class="form">' +
+              esc(o.form) +
+              "</span>" +
+              '<span class="cls">' +
+              esc(o.cls) +
+              '</span></div><p class="mean">' +
+              esc(o.meaning) +
+              "</p></li>";
+          });
+          h += "</ul>";
+        }
+        var fam = LEXICON.filter(function (o) {
+          return norm(o.form) !== k && o.field === e.field;
+        }).slice(0, 6);
+        if (fam.length) {
+          h +=
+            '<label class="fl" style="margin-top:18px">Termos relacionados</label><div class="hist">' +
+            fam
+              .map(function (o) {
+                return (
+                  '<button type="button" data-form="' +
+                  esc(o.form) +
+                  '">' +
+                  esc(o.form) +
+                  "</button>"
+                );
+              })
+              .join("") +
+            "</div>";
+        }
+        return h;
+      }
+      function entryPanelHTML(e) {
+        var h = "";
+        h +=
+          '<div class="entry-head"><span class="form" style="font-size:1.7rem">' +
+          esc(e.form) +
+          "</span>" +
+          (e.ipa ? '<span class="ipa">' + esc(e.ipa) + "</span>" : "") +
+          '<span class="cls">' +
+          esc(e.cls) +
+          "</span></div>";
+        if (isLocked(e.form))
+          h +=
+            '<div class="chips" style="margin-top:10px">' +
+            statusTagHTML("mark", "Forma estabelecida") +
+            "</div>";
+        h += '<dl class="kv">';
+        h += "<dt>Significado</dt><dd>" + esc(e.meaning) + "</dd>";
+        h += "<dt>Campo</dt><dd>" + esc(e.field) + "</dd>";
+        h +=
+          "<dt>Pronúncia</dt><dd>" +
+          (e.ipa ? '<span class="ipa">' + esc(e.ipa) + "</span>" : NO_IPA) +
+          "</dd>";
+        if (e.valency) h += "<dt>Valência</dt><dd>" + esc(e.valency) + "</dd>";
+        h += "<dt>Registro</dt><dd>" + registrosCompativeis(e) + "</dd>";
+        if (e.glyph) h += "<dt>Escrita</dt><dd>possui sinal próprio em Silmain</dd>";
+        if (e.etym) h += "<dt>Etimologia</dt><dd>" + esc(e.etym) + "</dd>";
+        h += "</dl>";
+        if (isLocked(e.form))
+          h +=
+            '<div class="note block"><strong>Forma estabelecida</strong> — esta palavra é usada como unidade própria. Sua história pode ser explicada, mas ela não funciona como uma montagem livre de morfemas.</div>';
+        var sem = SEMANTIC_LOCKS.filter(function (l) {
+          return l.a === norm(e.form);
+        });
+        sem.forEach(function (l) {
+          h += '<div class="note gold"><strong>Sentido preciso</strong> — ' + esc(l.txt) + "</div>";
+        });
+        (e.notes || []).forEach(function (n) {
+          h += '<div class="note">' + esc(n) + "</div>";
+        });
+        h += relatedHTML(e);
+        h +=
+          '<div class="row" style="margin-top:16px">' +
+          copyBtn("Copiar palavra", e.form) +
+          copyBtn("Copiar verbete", verbeteText(e)) +
+          "</div>";
+        return h;
+      }
+      function registrosCompativeis(e) {
+        if (e.cls.indexOf("nome próprio") >= 0) return "todos os registros";
+        return "Luz Cotidiano · Escuridão Cotidiano · Ritual Comum";
+      }
+
+      function verbeteText(e) {
+        return [
+          e.form,
+          e.ipa || NO_IPA,
+          e.cls,
+          e.meaning,
+          e.valency ? "Valência: " + e.valency : "",
+          e.etym ? "Etimologia: " + e.etym : "",
+        ]
+          .filter(Boolean)
+          .join("\n");
+      }
+      function copyBtn(label, text) {
+        var id = "cp" + (copyBtn._n = (copyBtn._n || 0) + 1);
+        window.__copy = window.__copy || {};
+        window.__copy[id] = text;
+        return (
+          '<button type="button" class="btn ghost" data-copy="' +
+          id +
+          '" style="flex:0 0 auto">' +
+          esc(label) +
+          "</button>"
+        );
+      }
+      document.addEventListener("click", function (ev) {
+        var b = ev.target.closest ? ev.target.closest("[data-copy]") : null;
+        if (!b) return;
+        var txt = (window.__copy || {})[b.getAttribute("data-copy")] || "";
+        copyText(txt);
+        var old = b.textContent;
+        b.textContent = "Copiado";
+        setTimeout(function () {
+          b.textContent = old;
+        }, 1200);
+      });
+      function copyText(txt) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(txt).catch(fallback);
+        } else fallback();
+        function fallback() {
+          var ta = document.createElement("textarea");
+          ta.value = txt;
+          ta.setAttribute("readonly", "");
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          try {
+            document.execCommand("copy");
+          } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      }
+      function openEntry(e) {
+        sideHTML(entryPanelHTML(e));
+        pushHist(e.form);
+      }
+      /* navegação entre verbetes relacionados */
+      document.addEventListener("click", function (ev) {
+        var b = ev.target.closest ? ev.target.closest("#side-body [data-form]") : null;
+        if (!b) return;
+        var e = byForm(b.getAttribute("data-form"));
+        if (e) {
+          document.getElementById("side").scrollTop = 0;
+          openEntry(e);
+        }
+      });
+
+      /* ========================= ANÁLISE MORFOLÓGICA ========================= */
+      /* Ordem obrigatória: 1) entrada lexical exata  2) forma estabelecida  3) análise produtiva */
+      function analyzeToken(raw) {
+        var word = raw.replace(/[.,!?;:]/g, "");
+        var res = {
+          input: raw,
+          word: word,
+          exact: null,
+          locked: false,
+          parts: null,
+          rule: null,
+          status: null,
+          meaning: null,
+          valency: null,
+          cls: null,
+          ipa: null,
+          ipaKind: null,
+          messages: [],
+        };
+        var exact = byForm(word);
+        if (exact) {
+          res.exact = exact;
+          res.status = "FORMA";
+          res.meaning = exact.meaning;
+          res.valency = exact.valency;
+          res.cls = exact.cls;
+          res.ipa = exact.ipa;
+          res.locked = isLocked(word);
+          if (res.locked)
+            res.messages.push(
+              "Forma estabelecida: usada como unidade própria, não como montagem livre de morfemas.",
+            );
+          return res;
+        }
+        var d = decompose(word);
+        if (d) {
+          res.parts = d;
+          res.rule = d.rule;
+          res.status = "CONSTRUCAO";
+          res.cls = d.base.cls;
+          res.valency = d.base.valency;
+          res.meaning = d.base.meaning + " + " + d.morph.meaning;
+          res.messages.push(
+            "Construção válida pela gramática disponível: " + d.segments.join(" + ") + ".",
+          );
+          res.messages.push(NO_IPA);
+          return res;
+        }
+        res.status = null;
+        res.messages.push(
+          "Forma não documentada. Não existe forma Velarim conhecida para esta sequência, e nenhuma foi criada.",
+        );
+        return res;
+      }
+
+      /* Decomposição produtiva sobre base documentada, com regra morfofonológica explícita */
+      function decompose(word) {
+        var w = norm(word),
+          best = null;
+        /* prefixos documentados: ve- (negação) e an- (agência) */
+        var prefixes = [
+          { p: "ve", id: "ve", label: "ve-", meaning: "negação", status: "CANONICAL" },
+          {
+            p: "an",
+            id: "an_p",
+            label: "an-",
+            meaning: "agência ou controle deliberado",
+            status: "CANONICAL",
+          },
+        ];
+        for (var i = 0; i < prefixes.length; i++) {
+          var pf = prefixes[i];
+          if (w.indexOf(pf.p) === 0) {
+            var rest = w.slice(pf.p.length),
+              b = byForm(rest);
+            if (b)
+              return {
+                base: b,
+                morph: { label: pf.label, meaning: pf.meaning, status: pf.status, type: "prefix" },
+                rule: ruleById("REG-MF-04"),
+                segments: [pf.label, b.form],
+                result: word,
+              };
+            var b2 = byForm(pf.p + rest); /* eco: annooveth */
+            if (!b2 && rest.charAt(0) === pf.p.charAt(pf.p.length - 1)) {
+              var b3 = byForm(rest.slice(1));
+              if (b3)
+                return {
+                  base: b3,
+                  morph: {
+                    label: pf.label,
+                    meaning: pf.meaning,
+                    status: pf.status,
+                    type: "prefix",
+                  },
+                  rule: ruleById("REG-MF-05"),
+                  segments: [pf.label, b3.form],
+                  result: word,
+                };
+            }
+          }
+        }
+        /* sufixos documentados */
+        MORPHEMES.forEach(function (m) {
+          if (m.type !== "suffix") return;
+          var suf = m.id.replace(/_.*/, "");
+          if (w.length <= suf.length) return;
+          if (w.slice(-suf.length) !== suf) return;
+          var stem = w.slice(0, w.length - suf.length);
+          var cand = [
+            { base: byForm(stem), rule: "REG-MF-04" } /* concatenação direta */,
+            { base: byForm(stem + suf.charAt(0)), rule: "REG-MF-01" } /* queda de vogal idêntica */,
+            { base: byForm(stem + "a"), rule: "REG-MF-01" },
+          ];
+          for (var k = 0; k < cand.length; k++) {
+            if (cand[k].base && !isLocked(cand[k].base.form) && allowed(m, cand[k].base)) {
+              if (!best)
+                best = {
+                  base: cand[k].base,
+                  morph: m,
+                  rule: ruleById(cand[k].rule),
+                  segments: [cand[k].base.form, m.label],
+                  result: word,
+                };
+            }
+          }
+        });
+        /* ditongo: silmain ← silma + -in */
+        if (!best && /ain$/.test(w)) {
+          var b = byForm(w.replace(/ain$/, "a"));
+          if (b)
+            best = {
+              base: b,
+              morph: mById("in"),
+              rule: ruleById("REG-MF-02"),
+              segments: [b.form, "-in"],
+              result: word,
+            };
+        }
+        return best;
+      }
+      function allowed(m, base) {
+        if (!m.base) return true;
+        return (
+          m.base.indexOf(base.cls) >= 0 ||
+          m.base.some(function (c) {
+            return base.cls.indexOf(c) >= 0;
+          })
+        );
+      }
+      function ruleById(id) {
+        for (var i = 0; i < MORPH_RULES.length; i++)
+          if (MORPH_RULES[i].id === id) return MORPH_RULES[i];
+        return null;
+      }
+      function mById(id) {
+        for (var i = 0; i < MORPHEMES.length; i++) if (MORPHEMES[i].id === id) return MORPHEMES[i];
+        return null;
+      }
+
+      /* Alerta da Sombra */
+      function shadowCheck(base, morph, hasAnPrefix) {
+        if (!base || !morph) return null;
+        if (base.valency === "TRANSITIVE" && morph.id === "ov" && !hasAnPrefix) {
+          return "SHADOW_AGENT_ERASURE";
+        }
+        return null;
+      }
+
+      /* ========================= TRADUTOR ========================= */
+      function translate() {
+        var dir = document.getElementById("dir").value;
+        var reg = document.getElementById("reg").value;
+        var text = document.getElementById("src").value.trim();
+        var out = document.getElementById("trd-out");
+        out.innerHTML = "";
+        if (!text) {
+          out.innerHTML = '<div class="note">Escreva um texto para traduzir.</div>';
+          return;
+        }
+        pushHist(text);
+        if (dir === "v2p") out.innerHTML = v2p(text, reg);
+        else out.innerHTML = p2v(text, reg);
+      }
+
+      function v2p(text, reg) {
+        var R = REGISTERS[reg];
+        var tokens = text.split(/\s+/).filter(Boolean);
+        var analyses = tokens.map(analyzeToken);
+        var canon = CANON_EXAMPLES.filter(function (e) {
+          return norm(e.vel) === norm(text);
+        })[0];
+        var missing = analyses.filter(function (a) {
+          return !a.status;
+        });
+        var h = '<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px">';
+        h += '<h3 class="sec" style="font-size:.82rem">Tradução</h3>';
+        if (canon) {
+          h +=
+            '<p style="font-family:var(--serif);font-size:1.25rem;line-height:1.5;margin:10px 0 0">' +
+            esc(canon.pt) +
+            "</p>";
+          h +=
+            '<p class="mean" style="color:var(--muted)">' +
+            esc(REGISTERS[canon.reg].name) +
+            " · " +
+            esc(canon.order) +
+            "</p>";
+          if (reg !== canon.reg)
+            h +=
+              '<div class="note block">Esta frase é registrada no ' +
+              esc(REGISTERS[canon.reg].name) +
+              "; você selecionou " +
+              esc(R.name) +
+              ".</div>";
+          h +=
+            '<div class="row" style="margin-top:12px">' +
+            copyBtn("Copiar tradução", canon.pt) +
+            "</div>";
+        } else if (missing.length) {
+          h +=
+            '<div class="note block"><strong>Tradução completa não disponível</strong><br>' +
+            "Não existe forma Velarim conhecida para: " +
+            esc(
+              missing
+                .map(function (m) {
+                  return m.word;
+                })
+                .join(", "),
+            ) +
+            ".<br>Nenhuma palavra foi inventada para preencher a lacuna.</div>";
+          var partial = analyses
+            .filter(function (a) {
+              return a.status;
+            })
+            .map(function (a) {
+              return a.meaning;
+            })
+            .join(" · ");
+          if (partial)
+            h +=
+              '<div class="note"><strong>Elementos reconhecidos</strong><br>' +
+              esc(partial) +
+              "</div>";
+        } else {
+          var gloss = analyses
+            .map(function (a) {
+              return a.meaning;
+            })
+            .join(" · ");
+          h +=
+            '<p style="font-family:var(--serif);font-size:1.1rem;line-height:1.6;margin:10px 0 0">' +
+            esc(gloss) +
+            "</p>";
+          h +=
+            '<p class="mean" style="color:var(--muted)">Leitura elemento a elemento. Esta frase inteira não está registrada, e a redação em português corrente não é gerada automaticamente.</p>';
+          h +=
+            '<div class="row" style="margin-top:12px">' +
+            copyBtn("Copiar leitura", gloss) +
+            "</div>";
+        }
+        h +=
+          '<h3 class="sec" style="font-size:.82rem;margin-top:26px">Palavra a palavra</h3><ul class="results">';
+        analyses.forEach(function (a, i) {
+          h +=
+            '<li class="entry" data-tok="' +
+            i +
+            '"><div class="entry-head"><span class="form">' +
+            esc(a.word) +
+            "</span>";
+          if (a.ipa) h += '<span class="ipa">' + esc(a.ipa) + "</span>";
+          if (a.cls) h += '<span class="cls">' + esc(a.cls) + "</span>";
+          h +=
+            '<div class="entry-tags">' +
+            (a.status === "FORMA"
+              ? statusTagHTML("mark", "Forma Velarim")
+              : a.status === "CONSTRUCAO"
+                ? statusTagHTML("", "Construção válida")
+                : statusTagHTML("warn", "Forma não documentada")) +
+            "</div></div>";
+          if (a.parts)
+            h +=
+              '<p class="mean" style="color:var(--muted)">' +
+              esc(a.parts.segments.join(" + ")) +
+              "</p>";
+          h +=
+            '<p class="mean">' +
+            esc(a.meaning || "Não existe forma Velarim conhecida para esta sequência.") +
+            "</p>";
+          h += "</li>";
+        });
+        h += "</ul>";
+        h +=
+          '<p class="mean" style="color:var(--muted)">Registro: ' +
+          esc(R.name) +
+          " · " +
+          esc(R.order) +
+          "</p>";
+        if (reg === "cie") h += '<div class="note">' + esc(REGISTERS.cie.note) + "</div>";
+        h += "</div>";
+        setTimeout(function () {
+          document.querySelectorAll("#trd-out [data-tok]").forEach(function (li) {
+            li.addEventListener("click", function () {
+              var a = analyses[+li.getAttribute("data-tok")];
+              if (a.exact) openEntry(a.exact);
+              else sideHTML(tokenPanelHTML(a));
+            });
+          });
+        }, 0);
+        return h;
+      }
+      function tokenPanelHTML(a) {
+        var h =
+          '<div class="entry-head"><span class="form" style="font-size:1.6rem">' +
+          esc(a.word) +
+          "</span></div>";
+        h +=
+          '<div class="chips" style="margin-top:10px">' +
+          (a.parts
+            ? statusTagHTML("", "Construção válida")
+            : statusTagHTML("warn", "Forma não documentada")) +
+          "</div>";
+        if (a.parts) {
+          h +=
+            '<pre class="deriv">' +
+            esc(a.parts.segments.join(" + ")) +
+            "\n↓\n" +
+            esc(a.parts.morph.meaning) +
+            "\n↓\n" +
+            esc(a.word) +
+            "</pre>";
+          h +=
+            '<dl class="kv"><dt>Base</dt><dd>' +
+            esc(a.parts.base.form) +
+            " — " +
+            esc(a.parts.base.meaning) +
+            "</dd>" +
+            "<dt>Operação</dt><dd>" +
+            esc(a.parts.morph.label) +
+            " — " +
+            esc(a.parts.morph.meaning) +
+            "</dd>" +
+            (a.valency ? "<dt>Valência</dt><dd>" + esc(a.valency) + "</dd>" : "") +
+            "<dt>Pronúncia</dt><dd>" +
+            NO_IPA +
+            "</dd></dl>";
+        }
+        (a.messages || []).forEach(function (m) {
+          h += '<div class="note">' + esc(m) + "</div>";
+        });
+        return h;
+      }
+
+      function p2v(text, reg) {
+        var R = REGISTERS[reg];
+        var idx = ptIndex();
+        var words = text
+          .toLowerCase()
+          .replace(/[.,!?;:]/g, " ")
+          .split(/\s+/)
+          .filter(function (w) {
+            return w && STOPWORDS.indexOf(w) < 0;
+          });
+        var found = [],
+          missing = [],
+          suggest = [];
+        words.forEach(function (w) {
+          var hit = null;
+          for (var c in idx) {
+            if (c === w || c.split(/\s+/).indexOf(w) >= 0 || norm(c) === norm(w)) {
+              hit = { concept: c, forms: idx[c] };
+              break;
+            }
+          }
+          if (hit) {
+            found.push({ word: w, concept: hit.concept, forms: hit.forms });
+            return;
+          }
+          /* aproximação por radical: sugestão de consulta, nunca tradução */
+          var appr = null;
+          for (var c2 in idx) {
+            var toks = norm(c2).split(/\s+/);
+            for (var i = 0; i < toks.length; i++) {
+              if (
+                toks[i].length > 3 &&
+                norm(w).length > 3 &&
+                toks[i].indexOf(norm(w).slice(0, Math.max(4, norm(w).length - 2))) === 0
+              ) {
+                appr = { concept: c2, forms: idx[c2] };
+                break;
+              }
+            }
+            if (appr) break;
+          }
+          missing.push(w);
+          if (appr) suggest.push({ word: w, concept: appr.concept, forms: appr.forms });
+        });
+
+        var h = '<div style="margin-top:22px;border-top:1px solid var(--line);padding-top:20px">';
+        h += '<h3 class="sec" style="font-size:.82rem">Resultado</h3>';
+        if (found.length && !missing.length) {
+          if (reg === "cie") {
+            h +=
+              '<div class="note block"><strong>Construção não suportada</strong><br>O Científico Secreto tem ordem variável e a língua registrada não fornece estrutura suficiente para montar a frase.</div>';
+          } else {
+            var seq = orderForms(found, reg);
+            if (seq) {
+              h +=
+                '<p style="font-family:var(--serif);font-size:1.35rem;letter-spacing:.04em;margin:10px 0 0">' +
+                esc(seq.join(" ")) +
+                "</p>";
+              h +=
+                '<p class="mean" style="color:var(--muted)">Sequência formada apenas com palavras existentes, na ordem ' +
+                esc(R.order) +
+                " do registro " +
+                esc(R.name) +
+                ".</p>";
+              h +=
+                '<div class="row" style="margin-top:12px">' +
+                copyBtn("Copiar", seq.join(" ")) +
+                "</div>";
+            } else {
+              h +=
+                '<div class="note block"><strong>Construção não suportada</strong><br>A valência dos verbos envolvidos não autoriza esta combinação de participantes.</div>';
+            }
+          }
+        } else {
+          h +=
+            '<div class="note block"><strong>Construção não suportada</strong><br>' +
+            "Não existe forma Velarim conhecida para: " +
+            esc(missing.join(", ")) +
+            ".<br>Nenhuma palavra foi inventada para preencher a lacuna.</div>";
+        }
+        if (found.length) {
+          h +=
+            '<h3 class="sec" style="font-size:.82rem;margin-top:26px">Palavras encontradas</h3><ul class="results">';
+          found.forEach(function (f) {
+            f.forms.forEach(function (fm) {
+              var e = byForm(fm);
+              h +=
+                '<li class="entry" data-form="' +
+                esc(fm) +
+                '"><div class="entry-head"><span class="form">' +
+                esc(fm) +
+                "</span>" +
+                (e.ipa ? '<span class="ipa">' + esc(e.ipa) + "</span>" : "") +
+                '<span class="cls">' +
+                esc(e.cls) +
+                "</span></div>" +
+                '<p class="mean">“' +
+                esc(f.word) +
+                "” → " +
+                esc(e.meaning) +
+                "</p></li>";
+            });
+          });
+          h += "</ul>";
+          if (
+            found.some(function (f) {
+              return f.forms.length > 1;
+            })
+          )
+            h +=
+              '<div class="note">Alguns conceitos têm mais de uma palavra possível; escolha a que corresponde ao sentido exato desejado.</div>';
+        }
+        if (suggest.length) {
+          h +=
+            '<h3 class="sec" style="font-size:.82rem;margin-top:26px">Sugestões de consulta</h3>' +
+            '<p class="mean" style="color:var(--muted)">Aproximações apenas para pesquisa — não são tradução.</p><ul class="results">';
+          suggest.forEach(function (s) {
+            s.forms.slice(0, 2).forEach(function (fm) {
+              var e = byForm(fm);
+              h +=
+                '<li class="entry" data-form="' +
+                esc(fm) +
+                '"><div class="entry-head"><span class="form">' +
+                esc(fm) +
+                "</span>" +
+                '<span class="cls">' +
+                esc(e.cls) +
+                '</span></div><p class="mean">próximo de “' +
+                esc(s.concept) +
+                "”</p></li>";
+            });
+          });
+          h += "</ul>";
+        }
+        h += "</div>";
+        setTimeout(function () {
+          document.querySelectorAll("#trd-out [data-form]").forEach(function (li) {
+            li.addEventListener("click", function () {
+              var e = byForm(li.getAttribute("data-form"));
+              if (e) openEntry(e);
+            });
+          });
+        }, 0);
+        return h;
+      }
+      function orderForms(found, reg) {
+        var forms = [];
+        found.forEach(function (f) {
+          forms.push(byForm(f.forms[0]));
+        });
+        var subj = forms.filter(function (e) {
+          return e.cls.indexOf("pronome") >= 0;
+        });
+        var verbs = forms.filter(function (e) {
+          return e.cls.indexOf("verbo") >= 0;
+        });
+        var others = forms.filter(function (e) {
+          return subj.indexOf(e) < 0 && verbs.indexOf(e) < 0;
+        });
+        if (!verbs.length)
+          return forms.map(function (e) {
+            return e.form;
+          });
+        var v = verbs[0];
+        if (v.valency === "INTRANSITIVE" && others.length)
+          return null; /* valência bloqueia objeto */
+        var s = subj.map(function (e) {
+            return e.form;
+          }),
+          o = others.map(function (e) {
+            return e.form;
+          });
+        if (reg === "luz") return s.concat([v.form], o);
+        if (reg === "esc") return s.concat(o, [v.form]);
+        if (reg === "rit") return [v.form].concat(s, o);
+        return null;
+      }
+
+      /* ========================= CONSTRUTOR ========================= */
+      function initBuilder() {
+        var rootSel = document.getElementById("root"),
+          mSel = document.getElementById("morph");
+        LEXICON.slice()
+          .sort(function (a, b) {
+            return a.form.localeCompare(b.form);
+          })
+          .forEach(function (e) {
+            var o = document.createElement("option");
+            o.value = e.form;
+            o.textContent =
+              e.form + " — " + e.meaning.slice(0, 48) + (e.meaning.length > 48 ? "…" : "");
+            rootSel.appendChild(o);
+          });
+        MORPHEMES.forEach(function (m) {
+          var o = document.createElement("option");
+          o.value = m.id;
+          o.textContent = m.label + " — " + m.op;
+          mSel.appendChild(o);
+        });
+        rootSel.value = "silma";
+        mSel.value = "ari";
+        rootSel.addEventListener("change", build);
+        mSel.addEventListener("change", build);
+        build();
+      }
+      function applyMorph(base, m) {
+        var b = base.form,
+          res,
+          rule;
+        if (m.type === "prefix") {
+          var p = m.label.replace("-", "");
+          if (b.charAt(0) === p.charAt(p.length - 1)) {
+            res = p + b;
+            rule = ruleById("REG-MF-05");
+          } else {
+            res = p + b;
+            rule = ruleById("REG-MF-04");
+          }
+          return { result: res, rule: rule, segments: [m.label, b] };
+        }
+        var suf = m.label.replace("-", "");
+        var lastV = b.slice(-1),
+          firstV = suf.charAt(0);
+        var vowels = "aeiou";
+        if (vowels.indexOf(lastV) >= 0 && lastV === firstV) {
+          /* REG-MF-01 */
+          res = b.slice(0, -1) + suf;
+          rule = ruleById("REG-MF-01");
+        } else if (vowels.indexOf(lastV) >= 0 && vowels.indexOf(firstV) >= 0) {
+          /* REG-MF-02 ditongo licenciado */
+          var di = lastV + firstV;
+          if (["ai", "ei", "oi", "au", "eu"].indexOf(di) >= 0) {
+            res = b + suf;
+            rule = ruleById("REG-MF-02");
+          } else {
+            res = b.slice(0, -1) + suf;
+            rule = ruleById("REG-MF-01");
+          }
+        } else if (vowels.indexOf(lastV) >= 0) {
+          /* vogal + consoante */
+          res = b + suf;
+          rule = ruleById("REG-MF-04");
+        } else {
+          /* raiz consonântica */
+          if (b.slice(-1) === suf.charAt(0)) {
+            res = b + suf;
+            rule = ruleById("REG-MF-04");
+          } else if (vowels.indexOf(firstV) >= 0) {
+            var echoNeeded = b.slice(-suf.length) === suf; /* repetição opaca */
+            if (echoNeeded) {
+              res = b + "v" + suf;
+              rule = ruleById("REG-MF-05");
+            } else {
+              res = b + suf;
+              rule = ruleById("REG-MF-04");
+            }
+          } else {
+            res = b + suf;
+            rule = ruleById("REG-MF-04");
+          }
+        }
+        return { result: res, rule: rule, segments: [b, m.label] };
+      }
+      function build() {
+        var base = byForm(document.getElementById("root").value);
+        var m = mById(document.getElementById("morph").value);
+        var out = document.getElementById("cns-out");
+        if (!base || !m) {
+          out.innerHTML = "";
+          return;
+        }
+        var h = "";
+        if (isLocked(base.form)) {
+          h +=
+            '<div class="note block"><strong>Construção não suportada</strong><br>' +
+            esc(base.form) +
+            " é uma forma estabelecida: é usada como unidade própria. Sua história pode ser explicada, mas ela não funciona como uma montagem livre de morfemas.</div>";
+          out.innerHTML = h;
+          return;
+        }
+        if (m.base && !allowed(m, base)) {
+          h +=
+            '<div class="note block"><strong>Construção não suportada</strong><br>' +
+            "A operação " +
+            esc(m.label) +
+            " atua sobre " +
+            esc(m.base.join(", ")) +
+            "; " +
+            esc(base.form) +
+            " é " +
+            esc(base.cls) +
+            ".</div>";
+          out.innerHTML = h;
+          return;
+        }
+        var ap = applyMorph(base, m);
+        var exact = byForm(ap.result);
+
+        h +=
+          '<pre class="deriv">' +
+          esc(ap.segments.join(" + ")) +
+          "\n↓\n" +
+          esc(m.meaning) +
+          "\n↓\n" +
+          esc(ap.result) +
+          "</pre>";
+        h +=
+          '<div class="entry-head" style="margin-top:16px"><span class="form" style="font-size:1.7rem">' +
+          esc(ap.result) +
+          "</span>" +
+          (exact && exact.ipa ? '<span class="ipa">' + esc(exact.ipa) + "</span>" : "") +
+          '<div class="entry-tags">' +
+          (exact
+            ? statusTagHTML("mark", "Forma Velarim")
+            : statusTagHTML("", "Construção válida")) +
+          "</div></div>";
+        h += '<dl class="kv">';
+        h +=
+          "<dt>Sentido</dt><dd>" +
+          esc(exact ? exact.meaning : base.meaning + " + " + m.meaning) +
+          "</dd>";
+        if (base.valency) h += "<dt>Valência</dt><dd>" + esc(base.valency) + "</dd>";
+        h += "<dt>Pronúncia</dt><dd>" + (exact && exact.ipa ? esc(exact.ipa) : NO_IPA) + "</dd>";
+        h += "</dl>";
+        if (exact) {
+          h +=
+            '<div class="note gold"><strong>Esta palavra já existe</strong> — ' +
+            esc(exact.form) +
+            ": " +
+            esc(exact.meaning) +
+            ".</div>";
+          h +=
+            '<div class="row" style="margin-top:10px"><button type="button" class="btn ghost" id="open-built" style="flex:0 0 auto">Abrir verbete</button></div>';
+        } else {
+          h +=
+            '<div class="note">Construção válida pela gramática disponível. Esta palavra não possui verbete próprio.</div>';
+        }
+        if (m.id === "ari")
+          h +=
+            '<div class="note gold">-ari forma um coletivo vivo: preserva a identidade de cada participante. <strong>-ari não é assimilação.</strong></div>';
+        if (m.id === "in")
+          h +=
+            '<div class="note">-in trata os indivíduos como unidades separadas, sem relação coletiva.</div>';
+        if (m.id === "ov")
+          h +=
+            '<div class="note block"><strong>Atenção</strong> — -ov pertence ao campo da assimilação e da perda de fronteiras. Não é plural nem coletivo.</div>';
+        var shadow = shadowCheck(base, m, false);
+        if (shadow)
+          h +=
+            '<div class="note alert"><strong>Atenção — estrutura associada à assimilação pela Sombra.</strong><br>' +
+            "Um verbo que age sobre outro, combinado com -ov e sem an-, apaga quem age: resta apenas a fusão. " +
+            "O Velarim prefere construções em que o agente, a pessoa afetada e a natureza da relação continuem reconhecíveis.</div>";
+        h +=
+          '<div class="row" style="margin-top:14px">' +
+          copyBtn("Copiar palavra", ap.result) +
+          copyBtn("Copiar construção", ap.segments.join(" + ") + " → " + ap.result) +
+          "</div>";
+        h +=
+          '<div class="note" style="margin-top:16px">Operações sem produtividade livre: ' +
+          NON_PRODUCTIVE.map(function (n) {
+            return "<code>" + esc(n.label) + "</code> — " + esc(n.reason);
+          }).join(" ") +
+          "</div>";
+        out.innerHTML = h;
+        var ob = document.getElementById("open-built");
+        if (ob && exact)
+          ob.addEventListener("click", function () {
+            openEntry(exact);
+          });
+        pushHist(ap.result);
+      }
+
+      /* ========================= VALIDADOR ========================= */
+      var ALLOWED_GRAPHEMES = /^[a-z]+$/;
+      var DOCUMENTED_LETTERS = "almnoshvrtieukjdbzy"; /* p e g não documentados produtivamente */
+      function validate() {
+        var raw = document.getElementById("val").value.trim();
+        var out = document.getElementById("val-out");
+        if (!raw) {
+          out.innerHTML = "";
+          return;
+        }
+        var w = raw.toLowerCase();
+        var h = "";
+        var hasDiacritic = /[^\u0000-\u007F]/.test(raw);
+        if (hasDiacritic) {
+          h +=
+            '<div class="chips">' +
+            statusTagHTML("warn", "Grafia não suportada") +
+            "</div>" +
+            '<div class="note block">A escrita do Velarim não usa acentos nem diacríticos. Nada é corrigido por adivinhação.</div>';
+        }
+        var exact = byForm(w.replace(/[^a-z]/g, ""));
+        if (exact) {
+          h +=
+            '<div class="chips">' +
+            statusTagHTML("mark", "Forma Velarim") +
+            (isLocked(exact.form) ? statusTagHTML("", "Forma estabelecida") : "") +
+            "</div>";
+          h +=
+            '<div class="note gold"><strong>' +
+            esc(exact.form) +
+            "</strong> — " +
+            esc(exact.meaning) +
+            "<br>" +
+            (exact.ipa ? "Pronúncia: " + esc(exact.ipa) : NO_IPA) +
+            "</div>";
+        } else if (!ALLOWED_GRAPHEMES.test(w)) {
+          h +=
+            '<div class="chips">' +
+            statusTagHTML("warn", "Grafia não suportada") +
+            "</div>" +
+            '<div class="note block">Apenas letras simples pertencem à escrita do Velarim.</div>';
+        } else if (/[pg]/.test(w)) {
+          h +=
+            '<div class="chips">' +
+            statusTagHTML("warn", "Grafia não suportada") +
+            "</div>" +
+            '<div class="note block">As letras <code>p</code> e <code>g</code> não existem na escrita conhecida do Velarim.</div>';
+        } else {
+          var d = decompose(w);
+          if (d) {
+            h +=
+              '<div class="chips">' +
+              statusTagHTML("", "Construção válida") +
+              "</div>" +
+              '<div class="note">' +
+              esc(d.segments.join(" + ")) +
+              " — construção válida pela gramática disponível. " +
+              NO_IPA +
+              "</div>";
+          } else {
+            h +=
+              '<div class="chips">' +
+              statusTagHTML("warn", "Forma não documentada") +
+              "</div>" +
+              '<div class="note block">Não existe forma Velarim conhecida para esta sequência. Nenhuma forma foi criada para preencher a lacuna.</div>';
+          }
+        }
+        /* leitura ortográfica */
+        var reads = [];
+        if (/([aeiou])\1/.test(w)) reads.push("vogal longa escrita por duplicação");
+        if (/eh/.test(w)) reads.push("<code>eh</code> = schwa /ə/");
+        ["th", "sh", "zh", "nh"].forEach(function (dg) {
+          if (w.indexOf(dg) >= 0) reads.push("dígrafo <code>" + dg + "</code>");
+        });
+        if (/j|(^h)|([^tszn]h)/.test(w))
+          reads.push("<code>j</code> ou <code>h</code> isolado: pronúncia ainda não documentada");
+        if (reads.length) h += '<div class="note">Leitura: ' + reads.join(" · ") + ".</div>";
+        out.innerHTML = h;
+      }
+
+      /* ========================= GRAMÁTICA ========================= */
+      var GRAMMAR = [
+        {
+          t: "Ortografia",
+          b:
+            "<ul>" +
+            "<li>A transliteração oficial usa caracteres <strong>ASCII</strong>.</li>" +
+            "<li>Vogais longas por duplicação: <code>aa ee ii oo uu</code>.</li>" +
+            "<li><code>eh</code> representa o schwa /ə/.</li>" +
+            "<li>Dígrafos: <code>th</code> /ð/, <code>sh</code> /ʃ/, <code>zh</code> /ʒ/, <code>nh</code> /ɲ/.</li>" +
+            "<li>Maiúsculas e minúsculas preservam a mesma identidade lexical.</li>" +
+            "<li>Diacríticos legados não são grafia normativa; nada é “corrigido” por adivinhação.</li>" +
+            "<li>Silmain registra sinais lexicais; o alfabeto latino registra leitura e pronúncia.</li></ul>",
+        },
+        {
+          t: "Fonologia",
+          b:
+            "<ul>" +
+            "<li>Canônicos: /l/ <code>l</code>, /ɾ/ <code>r</code>, /v/ <code>v</code>, /ð/ <code>th</code>, /s/ <code>s</code>, /ʃ/ <code>sh</code>, /ʒ/ <code>zh</code>, /n/ <code>n</code>, /m/ <code>m</code>, /ɲ/ <code>nh</code>.</li>" +
+            "<li><code>y</code> = glide /j/ produtivo em epêntese; não substitui <code>j</code> lexical.</li>" +
+            "<li><code>j</code>, <code>h</code> isolado e <code>t</code> isolado: pronúncia ainda não documentada.</li>" +
+            "<li>/b/ (<code>sib</code>) e /d/ (<code>dur</code>): existem nas palavras registradas; sua distribuição geral não está fechada.</li>" +
+            "<li><code>k</code> ocorre em palavras registradas. <code>p</code> e <code>g</code> não existem na língua conhecida.</li>" +
+            "<li>Vogais: a/aa, e/ee, i/ii, o/oo, u/uu; <code>eh</code> = /ə/. Ditongos licenciados: ai, ei, oi, au, eu.</li>" +
+            "<li>Acento: vogal longa lexical &gt; sufixos <code>-eth -il -ar</code> &gt; ditongo final lexicalizado &gt; penúltima sílaba. Oxítonas documentadas: <code>velar</code>, <code>anir</code>, <code>mirveth</code>.</li>" +
+            "<li>Sílaba: Luz favorece (C)V(C); Escuridão preserva grupos como <code>kr</code>.</li></ul>",
+        },
+        { t: "Morfofonologia", b: "__RULES__" },
+        {
+          t: "Número e coletividade",
+          b:
+            "<ul>" +
+            "<li><code>-in</code> — pluralidade dispersa; indivíduos tratados separadamente (<code>mirvethin</code>).</li>" +
+            "<li><code>-ari</code> — coletivo vivo/relacional, com identidade preservada (<code>mirvethari</code>). <strong>-ari ≠ assimilação.</strong></li>" +
+            "<li><code>-ov</code> — assimilação e perda de fronteiras (<code>silmov</code>). Gera alerta semântico.</li></ul>",
+        },
+        {
+          t: "Nominalização",
+          b:
+            "<ul>" +
+            "<li><code>-an</code> agente/pessoa relacionada (<code>noovethan</code>).</li>" +
+            "<li><code>-ol</code> campo de lugar — lido através de formas reconhecidas (<code>silmol</code>, <code>namol</code>); produtividade geral não autorizada.</li>" +
+            "<li><code>-esh</code> instrumento ou meio.</li>" +
+            "<li><code>-un</code> estado, qualidade ou abstração (<code>silarun</code>).</li>" +
+            "<li>Formas lexicalizadas mantêm prioridade sobre análises derivacionais posteriores.</li></ul>",
+        },
+        {
+          t: "Aspecto",
+          b:
+            "<ul>" +
+            "<li><code>-eth</code> ação concluída ou selada (<code>velareth</code>).</li>" +
+            "<li><code>-il</code> possibilidade, desejo, projeção futura (<code>velaril</code>).</li>" +
+            "<li><code>-ar</code> continuidade e duração (<code>velarvar</code>).</li>" +
+            "<li>Novas formas construídas por estas regras são <strong>construções válidas</strong>; as formas citadas já existem como palavras registradas.</li></ul>",
+        },
+        {
+          t: "Modalidade",
+          b:
+            "<ul>" +
+            "<li><code>kir</code> poder, capacidade, permissão.</li>" +
+            "<li><code>van</code> dever, obrigação.</li>" +
+            "<li><code>sen</code> querer, intenção, desejo intencional.</li>" +
+            "<li>São partículas modais; o corpus não documenta uma posição sintática fixa distinta da ordem do registro.</li></ul>",
+        },
+        {
+          t: "Negação",
+          b:
+            "<ul>" +
+            "<li><code>ve-</code> prefixo de negação; <code>ve</code> também ocorre como partícula livre.</li>" +
+            "<li>Formas lexicalizadas preservam sua identidade inteira: <code>vesilma</code> é a palavra estabelecida para ausência de luz física.</li>" +
+            "<li>Entrada lexical exata tem precedência sobre decomposição.</li></ul>",
+        },
+        {
+          t: "Valência",
+          b:
+            "<ul>" +
+            "<li>Verbos são <strong>INTRANSITIVE</strong>, <strong>TRANSITIVE</strong> ou <strong>RELATIONAL</strong>.</li>" +
+            "<li>A valência organiza participantes e restringe a ordem sintática apropriada.</li>" +
+            "<li>Se a valência não autorizar a construção: <strong>construção não suportada</strong>.</li></ul>",
+        },
+        {
+          t: "Relações",
+          b:
+            "<ul>" +
+            "<li><code>an-</code> controle ou agência unilateral (<code>annooveth</code>).</li>" +
+            "<li><code>-im</code> reciprocidade · <code>-ath</code> coexistência (<code>namath</code>) · <code>-oi</code> ressonância · <code>-av</code> domínio ou submissão.</li>" +
+            "<li><code>tal</code> possuidor → possuído; <code>kaj</code> subordinado → dominante. Pertencimento comunitário legítimo ocupa outro campo.</li>" +
+            "<li>Verbo que age sobre outro + <code>-ov</code> sem <code>an-</code>: estrutura de apagamento do agente, associada à assimilação pela Sombra.</li></ul>",
+        },
+        { t: "Sintaxe", b: "__SYNTAX__" },
+        { t: "Registros", b: "__REG__" },
+        { t: "Formas estabelecidas e sentidos travados", b: "__STATUS__" },
+        { t: "Exemplos", b: "__EX__" },
+      ];
+      function grammarHTML() {
+        var h = "";
+        GRAMMAR.forEach(function (g, i) {
+          var body = g.b;
+          if (body === "__RULES__") {
+            body =
+              '<table class="mini"><thead><tr><th>Regra</th><th>Descrição</th><th>Exemplo</th></tr></thead><tbody>';
+            MORPH_RULES.forEach(function (r) {
+              body +=
+                "<tr><td>" +
+                esc(r.name) +
+                "</td><td>" +
+                esc(r.desc) +
+                "</td><td><code>" +
+                esc(r.ex) +
+                "</code></td></tr>";
+            });
+            body +=
+              '</tbody></table><p style="margin-top:10px">Reversão de <code>silmain</code> devolve <code>silma</code>; nunca <code>silmai</code>. A epêntese não é criada automaticamente diante de <code>a</code>.</p>';
+          } else if (body === "__SYNTAX__") {
+            body =
+              "<ul>" +
+              "<li><strong>Luz Cotidiano — SVO.</strong> <code>Mi tal silma.</code> — Eu possuo a luz.</li>" +
+              "<li><strong>Escuridão Cotidiano — SOV.</strong> <code>Mi silma tal.</code> — Eu possuo a luz.</li>" +
+              "<li><strong>Ritual Comum — VSO.</strong> <code>Vethari na mirveth!</code> — Que entremos em Vethari de modo legítimo, contraparte.</li>" +
+              "<li><strong>Científico Secreto — variável.</strong> Sem estrutura documentada: <em>Construção não suportada.</em></li></ul>";
+          } else if (body === "__REG__") {
+            body =
+              '<table class="mini"><thead><tr><th>Registro</th><th>Ordem</th><th>Função</th></tr></thead><tbody>';
+            ["proto", "luz", "esc", "rit", "cie"].forEach(function (k) {
+              var r = REGISTERS[k];
+              body +=
+                "<tr><td>" +
+                esc(r.name) +
+                "</td><td><code>" +
+                esc(r.order) +
+                "</code></td><td>" +
+                esc(r.fn) +
+                "</td></tr>";
+            });
+            body +=
+              '</tbody></table><p style="margin-top:10px">Proto-Velarim é contexto histórico: sua ordem é reconstruída e não sustenta tradução automática completa.</p>';
+          } else if (body === "__STATUS__") {
+            body =
+              "<p>Algumas palavras funcionam como <strong>formas estabelecidas</strong>: são usadas inteiras. " +
+              "Sua história pode ser explicada, mas elas não funcionam como montagem livre de morfemas.</p>" +
+              '<p style="margin-top:10px"><strong>Formas estabelecidas:</strong> <code>' +
+              LEXICAL_LOCKS.join("</code>, <code>") +
+              "</code>.</p>" +
+              '<p style="margin-top:14px"><strong>Sentidos que não se confundem:</strong></p><ul>' +
+              SEMANTIC_LOCKS.map(function (l) {
+                return "<li><code>" + esc(l.a) + "</code> — " + esc(l.txt) + "</li>";
+              }).join("") +
+              "</ul>" +
+              '<p style="margin-top:12px;color:var(--muted)">Onde a língua registrada não decide, o aplicativo declara a fronteira em vez de inventar forma.</p>';
+          } else if (body === "__EX__") {
+            body =
+              "<ul>" +
+              CANON_EXAMPLES.map(function (e) {
+                return (
+                  "<li><code>" +
+                  esc(e.vel) +
+                  "</code> — " +
+                  esc(e.pt) +
+                  "<br><span style='color:var(--muted)'>" +
+                  esc(REGISTERS[e.reg].name) +
+                  " · " +
+                  esc(e.order) +
+                  "</span></li>"
+                );
+              }).join("") +
+              "</ul>";
+          }
+          h +=
+            '<div class="grammar-sec"><button type="button" aria-expanded="' +
+            (i === 0) +
+            '" data-g="' +
+            i +
+            '">' +
+            esc(g.t) +
+            '</button><div class="grammar-body' +
+            (i === 0 ? "" : " hide") +
+            '" id="gb' +
+            i +
+            '">' +
+            body +
+            "</div></div>";
+        });
+        return h;
+      }
+
+      /* ========================= HISTÓRICO ========================= */
+      var HK = "velarim.history.v1";
+      function getHist() {
+        try {
+          return JSON.parse(localStorage.getItem(HK) || "[]");
+        } catch (e) {
+          return [];
+        }
+      }
+      function pushHist(v) {
+        if (!v) return;
+        var h = getHist().filter(function (x) {
+          return x !== v;
+        });
+        h.unshift(v);
+        h = h.slice(0, 12);
+        try {
+          localStorage.setItem(HK, JSON.stringify(h));
+        } catch (e) {}
+        renderHist();
+      }
+      function renderHist() {
+        var box = document.getElementById("hist");
+        box.innerHTML = "";
+        var h = getHist();
+        if (!h.length) {
+          box.appendChild(el("span", "hint", "Nenhum registro local."));
+          return;
+        }
+        h.forEach(function (v) {
+          var b = el("button", null, v.length > 26 ? v.slice(0, 26) + "…" : v);
+          b.type = "button";
+          b.title = v;
+          b.addEventListener("click", function () {
+            var e = byForm(v);
+            if (e) {
+              show("dic");
+              document.getElementById("q").value = v;
+              renderDict();
+              openEntry(e);
+            } else {
+              show("trd");
+              document.getElementById("src").value = v;
+              translate();
+            }
+          });
+          box.appendChild(b);
+        });
+      }
+
+      /* ========================= NAVEGAÇÃO ========================= */
+      function show(surface) {
+        var map = { dic: "s-dic", trd: "s-trd", cns: "s-cns", grm: "s-grm" };
+        Object.keys(map).forEach(function (k) {
+          document.getElementById(map[k]).classList.toggle("hide", k !== surface);
+        });
+        document.querySelectorAll("nav.tabs button").forEach(function (b) {
+          b.setAttribute("aria-pressed", String(b.getAttribute("data-surface") === surface));
+        });
+        document.getElementById("s-val").classList.toggle("hide", surface === "grm");
+      }
+
+      /* ========================= BOOT ========================= */
+      document.querySelectorAll("nav.tabs button").forEach(function (b) {
+        b.addEventListener("click", function () {
+          show(b.getAttribute("data-surface"));
+        });
+      });
+      document.querySelectorAll(".chip[data-filter]").forEach(function (c) {
+        c.addEventListener("click", function () {
+          activeFilter = c.getAttribute("data-filter");
+          document.querySelectorAll(".chip[data-filter]").forEach(function (x) {
+            x.setAttribute("aria-pressed", String(x === c));
+          });
+          renderDict();
+        });
+      });
+      document.getElementById("q").addEventListener("input", renderDict);
+      document.getElementById("val").addEventListener("input", validate);
+      document.getElementById("go-trd").addEventListener("click", translate);
+      document.getElementById("ex1").addEventListener("click", function () {
+        document.getElementById("dir").value = "v2p";
+        document.getElementById("reg").value = "esc";
+        document.getElementById("src").value = "Na thuvel namath.";
+        translate();
+      });
+      document.getElementById("ex2").addEventListener("click", function () {
+        document.getElementById("dir").value = "v2p";
+        document.getElementById("reg").value = "rit";
+        document.getElementById("src").value = "Vethari na mirveth!";
+        translate();
+      });
+      document.getElementById("side-close").addEventListener("click", function () {
+        document.getElementById("side").classList.add("closed");
+      });
+      document.getElementById("clear-hist").addEventListener("click", function () {
+        try {
+          localStorage.removeItem(HK);
+        } catch (e) {}
+        renderHist();
+      });
+      document.addEventListener("click", function (ev) {
+        var b = ev.target.closest ? ev.target.closest("[data-g]") : null;
+        if (!b) return;
+        var body = document.getElementById("gb" + b.getAttribute("data-g"));
+        var open = body.classList.contains("hide");
+        body.classList.toggle("hide", !open);
+        b.setAttribute("aria-expanded", String(open));
+      });
+      document.getElementById("grm-out").innerHTML = grammarHTML();
+      initBuilder();
+      renderDict();
+      renderHist();
+    </script>
+    <nav
+      aria-label="Navegação JOGAR"
+      style="
+        position: fixed;
+        top: 12px;
+        right: 16px;
+        z-index: 9999;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        align-items: center;
+        padding: 8px 10px;
+        border: 1px solid rgba(140, 95, 255, 0.35);
+        border-radius: 999px;
+        background: rgba(11, 12, 18, 0.92);
+        font:
+          600 11px/1.2 Inter,
+          system-ui,
+          sans-serif;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      "
+    >
+      <a href="/chat" style="color: #f7f5fa; text-decoration: none; padding: 5px 8px">← KALLISTIS</a
+      ><span style="color: #8c5fff">·</span
+      ><a
+        href="/jogar/character-forge.html"
+        style="color: #eceaf0; text-decoration: none; padding: 5px 8px"
+        >Character Forge</a
+      ><a href="/jogar/velarim.html" style="color: #eceaf0; text-decoration: none; padding: 5px 8px"
+        >Velarim</a
+      ><a
+        href="/jogar/canon-explorer.html"
+        style="color: #eceaf0; text-decoration: none; padding: 5px 8px"
+        >Canon Explorer</a
+      >
+    </nav>
+  </body>
+</html>

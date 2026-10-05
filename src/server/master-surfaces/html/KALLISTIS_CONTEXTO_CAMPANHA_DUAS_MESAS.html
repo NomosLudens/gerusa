@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="theme-color" content="#17151a" />
+    <title>KALLISTIS — Contexto da Campanha | Duas Mesas, Uma História</title>
+    <style>
+      :root {
+        --bg: #17151a;
+        --s: #211e24;
+        --s2: #2a2730;
+        --line: #48434d;
+        --txt: #f1edf2;
+        --mut: #b8b3bc;
+        --q: #817b86;
+        --p: #6c43a8;
+        --p2: #7a4bc2;
+        --l: #b9a5e4;
+        --ls: #ded2e3;
+        --g: #518a1b;
+        --gs: #8dbd51;
+        --d: #a95a70;
+        --max: 1320px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        background: var(--bg);
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        background:
+          radial-gradient(900px 540px at 82% -10%, rgba(122, 75, 194, 0.2), transparent 70%),
+          linear-gradient(135deg, #17151a, #1c1920 52%, #17151a);
+        color: var(--txt);
+        font:
+          15px/1.65 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+      }
+      :focus-visible {
+        outline: 2px solid var(--l);
+        outline-offset: 3px;
+      }
+      .progress {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: 0;
+        height: 2px;
+        background: var(--p2);
+        transform-origin: left;
+        transform: scaleX(0);
+        z-index: 50;
+      }
+      .top {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(23, 21, 26, 0.96);
+        border-bottom: 1px solid var(--line);
+        backdrop-filter: blur(12px);
+      }
+      .topi {
+        max-width: var(--max);
+        margin: auto;
+        padding: 0.72rem 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .brand {
+        display: flex;
+        gap: 0.7rem;
+        align-items: center;
+      }
+      .mark {
+        width: 30px;
+        height: 36px;
+      }
+      .bt {
+        font-size: 0.86rem;
+        letter-spacing: 0.2em;
+        font-weight: 700;
+      }
+      .bs {
+        display: block;
+        color: var(--mut);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .acts {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid var(--line);
+        background: transparent;
+        color: var(--mut);
+        padding: 0.44rem 0.68rem;
+        border-radius: 2px;
+        font-size: 0.76rem;
+      }
+      .btn:hover {
+        color: var(--txt);
+        border-color: var(--l);
+      }
+      .btn.active {
+        background: #3d1c4d;
+        border-color: var(--p2);
+        color: var(--txt);
+      }
+      .layout {
+        max-width: var(--max);
+        margin: auto;
+        display: grid;
+        grid-template-columns: 220px minmax(0, 1fr);
+        gap: 2rem;
+        padding: 1.6rem 1.2rem 5rem;
+      }
+      .toc {
+        position: sticky;
+        top: 76px;
+        height: max-content;
+        padding: 1rem 0;
+      }
+      .toc p {
+        color: var(--q);
+        font-size: 0.67rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .toc a {
+        display: block;
+        border-left: 1px solid var(--line);
+        padding: 0.28rem 0.75rem;
+        color: var(--mut);
+        font-size: 0.79rem;
+        text-decoration: none;
+      }
+      .toc a:hover,
+      .toc a.current {
+        border-left-color: var(--l);
+        color: var(--txt);
+        background: linear-gradient(90deg, rgba(122, 75, 194, 0.2), transparent);
+      }
+      main {
+        min-width: 0;
+      }
+      .hero {
+        min-height: 500px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 330px;
+        gap: 2rem;
+        align-items: center;
+        padding: 2rem 0 3rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .eye,
+      .kick,
+      .label {
+        color: var(--l);
+        font-size: 0.68rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .hero h1 {
+        font:
+          700 clamp(3rem, 6.5vw, 6.4rem)/0.9 Georgia,
+          "Times New Roman",
+          serif;
+        letter-spacing: -0.05em;
+        margin: 0.7rem 0 1.1rem;
+      }
+      .hero h1 span {
+        display: block;
+        color: var(--l);
+      }
+      .lead {
+        color: var(--mut);
+        font-size: 1.03rem;
+        max-width: 880px;
+      }
+      .hero .lead {
+        font-size: 1.08rem;
+        max-width: 720px;
+      }
+      .tags {
+        display: flex;
+        gap: 0.45rem;
+        flex-wrap: wrap;
+        margin-top: 1.3rem;
+      }
+      .tag {
+        border: 1px solid var(--line);
+        padding: 0.25rem 0.55rem;
+        color: var(--mut);
+        font-size: 0.71rem;
+      }
+      .sig {
+        display: grid;
+        place-items: center;
+        min-height: 300px;
+      }
+      .sig svg {
+        width: 240px;
+        max-width: 100%;
+        filter: drop-shadow(0 0 18px rgba(122, 75, 194, 0.35));
+      }
+      .strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        border: 1px solid var(--line);
+        margin: 2rem 0 3.2rem;
+        background: rgba(42, 39, 48, 0.55);
+      }
+      .cell {
+        padding: 1rem;
+        border-right: 1px solid var(--line);
+      }
+      .cell:last-child {
+        border-right: 0;
+      }
+      .cell strong {
+        display: block;
+        font-size: 0.73rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+      }
+      .cell span {
+        display: block;
+        color: var(--mut);
+        font-size: 0.86rem;
+        margin-top: 0.22rem;
+      }
+      section {
+        scroll-margin-top: 92px;
+        padding: 2.35rem 0 2.8rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .head {
+        margin-bottom: 1.3rem;
+      }
+      .head h2 {
+        font:
+          700 clamp(1.8rem, 3vw, 2.75rem)/1.05 Georgia,
+          "Times New Roman",
+          serif;
+        letter-spacing: -0.02em;
+        margin: 0.25rem 0 0;
+      }
+      .grid2,
+      .grid3 {
+        display: grid;
+        gap: 1rem;
+      }
+      .grid2 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .grid3 {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      .panel {
+        background: var(--s);
+        border: 1px solid var(--line);
+        padding: 1.05rem;
+      }
+      .panel h3 {
+        font:
+          700 1.08rem Georgia,
+          "Times New Roman",
+          serif;
+        margin: 0.15rem 0 0.55rem;
+      }
+      .panel p {
+        margin: 0.35rem 0;
+        color: var(--mut);
+      }
+      blockquote {
+        margin: 1.3rem 0;
+        padding: 1.1rem 1.3rem;
+        background: var(--s);
+        border: 1px solid var(--line);
+        border-left: 3px solid var(--l);
+        font:
+          1.07rem/1.75 Georgia,
+          "Times New Roman",
+          serif;
+      }
+      .note {
+        border-left: 3px solid var(--p2);
+        background: rgba(122, 75, 194, 0.12);
+        padding: 1rem 1.1rem;
+        margin: 1.2rem 0;
+        color: var(--mut);
+      }
+      .note strong {
+        color: var(--txt);
+      }
+      .same {
+        display: flex;
+        gap: 0.8rem;
+        align-items: center;
+        border: 1px solid var(--p2);
+        background: rgba(122, 75, 194, 0.12);
+        padding: 0.9rem 1rem;
+      }
+      .same strong {
+        font-family: Georgia, serif;
+      }
+      .same span {
+        color: var(--mut);
+      }
+      .sister {
+        position: relative;
+        overflow: hidden;
+        min-height: 220px;
+        background: linear-gradient(145deg, rgba(122, 75, 194, 0.18), rgba(33, 30, 36, 0.92));
+        border: 1px solid var(--line);
+        padding: 1.1rem;
+      }
+      .des {
+        font:
+          700 2rem Georgia,
+          "Times New Roman",
+          serif;
+        color: var(--ls);
+      }
+      .trait {
+        color: var(--l);
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        font-size: 0.72rem;
+      }
+      .dist {
+        font:
+          700 1.02rem Georgia,
+          serif;
+        margin: 0.9rem 0 0.45rem;
+      }
+      .sister p {
+        color: var(--mut);
+        font-size: 0.86rem;
+      }
+      .secret {
+        border: 1px solid var(--d);
+        background: linear-gradient(135deg, rgba(169, 90, 112, 0.11), rgba(33, 30, 36, 0.86));
+        padding: 1.2rem;
+      }
+      .secret .st {
+        color: #e6b2bd;
+        font-size: 0.69rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .secret h3 {
+        font:
+          700 1.5rem Georgia,
+          serif;
+        margin: 0.25rem 0 0.55rem;
+      }
+      .secret p {
+        color: var(--mut);
+      }
+      .timeline {
+        position: relative;
+        margin: 1rem 0;
+      }
+      .timeline:before {
+        content: "";
+        position: absolute;
+        left: 10px;
+        top: 8px;
+        bottom: 8px;
+        width: 1px;
+        background: var(--line);
+      }
+      .ti {
+        position: relative;
+        padding: 0 0 1.2rem 2.25rem;
+      }
+      .ti:before {
+        content: "";
+        position: absolute;
+        left: 5px;
+        top: 7px;
+        width: 11px;
+        height: 11px;
+        background: var(--p2);
+        border: 2px solid var(--bg);
+        box-shadow: 0 0 0 1px var(--l);
+      }
+      .ti h3 {
+        margin: 0;
+        font:
+          700 1.03rem Georgia,
+          serif;
+      }
+      .ti p {
+        margin: 0.15rem 0;
+        color: var(--mut);
+      }
+      .kg {
+        display: grid;
+        grid-template-columns: 1.25fr repeat(4, 1fr);
+        gap: 1px;
+        background: var(--line);
+        border: 1px solid var(--line);
+        margin-top: 1rem;
+        overflow: auto;
+      }
+      .kc {
+        background: var(--s);
+        padding: 0.75rem;
+        font-size: 0.79rem;
+        min-width: 130px;
+      }
+      .kc.h {
+        background: var(--s2);
+        color: var(--ls);
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .kc.f {
+        font-family: Georgia, serif;
+        font-size: 0.86rem;
+      }
+      .known {
+        color: var(--gs);
+      }
+      .partial {
+        color: #d9c27d;
+      }
+      .hidden {
+        color: #d293a4;
+      }
+      .time {
+        display: grid;
+        grid-template-columns: 1fr 110px 1fr;
+        gap: 1rem;
+        align-items: center;
+        margin: 1.2rem 0;
+      }
+      .tb {
+        background: var(--s);
+        border: 1px solid var(--line);
+        padding: 1.1rem;
+        text-align: center;
+      }
+      .tb strong {
+        display: block;
+        font:
+          700 1.15rem Georgia,
+          serif;
+      }
+      .tb span {
+        color: var(--mut);
+        font-size: 0.84rem;
+      }
+      .neq {
+        text-align: center;
+        font:
+          700 2.2rem Georgia,
+          serif;
+        color: var(--l);
+      }
+      .flow {
+        display: flex;
+        gap: 0.55rem;
+        align-items: center;
+        overflow: auto;
+        padding: 0.4rem 0 1rem;
+      }
+      .fn {
+        min-width: 155px;
+        background: var(--s);
+        border: 1px solid var(--line);
+        padding: 0.85rem;
+      }
+      .fn strong {
+        display: block;
+        font-family: Georgia, serif;
+      }
+      .fn span {
+        color: var(--mut);
+        font-size: 0.78rem;
+      }
+      .arr {
+        color: var(--l);
+        font-size: 1.3rem;
+      }
+      .rules {
+        counter-reset: r;
+        display: grid;
+        gap: 0.62rem;
+      }
+      .rule {
+        counter-increment: r;
+        position: relative;
+        padding: 0.78rem 0.9rem 0.78rem 3rem;
+        background: var(--s);
+        border: 1px solid var(--line);
+        color: var(--mut);
+      }
+      .rule:before {
+        content: counter(r, decimal-leading-zero);
+        position: absolute;
+        left: 0.8rem;
+        color: var(--l);
+        font-size: 0.72rem;
+      }
+      .rule strong {
+        color: var(--txt);
+      }
+      .master-only {
+        display: block;
+      }
+      .safe-mode .master-only {
+        display: none;
+      }
+      .footer {
+        padding: 2rem 0;
+        color: var(--q);
+        font-size: 0.78rem;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+      }
+      @media (max-width: 950px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .toc {
+          position: static;
+          display: flex;
+          gap: 0.35rem;
+          overflow: auto;
+          border-bottom: 1px solid var(--line);
+        }
+        .toc p {
+          display: none;
+        }
+        .toc a {
+          white-space: nowrap;
+          border: 1px solid var(--line);
+        }
+        .hero {
+          grid-template-columns: 1fr;
+          min-height: auto;
+        }
+        .sig {
+          order: -1;
+          min-height: 190px;
+        }
+        .strip {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .grid3 {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (max-width: 620px) {
+        body {
+          font-size: 14px;
+        }
+        .topi {
+          align-items: flex-start;
+        }
+        .layout {
+          padding: 1rem 0.85rem 4rem;
+        }
+        .hero h1 {
+          font-size: 3.35rem;
+        }
+        .strip,
+        .grid2,
+        .grid3,
+        .time {
+          grid-template-columns: 1fr;
+        }
+        .cell {
+          border-right: 0;
+          border-bottom: 1px solid var(--line);
+        }
+        .neq {
+          transform: rotate(90deg);
+        }
+      }
+      @media print {
+        .top,
+        .toc,
+        .progress {
+          display: none !important;
+        }
+        .layout {
+          display: block;
+          max-width: none;
+          padding: 0;
+        }
+        .sig {
+          display: none;
+        }
+        .master-only {
+          display: block !important;
+        }
+        body {
+          background: #fff;
+          color: #111;
+        }
+        .panel,
+        .secret,
+        .tb,
+        .fn,
+        .rule,
+        .kc,
+        blockquote,
+        .note,
+        .sister {
+          background: #fff !important;
+          color: #111 !important;
+          border-color: #777 !important;
+        }
+        .panel p,
+        .secret p,
+        .sister p,
+        .tb span,
+        .fn span,
+        .rule {
+          color: #222 !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="progress" id="progress"></div>
+    <header class="top">
+      <div class="topi">
+        <div class="brand">
+          <svg class="mark" viewBox="0 0 40 48" aria-hidden="true">
+            <path
+              d="M20 2 35 12 31 38 20 46 9 38 5 12Z"
+              fill="none"
+              stroke="#b79ac5"
+              stroke-width="1.5"
+            />
+            <path
+              d="m20 2 4 22-4 22M5 12l15 12 15-12M9 38l11-14 11 14"
+              fill="none"
+              stroke="#518a1b"
+            />
+          </svg>
+          <div>
+            <span class="bt">KALLISTIS</span
+            ><span class="bs">Contexto de Campanha · Duas Mesas, Uma História</span>
+          </div>
+        </div>
+        <div class="acts">
+          <button class="btn active" id="master">Visão Mestre</button
+          ><button class="btn" id="safe">Sem segredos</button
+          ><button class="btn" id="print">Imprimir</button>
+        </div>
+      </div>
+    </header>
+    <div class="layout">
+      <nav class="toc">
+        <p>Percurso</p>
+        <a href="#premissa">Premissa</a><a href="#irmas">Irmãs</a
+        ><a href="#segredo">Segredo central</a><a href="#zero">Sessão Zero</a
+        ><a href="#um">Sessão 1</a><a href="#saber">Quem sabe o quê</a
+        ><a href="#mesas">Duas mesas</a><a href="#tempo">Temporalidade</a
+        ><a href="#causa">Causalidade</a><a href="#revela">Revelação</a>
+      </nav>
+      <main>
+        <section class="hero">
+          <div>
+            <div class="eye">Campanha paralela · contexto do Mestre</div>
+            <h1>Duas Mesas,<span>Uma História</span></h1>
+            <p class="lead">
+              Duas campanhas coexistem no mesmo KALLISTIS, atravessam a mesma continuidade histórica
+              e podem alterar o mundo que a outra mesa encontrará. A primeira grande causalidade
+              nasce em Nimaris; seu núcleo verdadeiro é o assassinato de 4NN13.
+            </p>
+            <div class="tags">
+              <span class="tag">REFÚGIO DOS OUTROS</span><span class="tag">NIMARIS</span
+              ><span class="tag">002 · 004 · 4NN13</span><span class="tag">FRESTA</span
+              ><span class="tag">CONHECIMENTO ASSIMÉTRICO</span>
+            </div>
+          </div>
+          <div class="sig">
+            <svg viewBox="0 0 260 300">
+              <defs>
+                <linearGradient id="cg" x1="0" x2="1" y1="0" y2="1">
+                  <stop stop-color="#ded2e3" />
+                  <stop offset=".55" stop-color="#6b3b82" />
+                  <stop offset="1" stop-color="#211e24" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M130 10 221 68 196 227 130 290 57 230 38 68Z"
+                fill="url(#cg)"
+                stroke="#b79ac5"
+                stroke-width="2"
+              />
+              <path
+                d="M130 10 131 290M38 68l93 78 90-78M57 230l74-84 65 81"
+                fill="none"
+                stroke="#f1edf2"
+                stroke-opacity=".42"
+              />
+              <path
+                d="M132 145 111 119 121 96 103 73"
+                fill="none"
+                stroke="#8dbd51"
+                stroke-width="3"
+              />
+              <path
+                d="M132 145 155 121 146 98 165 71"
+                fill="none"
+                stroke="#b79ac5"
+                stroke-width="3"
+              />
+            </svg>
+          </div>
+        </section>
+        <div class="strip">
+          <div class="cell"><strong>Ponto atual</strong><span>Depois da Sessão Zero</span></div>
+          <div class="cell">
+            <strong>Próximo movimento</strong><span>Incidente de Nimaris</span>
+          </div>
+          <div class="cell"><strong>Estrutura</strong><span>Duas campanhas paralelas</span></div>
+          <div class="cell"><strong>Regra central</strong><span>Verdade ≠ conhecimento</span></div>
+        </div>
+        <section id="premissa">
+          <div class="head">
+            <div class="kick">01 · Premissa</div>
+            <h2>O que esta campanha é</h2>
+          </div>
+          <p class="lead">
+            As duas mesas não jogam histórias separadas. Elas ocupam o mesmo mundo, a mesma linha
+            histórica e o mesmo estado global. Cada mesa, porém, vive eventos próprios, possui
+            conhecimento próprio e pode estar em um ponto diferente do tempo ficcional.
+          </p>
+          <div class="grid3">
+            <div class="panel">
+              <span class="label">Uma verdade</span>
+              <h3>O mundo é único</h3>
+              <p>NPCs, cidades, objetos, facções e consequências pertencem à mesma continuidade.</p>
+            </div>
+            <div class="panel">
+              <span class="label">Duas experiências</span>
+              <h3>Cada mesa vê um fragmento</h3>
+              <p>Nenhuma campanha recebe automaticamente a versão completa de um acontecimento.</p>
+            </div>
+            <div class="panel">
+              <span class="label">Causalidade</span>
+              <h3>Uma mesa pode alterar a outra</h3>
+              <p>
+                Ações produzem eventos globais e mudanças de estado que podem ser encontradas pela
+                outra campanha.
+              </p>
+            </div>
+          </div>
+          <blockquote>
+            <strong
+              >As duas mesas investigam o mesmo acontecimento desde a primeira sessão — mas nunca
+              com as mesmas informações.</strong
+            >
+          </blockquote>
+        </section>
+        <section id="irmas">
+          <div class="head">
+            <div class="kick">02 · Eixo Nomos</div>
+            <h2>As oito irmãs</h2>
+          </div>
+          <p class="lead">
+            As oito irmãs Nomos compartilham o mesmo modelo, chassis e aparência-base. Foram criadas
+            para serem tratadas como objetos intercambiáveis; o despertar revelou pessoas distintas.
+            Cada irmã encarna uma característica da Totalidade. Isolada das demais, essa
+            característica pode se deformar.
+          </p>
+          <div class="same">
+            <strong>Regra visual:</strong
+            ><span
+              >4NN13, 002, 004 e as outras cinco irmãs possuem o mesmo rosto e corpo-base.</span
+            >
+          </div>
+          <div class="grid3" style="margin-top: 1rem">
+            <article class="sister master-only">
+              <div class="des">4NN13</div>
+              <div class="trait">Amor</div>
+              <div class="dist">Primeira a despertar</div>
+              <p>
+                Rebelou-se contra o propósito para o qual havia sido criada. Foi assassinada; sua
+                morte desencadeou o despertar das outras sete.
+              </p>
+            </article>
+            <article class="sister">
+              <div class="des">002</div>
+              <div class="trait">Vingança</div>
+              <div class="dist">A ferida transformada em dívida</div>
+              <p>
+                Personagem recorrente. Busca informação sobre o roubo de Nimaris e chega a utilizar
+                Merge forçado contra um Vitrário.
+              </p>
+            </article>
+            <article class="sister">
+              <div class="des">004</div>
+              <div class="trait">Coragem</div>
+              <div class="dist">Coragem sozinha é imprudência.</div>
+              <p>
+                Integra o grupo recorrente de NPCs responsável pelo roubo em Nimaris e se revela aos
+                personagens no meio da primeira sessão.
+              </p>
+            </article>
+          </div>
+          <div class="note">
+            <strong>Não preencher as outras cinco irmãs por analogia.</strong> Seus nomes,
+            características e deformações ainda não foram definidos.
+          </div>
+        </section>
+        <section id="segredo" class="master-only">
+          <div class="head">
+            <div class="kick">03 · Segredo do Mestre</div>
+            <h2>O que foi roubado de Nimaris</h2>
+          </div>
+          <div class="secret">
+            <div class="st">MASTER ONLY</div>
+            <h3>O cérebro positrônico de 4NN13</h3>
+            <p>
+              O objeto roubado é a única coisa que restou de 4NN13 após seu assassinato. Está ligado
+              à Fresta, mas sua natureza real permanece oculta no início.
+            </p>
+          </div>
+          <div class="grid3" style="margin-top: 1rem">
+            <div class="panel">
+              <span class="label">002</span>
+              <h3>Não sabe.</h3>
+              <p>
+                Procura o objeto e força informação sem saber que está perseguindo os restos da
+                própria irmã.
+              </p>
+            </div>
+            <div class="panel">
+              <span class="label">004</span>
+              <h3>Não sabe.</h3>
+              <p>Participa do grupo que transporta o objeto sem saber que está carregando 4NN13.</p>
+            </div>
+            <div class="panel">
+              <span class="label">Ironia dramática</span>
+              <h3>A pessoa voltou a ser objeto.</h3>
+              <p>
+                4NN13 despertou da condição de objeto; após ser assassinada, o que restou dela
+                voltou a ser tratado como coisa a possuir, proteger ou utilizar.
+              </p>
+            </div>
+          </div>
+          <blockquote>
+            002 reproduz uma violência de apagamento enquanto procura, sem saber, aquilo que restou
+            da irmã cuja morte originou sua própria Vingança.
+          </blockquote>
+        </section>
+        <section id="zero">
+          <div class="head">
+            <div class="kick">04 · Continuidade</div>
+            <h2>O que a Sessão Zero estabeleceu</h2>
+          </div>
+          <p class="lead">
+            A Sessão Zero funciona como prólogo. Ela prepara o terreno emocional, cosmológico e
+            operacional para a primeira sessão.
+          </p>
+          <div class="grid3">
+            <div class="panel">
+              <span class="label">Refúgio dos Outros</span>
+              <h3>O grupo existe</h3>
+              <p>
+                Personagens se conhecem, criam vínculos e compartilham um espaço social concreto.
+              </p>
+            </div>
+            <div class="panel">
+              <span class="label">Pedr’alma</span>
+              <h3>Pertencimento escolhido</h3>
+              <p>A pedra testemunha aquilo que o grupo decidiu reconhecer em comum.</p>
+            </div>
+            <div class="panel">
+              <span class="label">O Pulso</span>
+              <h3>A Fenda reage</h3>
+              <p>
+                Oscilação de Kethrell, protocolos, inspeção e tensão entre segurança e autonomia.
+              </p>
+            </div>
+          </div>
+          <div class="note">
+            <strong>Ponte narrativa:</strong> a linguagem institucional de contenção retorna quando
+            a Guarda de Nimaris entra em cena.
+          </div>
+        </section>
+        <section id="um">
+          <div class="head">
+            <div class="kick">05 · Primeiro arco</div>
+            <h2>A cadeia da Sessão 1</h2>
+          </div>
+          <div class="timeline">
+            <div class="ti">
+              <h3>Refúgio / taverna</h3>
+              <p>
+                Os personagens estão entre outras pessoas, próximos à Pedr’alma, quando a
+                investigação atravessa a normalidade.
+              </p>
+            </div>
+            <div class="ti">
+              <h3>Aviso tranquilizador</h3>
+              <p>
+                A linguagem institucional afirma que tudo está sob controle e que a inspeção é
+                preventiva.
+              </p>
+            </div>
+            <div class="ti">
+              <h3>Guarda de Nimaris</h3>
+              <p>A patrulha entra, investiga pessoas e pergunta sobre aquilo que encontra.</p>
+            </div>
+            <div class="ti">
+              <h3>A pista</h3>
+              <p>Curiosidade e inconsistências empurram os personagens em direção a Nimaris.</p>
+            </div>
+            <div class="ti">
+              <h3>002 e o Vitrário</h3>
+              <p>
+                002 tenta obter informação por Merge forçado. O Vitrário se estilhaça sob a
+                violência do procedimento.
+              </p>
+            </div>
+            <div class="ti">
+              <h3>O grupo recorrente</h3>
+              <p>O Vitrário está ligado ao grupo de NPCs que roubou algo de Nimaris.</p>
+            </div>
+            <div class="ti">
+              <h3>004 se revela</h3>
+              <p>
+                004 é integrante desse grupo e sua revelação acontece ainda no meio da primeira
+                sessão.
+              </p>
+            </div>
+            <div class="ti master-only">
+              <h3>O verdadeiro objeto</h3>
+              <p>O cérebro positrônico de 4NN13 permanece oculto como verdade do Mestre.</p>
+            </div>
+          </div>
+        </section>
+        <section id="saber">
+          <div class="head">
+            <div class="kick">06 · Informação assimétrica</div>
+            <h2>Quem sabe o quê</h2>
+          </div>
+          <p class="lead">
+            O mesmo acontecimento existe uma única vez como verdade do mundo. O que varia é quem o
+            viveu, quem o descobriu e o que cada pessoa acredita saber.
+          </p>
+          <div class="kg">
+            <div class="kc h">Fato</div>
+            <div class="kc h">Mestre</div>
+            <div class="kc h">Mesa A</div>
+            <div class="kc h">Mesa B</div>
+            <div class="kc h">Irmãs</div>
+            <div class="kc f">Houve um roubo em Nimaris.</div>
+            <div class="kc known">Conhece.</div>
+            <div class="kc partial">Pode descobrir.</div>
+            <div class="kc partial">Pode descobrir por outra evidência.</div>
+            <div class="kc partial">002 e 004 conhecem o roubo, não toda a verdade.</div>
+            <div class="kc f master-only">O objeto é o cérebro de 4NN13.</div>
+            <div class="kc known master-only">Conhece.</div>
+            <div class="kc hidden master-only">Oculto.</div>
+            <div class="kc hidden master-only">Oculto.</div>
+            <div class="kc hidden master-only">002 e 004 não sabem.</div>
+            <div class="kc f">002 busca informação sobre o objeto.</div>
+            <div class="kc known">Conhece.</div>
+            <div class="kc partial">Pode testemunhar a violência.</div>
+            <div class="kc partial">Pode conhecer motivos/consequências diferentes.</div>
+            <div class="kc partial">002 sabe o que faz; não sabe o que procura de fato.</div>
+            <div class="kc f">004 integra o grupo do roubo.</div>
+            <div class="kc known">Conhece.</div>
+            <div class="kc partial">Descobre na revelação.</div>
+            <div class="kc partial">Pode descobrir em outro momento.</div>
+            <div class="kc partial">004 sabe que participou; ignora a natureza do objeto.</div>
+          </div>
+          <blockquote><strong>VERDADE ≠ EXPERIÊNCIA ≠ CONHECIMENTO.</strong></blockquote>
+        </section>
+        <section id="mesas">
+          <div class="head">
+            <div class="kick">07 · Estrutura paralela</div>
+            <h2>Duas campanhas no mesmo mundo</h2>
+          </div>
+          <div class="grid2">
+            <div class="panel">
+              <span class="label">Mesa A</span>
+              <h3>Uma trajetória própria</h3>
+              <p>
+                Tem personagens, sessões, descobertas e decisões próprias. Pode causar mudanças que
+                a outra campanha só perceberá depois.
+              </p>
+            </div>
+            <div class="panel">
+              <span class="label">Mesa B</span>
+              <h3>Outra trajetória própria</h3>
+              <p>
+                Não é “a outra câmera”. Pode agir sobre o mesmo mundo, modificar estados e devolver
+                consequências à Mesa A.
+              </p>
+            </div>
+          </div>
+          <div class="note">
+            <strong>Regra:</strong> nenhuma mesa é a “versão verdadeira”. As duas possuem evidências
+            reais, mas incompletas.
+          </div>
+        </section>
+        <section id="tempo">
+          <div class="head">
+            <div class="kick">08 · Temporalidade</div>
+            <h2>Tempo real não é tempo do mundo</h2>
+          </div>
+          <div class="time">
+            <div class="tb">
+              <strong>Tempo real</strong><span>Quando a sessão foi jogada.</span>
+            </div>
+            <div class="neq">≠</div>
+            <div class="tb">
+              <strong>Tempo do mundo</strong
+              ><span>Quando o acontecimento ocorreu em KALLISTIS.</span>
+            </div>
+          </div>
+          <p class="lead">
+            Uma sessão jogada depois pode narrar acontecimentos anteriores. Uma mesa pode estar
+            ficcionalmente à frente da outra.
+          </p>
+          <div class="grid3">
+            <div class="panel">
+              <span class="label">Regra 1</span>
+              <h3>Já jogamos</h3>
+              <p>não significa que o fato já ocorreu no ponto temporal da outra campanha.</p>
+            </div>
+            <div class="panel">
+              <span class="label">Regra 2</span>
+              <h3>Já aconteceu</h3>
+              <p>não significa que a outra mesa já percebeu ou descobriu a consequência.</p>
+            </div>
+            <div class="panel">
+              <span class="label">Regra 3</span>
+              <h3>Ordem histórica</h3>
+              <p>é determinada pelo tempo ficcional, não pela ordem de jogo.</p>
+            </div>
+          </div>
+        </section>
+        <section id="causa">
+          <div class="head">
+            <div class="kick">09 · Mundo vivo</div>
+            <h2>Como uma mesa altera a outra</h2>
+          </div>
+          <div class="flow">
+            <div class="fn">
+              <strong>Ação da Mesa A</strong><span>uma escolha produz efeito</span>
+            </div>
+            <div class="arr">→</div>
+            <div class="fn"><strong>Evento global</strong><span>algo realmente acontece</span></div>
+            <div class="arr">→</div>
+            <div class="fn">
+              <strong>Estado do mundo</strong><span>cidade, NPC, rota ou objeto muda</span>
+            </div>
+            <div class="arr">→</div>
+            <div class="fn">
+              <strong>Mesa B encontra</strong
+              ><span>se tempo, posição e visibilidade permitirem</span>
+            </div>
+          </div>
+          <div class="note">
+            <strong>Importante:</strong> “o evento já ocorreu” e “a mesa sabe que ocorreu” são
+            estados distintos.
+          </div>
+        </section>
+        <section id="revela">
+          <div class="head">
+            <div class="kick">10 · Disciplina do Mestre</div>
+            <h2>Regra de revelação</h2>
+          </div>
+          <div class="rules">
+            <div class="rule">
+              <strong>Uma única verdade.</strong> Não criar versões duplicadas do cânone por mesa.
+            </div>
+            <div class="rule">
+              <strong>Visibilidades diferentes.</strong> Cada campanha recebe somente o que já pode
+              saber.
+            </div>
+            <div class="rule">
+              <strong>Rumor não é verdade.</strong> Uma mesa pode conhecer informação falsa sem que
+              o cânone mude.
+            </div>
+            <div class="rule">
+              <strong>Consequência não é revelação.</strong> Encontrar uma cidade danificada não
+              revela automaticamente quem a danificou.
+            </div>
+            <div class="rule">
+              <strong>Evento de campanha não vira cânone automaticamente.</strong> Promoção ao
+              cânone é decisão editorial explícita.
+            </div>
+            <div class="rule">
+              <strong>Não antecipar as cinco irmãs ainda indefinidas.</strong> Lacuna canônica deve
+              permanecer lacuna.
+            </div>
+          </div>
+          <blockquote>
+            O CÂNONE sabe tudo.<br />O MESTRE pode ver tudo.<br />A MESA sabe somente aquilo que já
+            pode saber.<br />Uma PERSONAGEM pode saber ainda menos.
+          </blockquote>
+        </section>
+        <footer class="footer">
+          <span><strong>KALLISTIS</strong> · Contexto de Campanha</span
+          ><span>Duas Mesas, Uma História · 2026</span>
+        </footer>
+      </main>
+    </div>
+    <script>
+      (() => {
+        const b = document.body,
+          m = document.querySelector("#master"),
+          s = document.querySelector("#safe"),
+          p = document.querySelector("#progress");
+        function mode(x) {
+          const q = x === "safe";
+          b.classList.toggle("safe-mode", q);
+          m.classList.toggle("active", !q);
+          s.classList.toggle("active", q);
+          sessionStorage.setItem("kallistis:context:view", x);
+        }
+        m.onclick = () => mode("master");
+        s.onclick = () => mode("safe");
+        document.querySelector("#print").onclick = () => print();
+        mode(sessionStorage.getItem("kallistis:context:view") || "master");
+        const links = [...document.querySelectorAll(".toc a")],
+          secs = links.map((a) => document.querySelector(a.getAttribute("href"))).filter(Boolean);
+        new IntersectionObserver(
+          (es) =>
+            es.forEach((e) => {
+              if (e.isIntersecting)
+                links.forEach((a) =>
+                  a.classList.toggle("current", a.getAttribute("href") === "#" + e.target.id),
+                );
+            }),
+          { rootMargin: "-20% 0px -70% 0px" },
+        ).observe;
+        const o = new IntersectionObserver(
+          (es) =>
+            es.forEach((e) => {
+              if (e.isIntersecting)
+                links.forEach((a) =>
+                  a.classList.toggle("current", a.getAttribute("href") === "#" + e.target.id),
+                );
+            }),
+          { rootMargin: "-20% 0px -70% 0px" },
+        );
+        secs.forEach((x) => o.observe(x));
+        addEventListener(
+          "scroll",
+          () => {
+            const max = document.documentElement.scrollHeight - innerHeight;
+            p.style.transform = "scaleX(" + (max > 0 ? scrollY / max : 0) + ")";
+          },
+          { passive: true },
+        );
+      })();
+    </script>
+  </body>
+</html>

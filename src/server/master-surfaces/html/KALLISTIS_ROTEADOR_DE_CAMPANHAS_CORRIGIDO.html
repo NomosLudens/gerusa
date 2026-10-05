@@ -1,0 +1,867 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#17151a" />
+    <title>KALLISTIS — Mesa do Mestre</title>
+    <style>
+      :root {
+        --bg: #17151a;
+        --surface: #211e24;
+        --surface-2: #2a2730;
+        --line: #48434d;
+        --text: #f1edf2;
+        --muted: #b8b3bc;
+        --quiet: #817b86;
+        --purple: #6c43a8;
+        --purple-2: #7a4bc2;
+        --purple-dark: #4b2d78;
+        --lilac: #b9a5e4;
+        --lilac-soft: #e3dcf2;
+        --green: #518a1b;
+        --green-soft: #8dbd51;
+        --max: 1080px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        background: var(--bg);
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(900px 540px at 82% -10%, rgba(122, 75, 194, 0.18), transparent 70%),
+          linear-gradient(135deg, #17151a 0%, #1c1920 52%, #17151a 100%);
+        color: var(--text);
+        font:
+          15px/1.65 ui-sans-serif,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        -webkit-font-smoothing: antialiased;
+        min-height: 100vh;
+      }
+      button {
+        font: inherit;
+        cursor: pointer;
+        color: inherit;
+      }
+      :focus-visible {
+        outline: 2px solid var(--lilac);
+        outline-offset: 3px;
+      }
+      .skip {
+        position: absolute;
+        left: -999px;
+        top: auto;
+      }
+      .skip:focus {
+        left: 1rem;
+        top: 1rem;
+        z-index: 100;
+        background: #000;
+        color: #fff;
+        padding: 0.5rem 1rem;
+      }
+
+      /* ---------- topbar ---------- */
+      .topbar {
+        border-bottom: 1px solid var(--line);
+        background: rgba(23, 21, 26, 0.96);
+      }
+      .topbar-inner {
+        max-width: var(--max);
+        margin: auto;
+        padding: 0.8rem 1.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        min-width: 0;
+      }
+      .brand-mark {
+        width: 28px;
+        height: 34px;
+        flex: none;
+      }
+      .brand-title {
+        font-size: 0.85rem;
+        letter-spacing: 0.2em;
+        font-weight: 700;
+        display: block;
+        line-height: 1.2;
+      }
+      .brand-sub {
+        display: block;
+        color: var(--muted);
+        font-size: 0.66rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+      }
+      .topbar-side {
+        color: var(--quiet);
+        font-size: 0.68rem;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .layout {
+        max-width: var(--max);
+        margin: 0 auto;
+        padding: 2.6rem 1.2rem 5rem;
+      }
+
+      /* ---------- saudação ---------- */
+      .greeting {
+        padding: 0.5rem 0 2.2rem;
+      }
+      .greeting h1 {
+        font:
+          700 clamp(2rem, 4.5vw, 3.4rem)/1.02 Georgia,
+          "Times New Roman",
+          serif;
+        letter-spacing: -0.035em;
+        margin: 0;
+      }
+      .greeting h1 em {
+        font-style: normal;
+        color: var(--lilac);
+      }
+
+      .section-label {
+        color: var(--lilac);
+        font-size: 0.68rem;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        margin: 0 0 1.1rem;
+      }
+
+      /* ---------- lista de campanhas: composição editorial ---------- */
+      .campaign-list {
+        border-top: 1px solid var(--line);
+      }
+      .campaign {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 0.4rem 2rem;
+        align-items: center;
+        padding: 1.6rem 0.2rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .campaign-main {
+        min-width: 0;
+      }
+      .campaign-kicker {
+        color: var(--quiet);
+        font-size: 0.66rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        display: flex;
+        gap: 1.2rem;
+        flex-wrap: wrap;
+      }
+      .campaign h2 {
+        font:
+          700 clamp(1.5rem, 2.6vw, 2.1rem)/1.08 Georgia,
+          "Times New Roman",
+          serif;
+        margin: 0.35rem 0 0;
+        letter-spacing: -0.015em;
+      }
+      .campaign .subtitle {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin: 0.25rem 0 0;
+      }
+      .campaign-facts {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45rem 1.4rem;
+        margin-top: 0.7rem;
+        color: var(--muted);
+        font-size: 0.82rem;
+      }
+      .campaign-facts .next {
+        color: var(--lilac-soft);
+      }
+      .campaign-facts .pending {
+        color: var(--green-soft);
+      }
+      .campaign-action {
+        white-space: nowrap;
+      }
+      .campaign.archived {
+        opacity: 0.55;
+      }
+      .campaign.archived h2 {
+        font-weight: 400;
+      }
+
+      /* ---------- botões ---------- */
+      .btn-primary {
+        display: inline-block;
+        border: 1px solid var(--lilac);
+        background: rgba(122, 75, 194, 0.3);
+        color: var(--text);
+        padding: 0.65rem 1.1rem;
+        font-size: 0.76rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        text-align: center;
+      }
+      .btn-primary:hover {
+        background: var(--purple-dark);
+      }
+      .btn-quiet {
+        border: 1px solid transparent;
+        background: none;
+        color: var(--quiet);
+        padding: 0.65rem 0.6rem;
+        font-size: 0.72rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      .btn-quiet:hover {
+        color: var(--text);
+        border-color: var(--line);
+      }
+
+      /* ---------- visão da campanha ---------- */
+      .back-btn {
+        border: 0;
+        background: none;
+        padding: 0;
+        color: var(--lilac-soft);
+        font-size: 0.82rem;
+        letter-spacing: 0.06em;
+      }
+      .back-btn:hover {
+        color: #fff;
+        text-decoration: underline;
+      }
+      .campaign-head {
+        border-bottom: 1px solid var(--line);
+        padding: 1.6rem 0 2rem;
+      }
+      .campaign-head .kicker {
+        color: var(--quiet);
+        font-size: 0.66rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        display: flex;
+        gap: 1.2rem;
+        flex-wrap: wrap;
+      }
+      .campaign-head h1 {
+        font:
+          700 clamp(2rem, 4.5vw, 3.2rem)/1.02 Georgia,
+          serif;
+        letter-spacing: -0.03em;
+        margin: 0.5rem 0 0;
+      }
+      .campaign-head .subtitle {
+        color: var(--muted);
+        margin: 0.4rem 0 0;
+        font-size: 1rem;
+      }
+
+      .next-session {
+        border-left: 3px solid var(--green);
+        background: linear-gradient(110deg, rgba(81, 138, 27, 0.1), rgba(42, 39, 48, 0.35));
+        padding: 1.3rem 1.4rem;
+        margin: 1.8rem 0 0;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1rem;
+        align-items: center;
+      }
+      .next-session strong {
+        display: block;
+        color: var(--green-soft);
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        margin-bottom: 0.3rem;
+      }
+      .next-session .n {
+        font:
+          700 1.5rem/1.1 Georgia,
+          serif;
+      }
+      .next-session .d {
+        color: var(--muted);
+        font-size: 0.85rem;
+        margin-top: 0.2rem;
+      }
+
+      /* ---------- roteiros ---------- */
+      .guide-list {
+        border-top: 1px solid var(--line);
+        margin-top: 0.4rem;
+      }
+      .guide {
+        display: grid;
+        grid-template-columns: 110px minmax(0, 1fr) auto;
+        gap: 1.4rem;
+        align-items: center;
+        padding: 1.15rem 0.2rem;
+        border-bottom: 1px solid var(--line);
+      }
+      .guide.no-session {
+        grid-template-columns: minmax(0, 1fr) auto;
+      }
+      .guide-session {
+        color: var(--lilac);
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .guide-session b {
+        display: block;
+        font:
+          700 1.4rem/1.1 Georgia,
+          serif;
+        color: var(--text);
+        letter-spacing: 0;
+        margin-top: 0.15rem;
+      }
+      .guide-main {
+        min-width: 0;
+      }
+      .guide-main h3 {
+        margin: 0;
+        font:
+          700 1.15rem/1.2 Georgia,
+          serif;
+        letter-spacing: -0.01em;
+      }
+      .guide-main .meta {
+        color: var(--quiet);
+        font-size: 0.76rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        margin-top: 0.25rem;
+      }
+      .guide-actions {
+        display: flex;
+        align-items: center;
+        gap: 0.2rem;
+        white-space: nowrap;
+      }
+      .guide.played .guide-main h3 {
+        color: var(--muted);
+      }
+      .guide.archived {
+        opacity: 0.55;
+      }
+
+      /* ---------- estado vazio ---------- */
+      .empty {
+        min-height: 60vh;
+        display: grid;
+        place-content: center;
+        text-align: center;
+        padding: 3rem 1rem;
+      }
+      .empty .mark {
+        width: 54px;
+        height: auto;
+        margin: 0 auto 1.4rem;
+        opacity: 0.8;
+      }
+      .empty h1 {
+        font:
+          700 clamp(1.5rem, 3vw, 2.1rem)/1.15 Georgia,
+          serif;
+        margin: 0;
+        letter-spacing: -0.02em;
+      }
+      .empty p {
+        color: var(--muted);
+        max-width: 460px;
+        margin: 0.8rem auto 0;
+        font-size: 0.92rem;
+      }
+      .empty code {
+        color: var(--lilac-soft);
+        font-size: 0.85em;
+      }
+
+      .footer {
+        padding: 2.2rem 0 0;
+        color: var(--quiet);
+        font-size: 0.76rem;
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        flex-wrap: wrap;
+        border-top: 1px solid var(--line);
+        margin-top: 3.5rem;
+      }
+      .footer strong {
+        color: var(--muted);
+      }
+
+      [hidden] {
+        display: none !important;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        .campaign,
+        .guide {
+          transition: background 0.15s;
+        }
+        .campaign:hover,
+        .guide:hover {
+          background: rgba(122, 75, 194, 0.08);
+        }
+      }
+
+      @media (max-width: 760px) {
+        .layout {
+          padding: 1.8rem 1rem 4rem;
+        }
+        .campaign {
+          grid-template-columns: 1fr;
+          padding: 1.4rem 0.1rem;
+        }
+        .campaign-action {
+          justify-self: start;
+          margin-top: 0.9rem;
+        }
+        .btn-primary {
+          width: 100%;
+          padding: 0.85rem 1.1rem;
+        }
+        .next-session {
+          grid-template-columns: 1fr;
+        }
+        .guide {
+          grid-template-columns: minmax(0, 1fr);
+          gap: 0.5rem;
+          padding: 1.2rem 0.1rem;
+        }
+        .guide-session b {
+          display: inline;
+          font-size: 1rem;
+          margin-left: 0.4rem;
+          color: var(--lilac);
+        }
+        .guide-actions {
+          width: 100%;
+          flex-direction: column;
+          align-items: stretch;
+          gap: 0.3rem;
+          margin-top: 0.4rem;
+        }
+        .guide-actions .btn-quiet {
+          border-color: var(--line);
+          padding: 0.7rem;
+        }
+        .topbar-side {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <a class="skip" href="#conteudo">Pular para o conteúdo</a>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <div class="brand">
+          <svg class="brand-mark" viewBox="0 0 40 48" aria-hidden="true">
+            <path
+              d="M20 2 35 12 31 38 20 46 9 38 5 12Z"
+              fill="none"
+              stroke="#b79ac5"
+              stroke-width="1.5"
+            />
+            <path
+              d="m20 2 4 22-4 22M5 12l15 12 15-12M9 38l11-14 11 14"
+              fill="none"
+              stroke="#518a1b"
+              stroke-width="1"
+              opacity=".9"
+            />
+          </svg>
+          <div>
+            <span class="brand-title">KALLISTIS</span><span class="brand-sub">Mesa do Mestre</span>
+          </div>
+        </div>
+        <span class="topbar-side">Mesa do Mestre</span>
+      </div>
+    </header>
+
+    <div class="layout">
+      <main id="conteudo">
+        <!-- ESTADO: lista de campanhas -->
+        <section id="viewList" aria-label="Suas campanhas" hidden>
+          <div class="greeting">
+            <h1 id="greetingTitle">Suas mesas, <em>Mestre.</em></h1>
+          </div>
+          <p class="section-label">Suas campanhas</p>
+          <div class="campaign-list" id="campaignList"></div>
+        </section>
+
+        <!-- ESTADO: detalhe da campanha -->
+        <section id="viewDetail" aria-label="Roteiros da campanha" hidden>
+          <button type="button" class="back-btn" id="backBtn">← Campanhas</button>
+          <div class="campaign-head">
+            <div class="kicker" id="detailKicker"></div>
+            <h1 id="detailTitle"></h1>
+            <p class="subtitle" id="detailSubtitle" hidden></p>
+          </div>
+          <div class="next-session" id="nextSession" hidden>
+            <div>
+              <strong>Próxima sessão</strong>
+              <div class="n" id="nextTitle"></div>
+              <div class="d" id="nextDate" hidden></div>
+            </div>
+            <button type="button" class="btn-primary" id="nextOpen">Abrir roteiro</button>
+          </div>
+          <p class="section-label" style="margin-top: 2.2rem">Roteiros</p>
+          <div class="guide-list" id="guideList"></div>
+        </section>
+
+        <!-- ESTADO: contexto ausente -->
+        <div class="empty" id="viewEmpty" hidden>
+          <svg class="mark" viewBox="0 0 40 48" aria-hidden="true">
+            <path
+              d="M20 2 35 12 31 38 20 46 9 38 5 12Z"
+              fill="none"
+              stroke="#817b86"
+              stroke-width="1.5"
+            />
+            <path
+              d="m20 2 4 22-4 22M5 12l15 12 15-12M9 38l11-14 11 14"
+              fill="none"
+              stroke="#817b86"
+              stroke-width="1"
+              opacity=".6"
+            />
+          </svg>
+          <h1>Contexto KALLISTIS não fornecido.</h1>
+          <p>
+            Esta superfície deve ser aberta pelo KALLISTIS ou receber
+            <code>window.KALLISTIS_CONTEXT</code> antes da inicialização. Isso é comportamento
+            correto — a página não inventa campanhas nem mascara a ausência de dados.
+          </p>
+        </div>
+
+        <footer class="footer">
+          <span><strong>KALLISTIS</strong> · Mesa do Mestre</span>
+          <span>Campanha → Roteiro → Abrir</span>
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      /* ============================================================
+     CONTRATO — preenchido pelo host KALLISTIS antes deste script:
+
+       window.KALLISTIS_CONTEXT = {
+         master: { id, displayName },
+         campaigns: [{
+           id, title, subtitle?, role?, status?,           // status: active | archived
+           nextSession?: { number, title, dateLabel? },
+           sharedEventsPending?: number,
+           guides: [{
+             id, session, title, type?, html,
+             status?,         // draft | prepared | played | archived
+             updatedLabel?
+           }]
+         }]
+       }
+
+     Todos os campos além de id/title/html são opcionais:
+     campo ausente → simplesmente omitido da interface.
+
+     Esta página NÃO autentica, NÃO inventa dados e NÃO persiste
+     nada além da campanha aberta (sessionStorage, só navegação).
+     ============================================================ */
+      (function () {
+        "use strict";
+
+        var ctx = window.KALLISTIS_CONTEXT;
+        var $ = function (id) {
+          return document.getElementById(id);
+        };
+        var viewList = $("viewList"),
+          viewDetail = $("viewDetail"),
+          viewEmpty = $("viewEmpty");
+        var SS_KEY = "kallistis.openCampaign";
+
+        var STATUS_LABEL = {
+          draft: "Rascunho",
+          prepared: "Preparada",
+          played: "Realizada",
+          archived: "Arquivada",
+        };
+
+        /* ---------- sem contexto: estado vazio explícito ---------- */
+        if (!ctx || !Array.isArray(ctx.campaigns) || ctx.campaigns.length === 0) {
+          viewEmpty.hidden = false;
+          return;
+        }
+
+        var campaigns = ctx.campaigns;
+        var current = null;
+
+        /* ---------- saudação neutra (somente se o host forneceu o nome) ---------- */
+        if (
+          ctx.master &&
+          typeof ctx.master.displayName === "string" &&
+          ctx.master.displayName.trim()
+        ) {
+          $("greetingTitle").innerHTML = "";
+          $("greetingTitle").appendChild(document.createTextNode("Suas mesas, "));
+          var em = document.createElement("em");
+          em.textContent = ctx.master.displayName.trim() + ".";
+          $("greetingTitle").appendChild(em);
+        }
+
+        /* ---------- helpers ---------- */
+        function el(tag, cls, text) {
+          var n = document.createElement(tag);
+          if (cls) n.className = cls;
+          if (text != null) n.textContent = text;
+          return n;
+        }
+        function pad(n) {
+          var s = String(n);
+          return s.length < 2 ? "0" + s : s;
+        }
+        function openGuide(guide, newTab) {
+          if (!guide || !guide.html) return;
+          if (newTab) window.open(guide.html, "_blank", "noopener,noreferrer");
+          else window.location.href = guide.html;
+        }
+
+        /* ---------- lista de campanhas ---------- */
+        function renderList() {
+          var list = $("campaignList");
+          list.innerHTML = "";
+          campaigns.forEach(function (c, i) {
+            var archived = c.status === "archived";
+            var row = el("article", "campaign" + (archived ? " archived" : ""));
+
+            var main = el("div", "campaign-main");
+            var kicker = el("div", "campaign-kicker");
+            if (c.role) kicker.appendChild(el("span", null, c.role));
+            if (c.status === "active") kicker.appendChild(el("span", null, "Ativa"));
+            if (c.status === "archived") kicker.appendChild(el("span", null, "Arquivada"));
+            if (kicker.childNodes.length) main.appendChild(kicker);
+
+            if (c.title) main.appendChild(el("h2", null, c.title));
+            if (c.subtitle) main.appendChild(el("p", "subtitle", c.subtitle));
+
+            var facts = el("div", "campaign-facts");
+            if (c.nextSession && c.nextSession.number != null) {
+              var label = "Próxima sessão: " + pad(c.nextSession.number);
+              if (c.nextSession.title) label += " — " + c.nextSession.title;
+              if (c.nextSession.dateLabel) label += " · " + c.nextSession.dateLabel;
+              facts.appendChild(el("span", "next", label));
+            }
+            if (typeof c.sharedEventsPending === "number" && c.sharedEventsPending > 0) {
+              facts.appendChild(
+                el(
+                  "span",
+                  "pending",
+                  c.sharedEventsPending +
+                    (c.sharedEventsPending === 1
+                      ? " evento entre mesas pendente"
+                      : " eventos entre mesas pendentes"),
+                ),
+              );
+            }
+            if (facts.childNodes.length) main.appendChild(facts);
+
+            var action = el("div", "campaign-action");
+            var btn = el("button", "btn-primary", "Abrir campanha");
+            btn.type = "button";
+            btn.setAttribute(
+              "aria-label",
+              c.title ? "Abrir campanha " + c.title : "Abrir campanha",
+            );
+            btn.addEventListener("click", function () {
+              openCampaign(c);
+            });
+            action.appendChild(btn);
+
+            row.appendChild(main);
+            row.appendChild(action);
+            list.appendChild(row);
+          });
+        }
+
+        /* ---------- detalhe da campanha ---------- */
+        function renderDetail(c) {
+          current = c;
+          try {
+            sessionStorage.setItem(SS_KEY, c.id);
+          } catch (e) {}
+
+          var kicker = $("detailKicker");
+          kicker.innerHTML = "";
+          if (c.role) kicker.appendChild(el("span", null, c.role));
+          if (c.status === "archived") kicker.appendChild(el("span", null, "Arquivada"));
+
+          var detailTitle = $("detailTitle");
+          if (c.title) {
+            detailTitle.textContent = c.title;
+            detailTitle.hidden = false;
+            document.title = "KALLISTIS — " + c.title;
+          } else {
+            detailTitle.textContent = "";
+            detailTitle.hidden = true;
+            document.title = "KALLISTIS — Mesa do Mestre";
+          }
+          var sub = $("detailSubtitle");
+          if (c.subtitle) {
+            sub.textContent = c.subtitle;
+            sub.hidden = false;
+          } else {
+            sub.hidden = true;
+          }
+
+          /* próxima sessão → roteiro correspondente, se existir */
+          var ns = c.nextSession;
+          var nextBlock = $("nextSession");
+          var nextGuide = null;
+          if (ns && ns.number != null && Array.isArray(c.guides)) {
+            nextGuide =
+              c.guides.filter(function (g) {
+                return g.session === ns.number && g.html;
+              })[0] || null;
+          }
+          if (ns && ns.number != null) {
+            nextBlock.hidden = false;
+            $("nextTitle").textContent =
+              "Sessão " + pad(ns.number) + (ns.title ? " — " + ns.title : "");
+            var d = $("nextDate");
+            if (ns.dateLabel) {
+              d.textContent = ns.dateLabel;
+              d.hidden = false;
+            } else {
+              d.hidden = true;
+            }
+            var openBtn = $("nextOpen");
+            openBtn.disabled = !nextGuide;
+            openBtn.hidden = !nextGuide;
+            openBtn.onclick = function () {
+              openGuide(nextGuide, false);
+            };
+          } else {
+            nextBlock.hidden = true;
+          }
+
+          /* roteiros ordenados por número da sessão */
+          var guides = Array.isArray(c.guides) ? c.guides.slice() : [];
+          guides.sort(function (a, b) {
+            var aHasSession = a.session != null;
+            var bHasSession = b.session != null;
+            if (aHasSession && bHasSession) return a.session - b.session;
+            if (aHasSession) return -1;
+            if (bHasSession) return 1;
+            return 0;
+          });
+
+          var list = $("guideList");
+          list.innerHTML = "";
+          guides.forEach(function (g) {
+            var hasSession = g.session != null;
+            var row = el(
+              "article",
+              "guide" + (g.status ? " " + g.status : "") + (hasSession ? "" : " no-session"),
+            );
+
+            var sNum = null;
+            if (hasSession) {
+              sNum = el("div", "guide-session");
+              sNum.appendChild(el("span", null, "Sessão"));
+              sNum.appendChild(el("b", null, pad(g.session)));
+            }
+
+            var main = el("div", "guide-main");
+            if (g.title) main.appendChild(el("h3", null, g.title));
+            var meta = el("div", "meta");
+            meta.textContent =
+              (STATUS_LABEL[g.status] || g.status || "") +
+              (g.updatedLabel ? (g.status ? " · " : "") + g.updatedLabel : "");
+            if (meta.textContent) main.appendChild(meta);
+
+            var actions = el("div", "guide-actions");
+            if (g.html) {
+              var open = el("button", "btn-quiet", "Abrir roteiro");
+              open.type = "button";
+              open.style.color = "var(--lilac-soft)";
+              open.addEventListener("click", function () {
+                openGuide(g, false);
+              });
+              var tab = el("button", "btn-quiet", "Abrir em nova aba");
+              tab.type = "button";
+              tab.addEventListener("click", function () {
+                openGuide(g, true);
+              });
+              actions.appendChild(open);
+              actions.appendChild(tab);
+            }
+
+            if (sNum) row.appendChild(sNum);
+            row.appendChild(main);
+            row.appendChild(actions);
+            list.appendChild(row);
+          });
+        }
+
+        /* ---------- alternância de estado ---------- */
+        function openCampaign(c) {
+          renderDetail(c);
+          viewList.hidden = true;
+          viewDetail.hidden = false;
+          $("backBtn").focus();
+          window.scrollTo(0, 0);
+        }
+        function showList() {
+          current = null;
+          try {
+            sessionStorage.removeItem(SS_KEY);
+          } catch (e) {}
+          viewDetail.hidden = true;
+          viewList.hidden = false;
+          document.title = "KALLISTIS — Mesa do Mestre";
+        }
+        $("backBtn").addEventListener("click", showList);
+
+        /* ---------- inicialização ---------- */
+        renderList();
+        var restored = null;
+        try {
+          var openId = sessionStorage.getItem(SS_KEY);
+          if (openId)
+            restored =
+              campaigns.filter(function (c) {
+                return c.id === openId;
+              })[0] || null;
+        } catch (e) {}
+        if (restored) {
+          renderDetail(restored);
+          viewDetail.hidden = false;
+        } else {
+          viewList.hidden = false;
+        }
+      })();
+    </script>
+  </body>
+</html>

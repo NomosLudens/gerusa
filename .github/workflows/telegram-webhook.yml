@@ -1,0 +1,38 @@
+name: Configurar webhook Telegram
+
+on:
+  workflow_dispatch:
+    inputs:
+      webhook_url:
+        description: URL HTTPS do webhook da Kaline
+        required: true
+        type: string
+        default: https://kaline.nomosludens.ia.br/api/channels/telegram-dialogue
+
+permissions:
+  contents: read
+
+jobs:
+  configure-webhook:
+    runs-on: ubuntu-latest
+
+    env:
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_KALINE_BOT_TOKEN }}
+      TELEGRAM_WEBHOOK_SECRET: ${{ secrets.TELEGRAM_WEBHOOK_SECRET }}
+      WEBHOOK_URL: ${{ inputs.webhook_url }}
+
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Instalar Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Consultar webhook atual
+        run: bun scripts/telegram-webhook.mjs info
+
+      - name: Configurar webhook agregador
+        run: bun scripts/telegram-webhook.mjs set "$WEBHOOK_URL"
+
+      - name: Confirmar configuração
+        run: bun scripts/telegram-webhook.mjs info

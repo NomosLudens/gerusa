@@ -1,0 +1,123 @@
+# Cloudflare Workers deploy config for Kallistis Clean.
+# Run `bun run build` before `wrangler deploy`. The TanStack Start (Vite) build
+# emits the Worker entry to `dist/server/server.js` and static assets to `dist/client`.
+
+name = "kallistis-recovery"
+main = "dist/server/server.js"
+compatibility_date = "2026-09-16"
+compatibility_flags = ["nodejs_compat"]
+keep_vars = true
+
+[assets]
+directory = "dist/client"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
+[[r2_buckets]]
+binding = "KALLISTIS_MEDIA"
+bucket_name = "kallistis-media"
+
+[[hyperdrive]]
+binding = "HYPERDRIVE"
+id = "3efd826cb1dd4fc7afdd91b8a8cc702a"
+
+[vars]
+# Public build-time variables are injected by Vite from the build environment.
+# Runtime secrets must be configured with `wrangler secret put`.
+APP_ENV = "production"
+APP_PUBLIC_URL = "https://kallistis.app"
+KALLISTIS_GRAVEWRIGHT_ORIGIN = "https://gravewright.kallistis.app"
+KALLISTIS_PUBLIC_ORIGIN = "https://kallistis.app,https://kallistis-recovery.khykwyvbfb.workers.dev"
+
+# Runtime Supabase config. Use `SUPABASE_PUBLISHABLE_KEY` for the anon key used
+# by server-side auth checks; `SUPABASE_SERVICE_ROLE_KEY` must stay a secret.
+SUPABASE_URL = "https://gidsdflkjuaoxhejudna.supabase.co"
+
+# OpenRouter model defaults for Kallistis Clean.
+AI_PROVIDER = "openrouter"
+AI_FALLBACK_PROVIDER = "openrouter"
+OPENROUTER_APP_NAME = "Kallistis Clean"
+OPENROUTER_SITE_URL = "https://kallistis.app"
+OPENROUTER_MODEL = "deepseek/deepseek-v4-flash"
+OPENROUTER_MODEL_PRIMARY = "deepseek/deepseek-v4-flash"
+OPENROUTER_MODEL_FALLBACK_1 = "openai/gpt-5-nano"
+OPENROUTER_MODEL_FALLBACK_2 = "openai/gpt-4.1-nano"
+OPENROUTER_CHAT_MODEL = "deepseek/deepseek-v4-flash"
+OPENROUTER_CHAT_MODEL_FALLBACK = "openai/gpt-5-nano"
+OPENROUTER_CHAT_TIMEOUT_MS = "30000"
+OPENROUTER_CHAT_MAX_RETRIES = "1"
+OPENROUTER_FAST_MODEL = "openai/gpt-5-nano"
+OPENROUTER_REASONING_MODEL = "openai/gpt-4.1-nano"
+OPENROUTER_TRANSCRIBE_MODEL = "openai/whisper-large-v3"
+OPENROUTER_TRANSCRIPT_REVISION_MODEL = "poolside/laguna-xs-2.1"
+OPENROUTER_IMAGE_MODEL = "google/gemini-2.5-flash-lite"
+OPENROUTER_TTS_MODEL = "hexgrad/kokoro-82m"
+OPENROUTER_TTS_VOICE = "pf_dora"
+
+OPENROUTER_TRIAGE_MODEL = "openai/gpt-5-nano"
+OPENROUTER_TRIAGE_FALLBACK_MODEL = "deepseek/deepseek-v4-flash"
+OPENROUTER_TEXT_MODEL_PRIMARY = "deepseek/deepseek-v4-flash"
+OPENROUTER_TEXT_MODEL_FALLBACK_1 = "openai/gpt-4.1-nano"
+OPENROUTER_TEXT_MODEL_FALLBACK_2 = "openai/gpt-5-nano"
+OPENROUTER_VISION_MODEL_PRIMARY = "google/gemini-2.5-flash-lite"
+OPENROUTER_VISION_MODEL_FALLBACK_1 = "qwen/qwen3.7-plus"
+OPENROUTER_DOCUMENT_MODEL_FALLBACK = "google/gemini-2.5-flash-lite"
+OPENROUTER_VISION_MODEL_FALLBACK_2 = "openai/gpt-4.1-nano"
+OPENROUTER_VISION_MAX_IMAGE_BYTES = "4194304"
+OPENROUTER_VISION_TIMEOUT_MS = "30000"
+OPENROUTER_TTS_PRIMARY_MODEL = "hexgrad/kokoro-82m"
+OPENROUTER_TTS_FALLBACK_MODEL = "google/gemini-3.1-flash-tts-preview"
+OPENROUTER_TTS_FALLBACK_VOICE = "Vindemiatrix"
+MAX_TTS_CHARS = "320"
+OPENROUTER_TTS_DEFAULT_FORMAT = "mp3"
+OPENROUTER_TTS_TIMEOUT_MS = "30000"
+OPENROUTER_TTS_MAX_CHARS = "1200"
+OPENROUTER_STT_PRIMARY_MODEL = "openai/whisper-large-v3"
+OPENROUTER_STT_FALLBACK_MODEL = "openai/whisper-large-v3-turbo"
+OPENROUTER_STT_DEFAULT_FORMAT = "mp3"
+OPENROUTER_STT_TIMEOUT_MS = "30000"
+OPENROUTER_STT_MAX_SECONDS = "40"
+
+VOICE_PROVIDER = "openrouter"
+STT_PROVIDER = "openrouter"
+KALLISTIS_STT_PROVIDER = "openrouter"
+KALLISTIS_STT_LANGUAGE = "pt"
+KALLISTIS_TTS_ENABLED = "true"
+KALLISTIS_RADAR_ENABLED = "true"
+KALLISTIS_RADAR_MAX_RESULTS = "5"
+KALLISTIS_RADAR_SEARCH_ENGINE = "auto"
+OPENROUTER_RADAR_MODEL = "deepseek/deepseek-v4-flash"
+OPENROUTER_RADAR_FALLBACK_MODEL = "openai/gpt-4.1-nano"
+KALLISTIS_PROVIDER_TIMEOUT_MS = "30000"
+KALLISTIS_CHAT_HISTORY_LIMIT = "12"
+KALLISTIS_ATTACHMENT_MAX_BYTES = "8388608"
+
+[observability]
+enabled = true
+
+[placement]
+mode = "smart"
+
+[[ratelimits]]
+name = "CHAT_RATE_LIMITER"
+namespace_id = "148"
+
+  [ratelimits.simple]
+  limit = 10
+  period = 60
+
+[[ratelimits]]
+name = "CHAT_PRE_AUTH_RATE_LIMITER"
+namespace_id = "149"
+
+  [ratelimits.simple]
+  limit = 20
+  period = 60
+
+[[ratelimits]]
+name = "RECOVERY_RATE_LIMITER"
+namespace_id = "150"
+
+  [ratelimits.simple]
+  limit = 5
+  period = 60

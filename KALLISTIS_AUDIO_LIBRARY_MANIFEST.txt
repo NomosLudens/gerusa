@@ -1,0 +1,48 @@
+KALLISTIS AUDIO LIBRARY MANIFEST
+GENERATED=2026-09-11
+ZIP_MEDIA_COUNT=54
+VM_MAX_MEDIA_COUNT=33
+TOTAL_INPUT_FILES=87
+DUPLICATES_FOUND=53
+UNIQUE_TRACKS=34
+VM_ONLY=14
+ZIP_ONLY=1
+PRESENT_IN_BOTH=19
+MP4_CONVERTED=0
+FINAL_PLAYLIST_COUNT=34
+KALINE=SEPARATE_ASSET
+
+LEVANTA! RUGE! | ORIGIN=ZIP | SOURCE=[MP3 BRUTO] 14 — LEVANTA! RUGE!.mp3 | FINAL_FILE=/audio/ost/05_LEVANTA_RUGE.mp3 | DUPLICATES=none
+KALLISTIS — Prólogo | ORIGIN=VM_MAX | SOURCE=/public/media/ost/00.mp3 | FINAL_FILE=/media/ost/00.mp3 | DUPLICATES=ZIP 01 (curated/raw/MP4 representations)
+MI NAM. MI RRAAR | ORIGIN=VM_MAX | SOURCE=/public/media/ost/01.mp3 | FINAL_FILE=/media/ost/01.mp3 | DUPLICATES=none
+KALLISTIS | ORIGIN=BOTH | SOURCE=/public/media/ost/02.mp3; ZIP 04 | FINAL_FILE=/media/ost/02.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Before the Fracture | ORIGIN=BOTH | SOURCE=/public/media/ost/03.mp3; ZIP 02 | FINAL_FILE=/media/ost/03.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Crystal Fracture | ORIGIN=BOTH | SOURCE=/public/media/ost/04.mp3; ZIP 03 | FINAL_FILE=/media/ost/04.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Cristal Inacabado | ORIGIN=VM_MAX | SOURCE=/public/media/ost/05.mp3 | FINAL_FILE=/media/ost/05.mp3 | DUPLICATES=none
+Vethari na Mirveth | ORIGIN=BOTH | SOURCE=/public/media/ost/06.mp3; ZIP 06 | FINAL_FILE=/media/ost/06.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Caminhos entre Frestas | ORIGIN=BOTH | SOURCE=/public/media/ost/07.mp3; ZIP 05 | FINAL_FILE=/media/ost/07.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Kallistis Trace | ORIGIN=VM_MAX | SOURCE=/public/media/ost/08.mp3 | FINAL_FILE=/media/ost/08.mp3 | DUPLICATES=none
+Glass Pattern | ORIGIN=VM_MAX | SOURCE=/public/media/ost/09.mp3 | FINAL_FILE=/media/ost/09.mp3 | DUPLICATES=none
+Refúgio dos Outros | ORIGIN=BOTH | SOURCE=/public/media/ost/10.mp3; ZIP 07 | FINAL_FILE=/media/ost/10.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Hearth Song | ORIGIN=VM_MAX | SOURCE=/public/media/ost/11.mp3 | FINAL_FILE=/media/ost/11.mp3 | DUPLICATES=none
+Song of Kael | ORIGIN=BOTH | SOURCE=/public/media/ost/12.mp3; ZIP 16 | FINAL_FILE=/media/ost/12.mp3 | DUPLICATES=ZIP raw/MP4 representations
+Alma de Bronze | ORIGIN=BOTH | SOURCE=/public/media/ost/13.mp3; ZIP 08 | FINAL_FILE=/media/ost/13.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Crystal Rite | ORIGIN=BOTH | SOURCE=/public/media/ost/14.mp3; ZIP 09 | FINAL_FILE=/media/ost/14.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Crystal Riff | ORIGIN=VM_MAX | SOURCE=/public/media/ost/15.mp3 | FINAL_FILE=/media/ost/15.mp3 | DUPLICATES=none
+Fractured Crown | ORIGIN=BOTH | SOURCE=/public/media/ost/16.mp3; ZIP 10 | FINAL_FILE=/media/ost/16.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Break the Oathgate | ORIGIN=VM_MAX | SOURCE=/public/media/ost/17.mp3 | FINAL_FILE=/media/ost/17.mp3 | DUPLICATES=none
+Crystal Crack | ORIGIN=VM_MAX | SOURCE=/public/media/ost/18.mp3 | FINAL_FILE=/media/ost/18.mp3 | DUPLICATES=none
+Fracture Pursuit | ORIGIN=VM_MAX | SOURCE=/public/media/ost/19.mp3 | FINAL_FILE=/media/ost/19.mp3 | DUPLICATES=none
+Phantom Glass Tone | ORIGIN=VM_MAX | SOURCE=/public/media/ost/20.mp3 | FINAL_FILE=/media/ost/20.mp3 | DUPLICATES=none
+Glass After the Gate | ORIGIN=VM_MAX | SOURCE=/public/media/ost/21.mp3 | FINAL_FILE=/media/ost/21.mp3 | DUPLICATES=none
+Crystal Motif | ORIGIN=BOTH | SOURCE=/public/media/ost/22.mp3; ZIP 18 | FINAL_FILE=/media/ost/22.mp3 | DUPLICATES=ZIP raw/MP4 representations
+Cosmic Strike Protocol | ORIGIN=VM_MAX | SOURCE=/public/media/ost/23.mp3 | FINAL_FILE=/media/ost/23.mp3 | DUPLICATES=none
+KALLISTIS (trailer representation) | ORIGIN=BOTH | SOURCE=/public/media/ost/24.mp3; ZIP 19 | FINAL_FILE=/media/ost/24.mp3 | DUPLICATES=ZIP raw/MP4 representations
+MI NAM. MI RAAR. | ORIGIN=BOTH | SOURCE=/public/media/ost/25.mp3; ZIP 13 | FINAL_FILE=/media/ost/25.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Oração da Pedr’alma | ORIGIN=BOTH | SOURCE=/public/media/ost/26.mp3; ZIP 15 | FINAL_FILE=/media/ost/26.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+TEMPO DA ESCOLHA | ORIGIN=BOTH | SOURCE=/public/media/ost/27.mp3; ZIP 17 | FINAL_FILE=/media/ost/27.mp3 | DUPLICATES=ZIP raw/MP4 representations
+KAV | ORIGIN=VM_MAX | SOURCE=/public/media/ost/28.mp3 | FINAL_FILE=/media/ost/28.mp3 | DUPLICATES=none
+MI NAM. MI RAAR — Tema do Trailer | ORIGIN=BOTH | SOURCE=/public/audio/ost/01_MI_NAM_MI_RAAR_TEMA_DO_TRAILER.mp3; ZIP 13 | FINAL_FILE=/audio/ost/01_MI_NAM_MI_RAAR_TEMA_DO_TRAILER.mp3 | DUPLICATES=ZIP curated/MP4 representations
+Não Consta — Linha de Montagem | ORIGIN=BOTH | SOURCE=/public/audio/ost/02_NAO_CONSTA_LINHA_DE_MONTAGEM.mp3; ZIP 11 | FINAL_FILE=/audio/ost/02_NAO_CONSTA_LINHA_DE_MONTAGEM.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+Garantia Expirada | ORIGIN=BOTH | SOURCE=/public/audio/ost/03_GARANTIA_EXPIRADA.mp3; ZIP 12 | FINAL_FILE=/audio/ost/03_GARANTIA_EXPIRADA.mp3 | DUPLICATES=ZIP raw/curated/MP4 representations
+O Mundo Não Será Um | ORIGIN=BOTH | SOURCE=/public/audio/ost/04_O_MUNDO_NAO_SERA_UM.mp3; ZIP 18 | FINAL_FILE=/audio/ost/04_O_MUNDO_NAO_SERA_UM.mp3 | DUPLICATES=ZIP curated/MP4 representations

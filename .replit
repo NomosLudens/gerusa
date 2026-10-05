@@ -1,0 +1,7 @@
+run = "bun run build && bun run start"
+
+[nix]
+channel = "stable-24_05"
+
+[deployment]
+run = "bun run build && bun run start"

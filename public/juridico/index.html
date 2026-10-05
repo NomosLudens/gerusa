@@ -1,0 +1,674 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#08080e" />
+    <title>Jurídico</title>
+    <style>
+      :root {
+        --bg: #08080e;
+        --card: rgba(40, 20, 10, 0.35);
+        --border: rgba(255, 68, 0, 0.2);
+        --gold: #ff4400; /* --kaline: cor real do domínio Kaline */
+        --gold-dim: rgba(255, 68, 0, 0.12);
+        --text: #f3ebdd;
+        --text-dim: #b6a88f;
+        --text-faint: #847661;
+        --green: #22c55e;
+        --amber: #f0b429;
+        --red: #f43f5e;
+        --radius: 16px;
+        --radius-sm: 10px;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        min-height: 100%;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
+      }
+      .app {
+        max-width: 760px;
+        margin: 0 auto;
+        padding: 20px 14px 90px;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, "Times New Roman", serif;
+        margin: 0;
+        color: var(--gold);
+        font-weight: 500;
+      }
+      h1 {
+        font-size: 1.6rem;
+      }
+      h2 {
+        font-size: 1rem;
+        color: var(--text);
+      }
+      p {
+        margin: 0;
+        line-height: 1.5;
+      }
+      .dim {
+        color: var(--text-dim);
+      }
+      .small {
+        font-size: 0.8rem;
+      }
+      .italic {
+        font-style: italic;
+      }
+      .eyebrow {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.28em;
+        color: var(--amber);
+      }
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 14px;
+        margin-top: 16px;
+      }
+      .search-row {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .search-row input[type="text"] {
+        flex: 1;
+        min-width: 160px;
+      }
+      input,
+      textarea,
+      select {
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        background: rgba(0, 0, 0, 0.25);
+        color: var(--text);
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        font-family: inherit;
+      }
+      textarea {
+        width: 100%;
+        min-height: 90px;
+        resize: vertical;
+        font-family: ui-monospace, monospace;
+        font-size: 0.82rem;
+      }
+      .btn {
+        border: 0;
+        border-radius: var(--radius-sm);
+        padding: 10px 16px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        cursor: pointer;
+        background: var(--gold);
+        color: #180a04;
+        white-space: nowrap;
+      }
+      .btn.outline {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      .tabs {
+        display: flex;
+        gap: 6px;
+        margin-bottom: 12px;
+      }
+      .tab {
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 0.78rem;
+        background: transparent;
+        color: var(--text-dim);
+        cursor: pointer;
+      }
+      .tab.active {
+        border-color: var(--gold);
+        color: var(--gold);
+        background: var(--gold-dim);
+      }
+      .badge {
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 2px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .badge.vigente {
+        color: var(--green);
+      }
+      .badge.em_revisao,
+      .badge.alterado_recentemente {
+        color: var(--amber);
+      }
+      .badge.revogado,
+      .badge.bloqueado {
+        color: var(--red);
+      }
+      .list {
+        list-style: none;
+        margin: 10px 0 0;
+        padding: 0;
+        display: grid;
+        gap: 8px;
+      }
+      .grid2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+      @media (max-width: 480px) {
+        .grid2 {
+          grid-template-columns: 1fr;
+        }
+      }
+      .doc-item {
+        background: rgba(40, 20, 10, 0.25);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 10px 12px;
+      }
+      .doc-item .row-between {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .doc-item .meta {
+        font-size: 0.74rem;
+        color: var(--text-dim);
+        margin-top: 2px;
+      }
+      .row-between {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .chunk {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: rgba(40, 20, 10, 0.25);
+      }
+      .chunk .chunk-head {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.66rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        margin-bottom: 6px;
+      }
+      .chunk .chunk-doc {
+        color: var(--amber);
+      }
+      .chunk .chunk-path {
+        color: var(--text-dim);
+      }
+      .chunk p {
+        font-size: 0.88rem;
+        white-space: pre-wrap;
+        color: var(--text);
+      }
+      .chunk a {
+        display: inline-block;
+        margin-top: 8px;
+        font-size: 0.76rem;
+        color: var(--gold);
+        text-decoration: none;
+      }
+      .warn {
+        border: 1px solid rgba(240, 180, 41, 0.4);
+        background: rgba(240, 180, 41, 0.06);
+        color: var(--amber);
+        border-radius: 12px;
+        padding: 10px 12px;
+        font-size: 0.85rem;
+      }
+      label {
+        display: block;
+        font-size: 0.72rem;
+        color: var(--text-dim);
+        margin: 8px 0 4px;
+      }
+      .hide {
+        display: none !important;
+      }
+      .checkbox-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        margin: 10px 0;
+      }
+      .checkbox-row input {
+        width: auto;
+      }
+      #toast {
+        position: fixed;
+        left: 50%;
+        bottom: 18px;
+        transform: translateX(-50%);
+        background: #140a05;
+        border: 1px solid var(--border);
+        color: var(--text);
+        padding: 10px 16px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        z-index: 60;
+        max-width: 90vw;
+        text-align: center;
+      }
+      #toast.error {
+        border-color: var(--red);
+        color: #fda4af;
+      }
+    </style>
+  </head>
+  <body>
+    <main class="app">
+      <div>
+        <p class="eyebrow">Jurídico · corpus curado</p>
+        <h1>Buscar lei seca, súmula, tema</h1>
+      </div>
+
+      <div class="card">
+        <div class="search-row">
+          <input id="q" type="text" placeholder="ex: art. 5º inciso II · súmula 7" />
+          <select id="doc-filter">
+            <option value="">todos os documentos</option>
+          </select>
+          <button id="btn-buscar" class="btn">buscar</button>
+        </div>
+        <p class="small dim italic" style="margin-top: 8px">
+          Apenas o corpus curado responde. Nada é gerado ou completado pelo modelo.
+        </p>
+      </div>
+
+      <div id="resultados" class="hide" style="margin-top: 16px">
+        <div id="disambig" class="warn hide" style="margin-bottom: 10px">
+          Mais de um documento candidato. Use o filtro acima para escolher antes de citar.
+        </div>
+        <p id="sem-resultado" class="small dim italic hide">
+          Nada encontrado no corpus curado. Não vou completar de memória.
+        </p>
+        <div id="chunks" class="list"></div>
+      </div>
+
+      <div style="margin-top: 20px">
+        <h2>Documentos no corpus</h2>
+        <p id="docs-vazio" class="small dim italic hide" style="margin-top: 8px"></p>
+        <ul id="docs-lista" class="list"></ul>
+      </div>
+
+      <div id="admin-panel" class="card hide">
+        <p class="eyebrow">Admin · importar</p>
+        <div class="tabs" style="margin-top: 10px">
+          <button class="tab active" data-tab="doc">documento</button>
+          <button class="tab" data-tab="chunks">trechos</button>
+        </div>
+
+        <div id="tab-doc">
+          <div class="grid2">
+            <select id="f-kind">
+              <option value="constituicao">constituicao</option>
+              <option value="codigo">codigo</option>
+              <option value="lei" selected>lei</option>
+              <option value="decreto">decreto</option>
+              <option value="sumula">sumula</option>
+              <option value="tema">tema</option>
+              <option value="enunciado">enunciado</option>
+              <option value="outro">outro</option>
+            </select>
+            <select id="f-status">
+              <option value="vigente" selected>vigente</option>
+              <option value="revogado">revogado</option>
+              <option value="em_revisao">em_revisao</option>
+              <option value="bloqueado">bloqueado</option>
+            </select>
+          </div>
+          <label>Título</label>
+          <input id="f-title" type="text" placeholder="Título" />
+          <div class="grid2">
+            <div>
+              <label>Slug</label>
+              <input id="f-slug" type="text" placeholder="ex: cf-88" />
+            </div>
+            <div>
+              <label>Nº (opcional)</label>
+              <input id="f-numero" type="text" />
+            </div>
+          </div>
+          <div class="grid2">
+            <div>
+              <label>Ano</label>
+              <input id="f-ano" type="number" />
+            </div>
+            <div>
+              <label>URL oficial</label>
+              <input id="f-source-url" type="text" placeholder="planalto.gov.br..." />
+            </div>
+          </div>
+          <button id="btn-salvar-doc" class="btn" style="margin-top: 12px; width: 100%">
+            salvar documento
+          </button>
+        </div>
+
+        <div id="tab-chunks" class="hide">
+          <label>Documento</label>
+          <select id="f-doc-id">
+            <option value="">selecione o documento</option>
+          </select>
+          <label>Trechos — uma linha por trecho: nivel|path|texto</label>
+          <textarea
+            id="f-raw"
+            placeholder="artigo|art. 5º|Todos são iguais perante a lei..."
+          ></textarea>
+          <div class="checkbox-row">
+            <input id="f-replace" type="checkbox" />
+            <label style="margin: 0">substituir todos os trechos existentes deste documento</label>
+          </div>
+          <button id="btn-salvar-chunks" class="btn" style="width: 100%">importar trechos</button>
+        </div>
+      </div>
+    </main>
+
+    <div id="toast" class="hide" role="status" aria-live="polite"></div>
+
+    <script>
+      (function () {
+        "use strict";
+
+        if (new URLSearchParams(location.search).get("embedded") === "1") {
+          document.documentElement.classList.add("embedded");
+        }
+
+        var STATUS_LABEL = {
+          vigente: "vigente",
+          em_revisao: "em revisão",
+          revogado: "revogado",
+          bloqueado: "bloqueado",
+          alterado_recentemente: "alterado recentemente",
+        };
+
+        var docs = [];
+        var isAdmin = false;
+
+        function $(id) {
+          return document.getElementById(id);
+        }
+        function esc(value) {
+          return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+            return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+          });
+        }
+        function emit(action, payload) {
+          window.parent?.postMessage(
+            { source: "juridico", action: action, payload: payload || {}, timestamp: Date.now() },
+            window.location.origin,
+          );
+        }
+        var toastTimer;
+        function toast(message, isError) {
+          var el = $("toast");
+          el.textContent = message;
+          el.className = isError ? "error" : "";
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(function () {
+            el.className = "hide";
+          }, 3000);
+        }
+
+        function renderDocFilters() {
+          var options = ['<option value="">todos os documentos</option>'];
+          docs.forEach(function (d) {
+            options.push('<option value="' + esc(d.id) + '">' + esc(d.title) + "</option>");
+          });
+          $("doc-filter").innerHTML = options.join("");
+          $("f-doc-id").innerHTML =
+            '<option value="">selecione o documento</option>' +
+            docs
+              .map(function (d) {
+                return '<option value="' + esc(d.id) + '">' + esc(d.title) + "</option>";
+              })
+              .join("");
+        }
+
+        function renderDocs() {
+          renderDocFilters();
+          var vazio = $("docs-vazio");
+          if (docs.length === 0) {
+            vazio.textContent = isAdmin
+              ? "Corpus vazio. Use o painel abaixo para importar."
+              : "Corpus vazio. Peça ao admin para importar documentos.";
+            vazio.classList.remove("hide");
+          } else {
+            vazio.classList.add("hide");
+          }
+          $("docs-lista").innerHTML = docs
+            .map(function (d) {
+              var meta = [d.kind, d.jurisdicao].filter(Boolean).join(" · ");
+              if (d.ano) meta += " · " + d.ano;
+              if (d.numero) meta += " · nº " + d.numero;
+              return (
+                '<li class="doc-item"><div class="row-between"><span>' +
+                esc(d.title) +
+                '</span><span class="badge ' +
+                esc(d.status) +
+                '">' +
+                esc(STATUS_LABEL[d.status] || d.status) +
+                '</span></div><p class="meta">' +
+                esc(meta) +
+                "</p></li>"
+              );
+            })
+            .join("");
+        }
+
+        function renderResultados(results) {
+          $("resultados").classList.remove("hide");
+          $("disambig").classList.toggle("hide", !results.needs_disambiguation);
+          $("sem-resultado").classList.toggle("hide", results.chunks.length > 0);
+          $("chunks").innerHTML = results.chunks
+            .map(function (c) {
+              var fonte = c.source_url
+                ? '<a href="' +
+                  esc(c.source_url) +
+                  '" target="_blank" rel="noopener noreferrer">fonte oficial ↗</a>'
+                : "";
+              return (
+                '<article class="chunk"><div class="chunk-head"><span class="chunk-doc">' +
+                esc(c.document_title) +
+                '</span><span class="chunk-path">· ' +
+                esc(c.path) +
+                '</span><span class="badge ' +
+                esc(c.status) +
+                '" style="margin-left: auto">' +
+                esc(STATUS_LABEL[c.status] || c.status) +
+                "</span></div><p>" +
+                esc(c.text) +
+                "</p>" +
+                fonte +
+                "</article>"
+              );
+            })
+            .join("");
+        }
+
+        var buscaBusy = false;
+        var adminBusy = false;
+        var searchRequestId = 0;
+
+        function buscar() {
+          var q = $("q").value.trim();
+          if (q.length < 2 || buscaBusy) return;
+          buscaBusy = true;
+          searchRequestId += 1;
+          $("btn-buscar").disabled = true;
+          $("btn-buscar").textContent = "…";
+          emit("juridico:busca-request", {
+            query: q,
+            document_id: $("doc-filter").value || undefined,
+            limit: 30,
+            requestId: searchRequestId,
+          });
+        }
+        $("btn-buscar").onclick = buscar;
+        $("q").addEventListener("keydown", function (e) {
+          if (e.key === "Enter") buscar();
+        });
+
+        document.querySelectorAll(".tab").forEach(function (btn) {
+          btn.onclick = function () {
+            document.querySelectorAll(".tab").forEach(function (b) {
+              b.classList.remove("active");
+            });
+            btn.classList.add("active");
+            var tab = btn.dataset.tab;
+            $("tab-doc").classList.toggle("hide", tab !== "doc");
+            $("tab-chunks").classList.toggle("hide", tab !== "chunks");
+          };
+        });
+
+        $("btn-salvar-doc").onclick = function () {
+          if (adminBusy) return;
+          var title = $("f-title").value.trim();
+          var slug = $("f-slug").value.trim();
+          if (!title || !slug) {
+            toast("Preencha título e slug", true);
+            return;
+          }
+          var ano = $("f-ano").value ? Number($("f-ano").value) : null;
+          adminBusy = true;
+          $("btn-salvar-doc").disabled = true;
+          $("btn-salvar-chunks").disabled = true;
+          emit("juridico:documento-salvar", {
+            kind: $("f-kind").value,
+            title: title,
+            slug: slug,
+            ano: ano,
+            numero: $("f-numero").value.trim() || undefined,
+            status: $("f-status").value,
+            source_url: $("f-source-url").value.trim() || undefined,
+          });
+        };
+
+        $("f-slug").addEventListener("input", function () {
+          this.value = this.value.toLowerCase().replace(/[^a-z0-9-]/g, "-");
+        });
+
+        $("btn-salvar-chunks").onclick = function () {
+          if (adminBusy) return;
+          var docId = $("f-doc-id").value;
+          var raw = $("f-raw").value.trim();
+          if (!docId || !raw) {
+            toast("Selecione o documento e informe os trechos", true);
+            return;
+          }
+          var lines = raw
+            .split("\n")
+            .map(function (l) {
+              return l.trim();
+            })
+            .filter(Boolean);
+          var chunks = lines.map(function (l, i) {
+            var parts = l.split("|");
+            var level = (parts[0] || "").trim() || "artigo";
+            var path = (parts[1] || "").trim() || "linha " + (i + 1);
+            var text = parts.slice(2).join("|").trim();
+            return { level: level, path: path, ordinal: i, text: text };
+          });
+          adminBusy = true;
+          $("btn-salvar-doc").disabled = true;
+          $("btn-salvar-chunks").disabled = true;
+          emit("juridico:trechos-salvar", {
+            document_id: docId,
+            chunks: chunks,
+            replace: $("f-replace").checked,
+          });
+        };
+
+        window.addEventListener("message", function (event) {
+          if (event.origin !== window.location.origin) return;
+          var msg = event.data;
+          if (!msg || msg.source !== "kaline-host") return;
+          var p = msg.payload || {};
+
+          if (msg.action === "juridico:documentos-pronto") {
+            docs = p.docs || [];
+            isAdmin = !!p.isAdmin;
+            $("admin-panel").classList.toggle("hide", !isAdmin);
+            renderDocs();
+            return;
+          }
+          if (msg.action === "juridico:busca-pronto") {
+            if (p.requestId !== searchRequestId) return;
+            buscaBusy = false;
+            $("btn-buscar").disabled = false;
+            $("btn-buscar").textContent = "buscar";
+            renderResultados(p.results);
+            return;
+          }
+          if (msg.action === "juridico:documento-salvo") {
+            adminBusy = false;
+            $("btn-salvar-doc").disabled = false;
+            $("btn-salvar-chunks").disabled = false;
+            docs = p.docs || docs;
+            renderDocs();
+            toast("Documento salvo");
+            return;
+          }
+          if (msg.action === "juridico:trechos-salvo") {
+            adminBusy = false;
+            $("btn-salvar-doc").disabled = false;
+            $("btn-salvar-chunks").disabled = false;
+            $("f-raw").value = "";
+            toast((p.inserted || 0) + " trechos inseridos");
+            return;
+          }
+          if (msg.action === "juridico:erro") {
+            buscaBusy = false;
+            adminBusy = false;
+            $("btn-buscar").disabled = false;
+            $("btn-buscar").textContent = "buscar";
+            $("btn-salvar-doc").disabled = false;
+            $("btn-salvar-chunks").disabled = false;
+            toast(p.message || "Algo falhou no Jurídico.", true);
+            return;
+          }
+        });
+
+        emit("microapp:ready");
+        emit("juridico:documentos-request");
+      })();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,946 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0b0908" />
+    <title>Kaline Offline — Installer</title>
+    <style>
+      :root {
+        --bg: #0b0908;
+        --bg2: #130f0c;
+        --panel: rgba(255, 247, 237, 0.065);
+        --panel2: rgba(255, 247, 237, 0.095);
+        --border: rgba(255, 184, 108, 0.24);
+        --border2: rgba(255, 119, 51, 0.46);
+        --text: #fff7ed;
+        --muted: #d8c4b6;
+        --soft: #a99183;
+        --accent: #ff6b2c;
+        --accent2: #ffb35a;
+        --ok: #8ee6a7;
+        --warn: #facc15;
+        --shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+        --radius: 28px;
+        --mono:
+          ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New",
+          monospace;
+        --sans:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          Arial, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: var(--sans);
+        color: var(--text);
+        background:
+          radial-gradient(circle at 15% 10%, rgba(255, 107, 44, 0.22), transparent 28rem),
+          radial-gradient(circle at 82% 5%, rgba(185, 28, 28, 0.18), transparent 26rem),
+          radial-gradient(circle at 50% 105%, rgba(255, 179, 90, 0.14), transparent 34rem),
+          linear-gradient(135deg, #080706 0%, #120d0a 44%, #090706 100%);
+        overflow-x: hidden;
+      }
+      a {
+        color: inherit;
+      }
+      .shell {
+        width: min(1160px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 28px 0 54px;
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 36px;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-width: 0;
+      }
+      .mark {
+        width: 46px;
+        height: 46px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid var(--border);
+        box-shadow: 0 12px 40px rgba(255, 107, 44, 0.2);
+        overflow: hidden;
+      }
+      .mark img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .brand-title {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+      }
+      .brand-title strong {
+        font-size: 15px;
+        letter-spacing: 0.02em;
+      }
+      .brand-title span {
+        color: var(--soft);
+        font-size: 13px;
+      }
+      .pill {
+        border: 1px solid var(--border);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--muted);
+        padding: 10px 14px;
+        border-radius: 999px;
+        font-size: 13px;
+        white-space: nowrap;
+      }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        gap: 28px;
+        align-items: stretch;
+        margin-bottom: 28px;
+      }
+      .hero-card,
+      .status-card,
+      .card,
+      .section {
+        position: relative;
+        border: 1px solid var(--border);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.078), rgba(255, 255, 255, 0.036));
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+      .hero-card:before,
+      .status-card:before,
+      .card:before,
+      .section:before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+          linear-gradient(115deg, rgba(255, 179, 90, 0.16), transparent 28%),
+          radial-gradient(circle at 100% 0%, rgba(255, 107, 44, 0.18), transparent 16rem);
+        opacity: 0.75;
+      }
+      .hero-inner,
+      .status-inner,
+      .card-inner,
+      .section-inner {
+        position: relative;
+        z-index: 1;
+      }
+      .hero-inner {
+        padding: clamp(28px, 5vw, 58px);
+      }
+      .status-inner,
+      .card-inner,
+      .section-inner {
+        padding: 28px;
+      }
+      .eyebrow {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        color: var(--accent2);
+        border: 1px solid rgba(255, 179, 90, 0.25);
+        background: rgba(255, 179, 90, 0.08);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 13px;
+        margin-bottom: 22px;
+      }
+      .hero-logo {
+        width: 32px;
+        height: 32px;
+        border-radius: 11px;
+        object-fit: cover;
+        border: 1px solid rgba(255, 179, 90, 0.25);
+      }
+      h1 {
+        margin: 0;
+        font-size: clamp(44px, 8vw, 86px);
+        letter-spacing: -0.07em;
+        line-height: 0.92;
+      }
+      .gradient-text {
+        background: linear-gradient(92deg, #fff7ed, #ffb35a 42%, #ff6b2c 72%, #e11d48);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .lead {
+        color: var(--muted);
+        font-size: clamp(17px, 2.1vw, 21px);
+        line-height: 1.58;
+        max-width: 720px;
+        margin: 22px 0 0;
+      }
+      .flow {
+        display: grid;
+        gap: 12px;
+        margin-top: 28px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .flow-step {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 13px;
+        border-radius: 16px;
+        background: rgba(0, 0, 0, 0.19);
+        border: 1px solid rgba(255, 255, 255, 0.075);
+      }
+      .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 999px;
+        background: var(--accent2);
+        box-shadow: 0 0 18px rgba(255, 179, 90, 0.8);
+        flex: 0 0 auto;
+      }
+      .status-card {
+        min-height: 100%;
+        display: flex;
+        align-items: center;
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 9px;
+        padding: 11px 13px;
+        border-radius: 999px;
+        border: 1px solid var(--border2);
+        background: rgba(255, 107, 44, 0.11);
+        color: #ffd6bf;
+        font-size: 14px;
+        margin-bottom: 18px;
+      }
+      .status-card h2 {
+        margin: 0;
+        font-size: clamp(24px, 3vw, 38px);
+        letter-spacing: -0.04em;
+      }
+      .status-card p,
+      .card p,
+      .section p {
+        color: var(--muted);
+        line-height: 1.58;
+        margin: 12px 0 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        margin-bottom: 28px;
+      }
+      .card {
+        min-height: 100%;
+        transition:
+          transform 0.18s ease,
+          border-color 0.18s ease,
+          background 0.18s ease;
+      }
+      .card.recommended {
+        border-color: var(--border2);
+        transform: translateY(-2px);
+        background: linear-gradient(180deg, rgba(255, 107, 44, 0.14), rgba(255, 255, 255, 0.04));
+      }
+      .card-head {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 14px;
+      }
+      .card h2,
+      .section h2 {
+        margin: 0 0 18px;
+        font-size: clamp(25px, 3vw, 38px);
+        letter-spacing: -0.045em;
+      }
+      .tag {
+        border: 1px solid rgba(255, 179, 90, 0.26);
+        color: var(--accent2);
+        background: rgba(255, 179, 90, 0.08);
+        border-radius: 999px;
+        padding: 7px 10px;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+      .codebox {
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        background: rgba(0, 0, 0, 0.28);
+        border-radius: 18px;
+        padding: 14px;
+        margin: 16px 0;
+        overflow: auto;
+      }
+      code,
+      pre {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: #ffe7cd;
+        line-height: 1.55;
+      }
+      pre {
+        margin: 0;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 16px;
+      }
+      .btn {
+        appearance: none;
+        border: 1px solid rgba(255, 179, 90, 0.24);
+        color: var(--text);
+        background: rgba(255, 255, 255, 0.06);
+        border-radius: 999px;
+        padding: 12px 15px;
+        font: inherit;
+        font-weight: 650;
+        font-size: 14px;
+        cursor: pointer;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 44px;
+        transition:
+          transform 0.16s ease,
+          border-color 0.16s ease,
+          background 0.16s ease;
+      }
+      .btn:hover {
+        transform: translateY(-1px);
+        border-color: rgba(255, 179, 90, 0.56);
+        background: rgba(255, 179, 90, 0.1);
+      }
+      .btn.primary {
+        background: linear-gradient(135deg, var(--accent2), var(--accent) 48%, #d43f17);
+        color: #170804;
+        border-color: transparent;
+        box-shadow: 0 14px 34px rgba(255, 107, 44, 0.22);
+      }
+      .btn.download {
+        background: linear-gradient(135deg, #ffe1ad, #ffb35a 44%, #ff6b2c);
+        color: #160703;
+        border-color: transparent;
+      }
+      .hint {
+        color: var(--soft);
+        font-size: 13px;
+        margin-top: 10px;
+      }
+      .section {
+        margin-bottom: 28px;
+      }
+      .features,
+      .security-list {
+        display: grid;
+        gap: 12px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+      .features {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .security-list {
+        grid-template-columns: 1fr 1fr;
+      }
+      .features li,
+      .security-list li {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.18);
+        color: var(--muted);
+        padding: 12px 13px;
+        border-radius: 15px;
+        line-height: 1.45;
+        font-size: 14px;
+      }
+      .security-list li {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+      }
+      .check {
+        color: var(--ok);
+        flex: 0 0 auto;
+      }
+      .warning {
+        margin-top: 18px;
+        border: 1px solid rgba(250, 204, 21, 0.28);
+        background: rgba(250, 204, 21, 0.08);
+        color: #fde68a;
+        border-radius: 18px;
+        padding: 15px;
+        line-height: 1.5;
+      }
+      details {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(0, 0, 0, 0.16);
+        border-radius: 18px;
+        padding: 0;
+        overflow: hidden;
+      }
+      details + details {
+        margin-top: 10px;
+      }
+      summary {
+        cursor: pointer;
+        padding: 16px 18px;
+        font-weight: 750;
+        color: #ffe7cd;
+      }
+      details[open] summary {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+      }
+      .details-body {
+        padding: 16px 18px 18px;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+      .footer {
+        color: var(--soft);
+        text-align: center;
+        font-size: 13px;
+        padding: 16px 0 0;
+      }
+      .toast {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        transform: translate(-50%, 20px);
+        opacity: 0;
+        pointer-events: none;
+        background: rgba(17, 12, 9, 0.94);
+        border: 1px solid var(--border2);
+        color: var(--text);
+        box-shadow: var(--shadow);
+        border-radius: 999px;
+        padding: 12px 16px;
+        z-index: 30;
+        transition:
+          opacity 0.18s ease,
+          transform 0.18s ease;
+        font-size: 14px;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+      .mobile-only-note {
+        display: none;
+      }
+      @media (max-width: 880px) {
+        .shell {
+          width: min(100% - 22px, 700px);
+          padding-top: 18px;
+        }
+        .nav {
+          align-items: flex-start;
+          margin-bottom: 20px;
+        }
+        .pill {
+          display: none;
+        }
+        .hero,
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .hero-inner,
+        .status-inner,
+        .card-inner,
+        .section-inner {
+          padding: 22px;
+        }
+        .features,
+        .security-list {
+          grid-template-columns: 1fr;
+        }
+        .actions {
+          flex-direction: column;
+        }
+        .btn {
+          width: 100%;
+        }
+        .card.recommended {
+          transform: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="nav" aria-label="Cabeçalho">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">
+            <img
+              src="/kaline.png"
+              alt=""
+              onerror="
+                this.onerror = null;
+                this.src =
+                  'https://raw.githubusercontent.com/Tonyus-dev/totalidade/main/public/kaline.png';
+              "
+            />
+          </div>
+          <div class="brand-title">
+            <strong>Kaline Atelier</strong><span>Installer Offline</span>
+          </div>
+        </div>
+        <div class="pill">Sem Worker · Sem backend · Página pública</div>
+      </header>
+
+      <main>
+        <section class="hero">
+          <div class="hero-card">
+            <div class="hero-inner">
+              <div class="eyebrow">
+                <img
+                  class="hero-logo"
+                  src="/kaline.png"
+                  alt="Kaline"
+                  onerror="
+                    this.onerror = null;
+                    this.src =
+                      'https://raw.githubusercontent.com/Tonyus-dev/totalidade/main/public/kaline.png';
+                  "
+                /><span>Kaline Offline</span>
+              </div>
+              <h1><span class="gradient-text">Instale sua presença local</span></h1>
+              <p class="lead">
+                Esta página identifica seu sistema e entrega o instalador correto da Kaline Offline.
+                A instalação real acontece no seu computador, por scripts locais do próprio
+                repositório.
+              </p>
+              <div class="flow" aria-label="Fluxo de instalação">
+                <div class="flow-step">
+                  <span class="dot"></span> Kaline Online entrega um bootstrap público.
+                </div>
+                <div class="flow-step">
+                  <span class="dot"></span> O bootstrap localiza ou clona o repositório Kaline
+                  Atelier.
+                </div>
+                <div class="flow-step">
+                  <span class="dot"></span> O instalador real roda dentro do repo e prepara a Kaline
+                  Offline.
+                </div>
+              </div>
+            </div>
+          </div>
+          <aside class="status-card" aria-live="polite">
+            <div class="status-inner">
+              <div class="status-badge" id="systemBadge">
+                <span class="dot"></span> Detectando sistema…
+              </div>
+              <h2 id="systemTitle">Escolha o instalador adequado</h2>
+              <p id="systemText">
+                A página não executa nada no navegador. Ela apenas mostra comandos e links para
+                baixar os bootstraps públicos.
+              </p>
+              <p class="mobile-only-note" id="mobileNote">
+                Você está no celular. A instalação completa é para computador Linux Mint Xfce ou
+                Windows. Abra esta página no computador onde deseja instalar a Kaline Offline.
+              </p>
+            </div>
+          </aside>
+        </section>
+
+        <section class="grid" aria-label="Instaladores">
+          <article class="card" id="linuxCard">
+            <div class="card-inner">
+              <div class="card-head">
+                <h2>Instalador Linux Mint Xfce</h2>
+                <span class="tag">Linux</span>
+              </div>
+              <p>
+                Use este fluxo no Linux Mint Xfce. Ele baixa um bootstrap público, localiza ou clona
+                o repositório Kaline Atelier e chama o instalador real dentro do repo.
+              </p>
+              <strong>Instalador baixável</strong>
+              <p>
+                Baixe o arquivo <code>.sh</code>; depois rode o comando indicado abaixo na pasta
+                Downloads. Por segurança, o navegador apenas baixa o arquivo.
+              </p>
+              <div class="actions">
+                <button class="btn download" id="downloadLinuxInstaller">
+                  Baixar instalador Linux Mint Xfce (.sh)</button
+                ><button
+                  class="btn"
+                  data-copy-value="cd ~/Downloads && bash kaline-offline-linux-mint.sh"
+                >
+                  Copiar comando para executar
+                </button>
+              </div>
+              <strong>Comando recomendado</strong>
+              <div class="codebox"><pre id="linuxRecommended"></pre></div>
+              <strong>Comando rápido</strong>
+              <div class="codebox"><pre id="linuxQuick"></pre></div>
+              <div class="actions">
+                <button class="btn primary" data-copy-target="linuxRecommended">
+                  Copiar comando recomendado</button
+                ><button class="btn" data-copy-target="linuxQuick">Copiar comando rápido</button
+                ><a class="btn" id="linuxOpen" target="_blank" rel="noopener noreferrer"
+                  >Abrir script Linux</a
+                >
+              </div>
+              <div class="hint">
+                Recomendado: revise o script com <code>less</code> antes de executar.
+              </div>
+            </div>
+          </article>
+
+          <article class="card" id="windowsCard">
+            <div class="card-inner">
+              <div class="card-head">
+                <h2>Instalador Windows</h2>
+                <span class="tag">Windows</span>
+              </div>
+              <p>
+                Use este fluxo no Windows. Ele baixa um bootstrap PowerShell, localiza ou clona o
+                repositório Kaline Atelier e chama o instalador real dentro do repo.
+              </p>
+              <strong>Instalador baixável</strong>
+              <p>
+                Baixe o arquivo <code>.bat</code> e dê dois cliques para iniciar. O Windows pode
+                exibir um aviso por ser um script baixado da internet.
+              </p>
+              <div class="actions">
+                <button class="btn download" id="downloadWindowsInstaller">
+                  Baixar instalador Windows (.bat)
+                </button>
+              </div>
+              <strong>Comando PowerShell</strong>
+              <div class="codebox"><pre id="windowsCommand"></pre></div>
+              <div class="actions">
+                <button class="btn primary" data-copy-target="windowsCommand">
+                  Copiar comando Windows</button
+                ><a class="btn" id="windowsBat" target="_blank" rel="noopener noreferrer"
+                  >Abrir/baixar .bat</a
+                ><a class="btn" id="windowsPs1" target="_blank" rel="noopener noreferrer"
+                  >Abrir/baixar .ps1</a
+                >
+              </div>
+              <div class="hint">
+                Se o navegador abrir o arquivo como texto, clique com o botão direito e escolha
+                “Salvar como”.
+              </div>
+            </div>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-inner">
+            <h2>O que o instalador fará</h2>
+            <ul class="features">
+              <li>Verifica se a Kaline já está baixada.</li>
+              <li>Clona <code>Tonyus-dev/kalineatelier</code> se necessário.</li>
+              <li>Verifica GitHub CLI e orienta <code>gh auth login</code>.</li>
+              <li>Chama o instalador real dentro do repo.</li>
+              <li>Instala dependências do projeto.</li>
+              <li>Configura <code>.env</code> com backup.</li>
+              <li>Verifica Ollama e modelos locais.</li>
+              <li>Baixa modelos ausentes apenas com confirmação.</li>
+              <li>Verifica Whisper Small e Kokoro/Dora.</li>
+              <li>Prepara local-server e SQLite.</li>
+              <li>Cria atalhos da Kaline Offline.</li>
+              <li>Cria atalho da Kaline Janelinha.</li>
+            </ul>
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-inner">
+            <h2>Segurança</h2>
+            <ul class="security-list">
+              <li><span class="check">✓</span> A Kaline Online não instala nada sozinha.</li>
+              <li><span class="check">✓</span> Esta página não lê seus arquivos.</li>
+              <li><span class="check">✓</span> Esta página não cria atalhos diretamente.</li>
+              <li><span class="check">✓</span> Esta página não recebe áudio.</li>
+              <li><span class="check">✓</span> Esta página não acessa sua Kaline local.</li>
+              <li><span class="check">✓</span> Esta página não pede token GitHub.</li>
+              <li><span class="check">✓</span> Esta página não guarda chaves.</li>
+              <li><span class="check">✓</span> A instalação real acontece localmente.</li>
+              <li>
+                <span class="check">✓</span> A Kaline Offline roda em <code>127.0.0.1:64113</code>.
+              </li>
+              <li>
+                <span class="check">✓</span> O microfone só liga quando você clica dentro da Kaline.
+              </li>
+            </ul>
+            <div class="warning">
+              O navegador não instala a Kaline sozinho. Ele apenas baixa o instalador. A execução
+              acontece localmente, no seu computador. Nunca cole tokens ou chaves secretas nesta
+              página.
+            </div>
+          </div>
+        </section>
+        <section class="section">
+          <div class="section-inner">
+            <h2>Problemas comuns</h2>
+            <details>
+              <summary>O comando gh não existe</summary>
+              <div class="details-body">
+                <p>Instale o GitHub CLI antes de rodar o bootstrap.</p>
+                <div class="codebox"><pre>sudo apt install gh</pre></div>
+                <div class="codebox"><pre>winget install --id GitHub.cli</pre></div>
+              </div>
+            </details>
+            <details>
+              <summary>Não tenho acesso ao repo</summary>
+              <div class="details-body">
+                <p>Use o fluxo interativo do GitHub CLI. Nunca cole tokens nesta página.</p>
+                <div class="codebox"><pre>gh auth login</pre></div>
+              </div>
+            </details>
+            <details>
+              <summary>Mint bloqueou o script</summary>
+              <div class="details-body">
+                <div class="codebox">
+                  <pre>
+cd ~/Downloads
+bash kaline-installer-linux-mint.sh</pre
+                  >
+                </div>
+              </div>
+            </details>
+            <details>
+              <summary>PowerShell bloqueou o script</summary>
+              <div class="details-body">
+                <div class="codebox">
+                  <pre>powershell -ExecutionPolicy Bypass -File .\kaline-installer-windows.ps1</pre>
+                </div>
+              </div>
+            </details>
+            <details>
+              <summary>Ollama não está rodando</summary>
+              <div class="details-body">
+                Abra ou instale o Ollama. Sem ele, a Kaline pode instalar, mas a IA local ficará
+                indisponível até configurar.
+              </div>
+            </details>
+            <details>
+              <summary>Modelo Ollama ausente</summary>
+              <div class="details-body">
+                O instalador pergunta antes de baixar modelos. Se você recusar, instale depois com
+                <code>ollama pull &lt;modelo&gt;</code>.
+              </div>
+            </details>
+            <details>
+              <summary>Whisper Small não encontrado</summary>
+              <div class="details-body">
+                A transcrição ficará indisponível até configurar. Isso não quebra a instalação
+                principal.
+              </div>
+            </details>
+            <details>
+              <summary>Kokoro/Dora não encontrado</summary>
+              <div class="details-body">
+                A voz local ficará indisponível até configurar. A Kaline ainda pode usar fallback do
+                navegador quando aplicável.
+              </div>
+            </details>
+            <details>
+              <summary>Janelinha não apareceu na barra</summary>
+              <div class="details-body">
+                Abra o menu de aplicativos, procure “Kaline Janelinha”, clique com o botão direito e
+                escolha “Adicionar ao painel”, ou arraste para a barra.
+              </div>
+            </details>
+          </div>
+        </section>
+      </main>
+      <footer class="footer">
+        Kaline Offline · página estática para a Kaline Online/Totalidade
+      </footer>
+    </div>
+    <div class="toast" id="toast">Comando copiado.</div>
+
+    <script>
+      (function () {
+        const RAW_BASE =
+          "https://raw.githubusercontent.com/Tonyus-dev/kalineatelier/main/apps/installer-worker/install";
+        const urls = {
+          linux: RAW_BASE + "/kaline-installer-linux-mint.sh",
+          windowsPs1: RAW_BASE + "/kaline-installer-windows.ps1",
+          windowsBat: RAW_BASE + "/kaline-installer-windows.bat",
+        };
+        const commands = {
+          linuxRecommended: `cd ~/Downloads && curl -fsSL ${urls.linux} -o kaline-installer-linux-mint.sh && less kaline-installer-linux-mint.sh && bash kaline-installer-linux-mint.sh`,
+          linuxQuick: `cd ~/Downloads && curl -fsSL ${urls.linux} -o kaline-installer-linux-mint.sh && bash kaline-installer-linux-mint.sh`,
+          windowsCommand: `cd $env:USERPROFILE\\Downloads; irm ${urls.windowsPs1} -OutFile kaline-installer-windows.ps1; powershell -ExecutionPolicy Bypass -File .\\kaline-installer-windows.ps1`,
+        };
+        Object.entries(commands).forEach(([id, value]) => {
+          const el = document.getElementById(id);
+          if (el) el.textContent = value;
+        });
+        document.getElementById("linuxOpen").href = urls.linux;
+        document.getElementById("windowsBat").href = urls.windowsBat;
+        document.getElementById("windowsPs1").href = urls.windowsPs1;
+        const linuxInstallerContent = `#!/usr/bin/env bash
+set -euo pipefail
+
+cd "${HOME}/Downloads"
+
+curl -fsSL "${urls.linux}" -o "kaline-installer-linux-mint.sh"
+
+echo
+echo "Instalador baixado em: ${HOME}/Downloads/kaline-installer-linux-mint.sh"
+echo "Revise o script antes de executar."
+echo
+
+if command -v less >/dev/null 2>&1; then
+  less "kaline-installer-linux-mint.sh"
+else
+  cat "kaline-installer-linux-mint.sh"
+fi
+
+bash "kaline-installer-linux-mint.sh"
+`;
+        const windowsInstallerContent = `@echo off
+setlocal
+
+cd /d "%USERPROFILE%\\Downloads"
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "Invoke-WebRequest -Uri '${urls.windowsPs1}' -OutFile 'kaline-installer-windows.ps1'"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File ".\\kaline-installer-windows.ps1"
+
+pause
+`;
+        const ua = navigator.userAgent || "",
+          platform = navigator.platform || "",
+          isAndroid = /Android/i.test(ua),
+          isIOS =
+            /iPhone|iPad|iPod/i.test(ua) ||
+            (platform === "MacIntel" && navigator.maxTouchPoints > 1),
+          isWindows = /Win/i.test(platform) || /Windows/i.test(ua),
+          isLinux = !isAndroid && /Linux/i.test(platform + " " + ua),
+          isMobile = isAndroid || isIOS;
+        const linuxCard = document.getElementById("linuxCard"),
+          windowsCard = document.getElementById("windowsCard"),
+          systemBadge = document.getElementById("systemBadge"),
+          systemTitle = document.getElementById("systemTitle"),
+          systemText = document.getElementById("systemText"),
+          mobileNote = document.getElementById("mobileNote");
+        function setStatus(label, title, text) {
+          systemBadge.innerHTML = `<span class="dot"></span> ${label}`;
+          systemTitle.textContent = title;
+          systemText.textContent = text;
+        }
+        if (isMobile) {
+          setStatus(
+            "Sistema detectado: celular",
+            "Abra no computador de instalação",
+            "Android e iPhone podem abrir esta página, mas a instalação completa da Kaline Offline é para Linux Mint Xfce ou Windows.",
+          );
+          mobileNote.style.display = "block";
+        } else if (isWindows) {
+          windowsCard.classList.add("recommended");
+          setStatus(
+            "Sistema detectado: Windows",
+            "Use o instalador Windows",
+            "Baixe o .bat para dois cliques ou copie o comando PowerShell.",
+          );
+        } else if (isLinux) {
+          linuxCard.classList.add("recommended");
+          setStatus(
+            "Sistema detectado: Linux",
+            "Use o instalador Linux Mint Xfce",
+            "Baixe o .sh ou copie o comando recomendado para revisar o script antes de executar.",
+          );
+        } else {
+          setStatus(
+            "Sistema não identificado",
+            "Escolha manualmente",
+            "Não conseguimos identificar seu sistema. Escolha o instalador correto abaixo.",
+          );
+        }
+        const toast = document.getElementById("toast");
+        let toastTimer = null;
+        function showToast(message) {
+          toast.textContent = message || "Comando copiado.";
+          toast.classList.add("show");
+          clearTimeout(toastTimer);
+          toastTimer = setTimeout(() => toast.classList.remove("show"), 1800);
+        }
+        async function copyText(text) {
+          try {
+            await navigator.clipboard.writeText(text);
+            showToast("Comando copiado.");
+          } catch (_) {
+            const area = document.createElement("textarea");
+            area.value = text;
+            area.setAttribute("readonly", "readonly");
+            area.style.position = "fixed";
+            area.style.left = "-9999px";
+            document.body.appendChild(area);
+            area.select();
+            document.execCommand("copy");
+            document.body.removeChild(area);
+            showToast("Comando copiado.");
+          }
+        }
+        function downloadTextFile(filename, content, mimeType = "text/plain") {
+          const blob = new Blob([content], { type: mimeType });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = filename;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(url);
+        }
+        document.querySelectorAll("[data-copy-target]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const target = document.getElementById(button.getAttribute("data-copy-target"));
+            if (target) copyText(target.textContent.trim());
+          });
+        });
+        document.querySelectorAll("[data-copy-value]").forEach((button) => {
+          button.addEventListener("click", () => copyText(button.getAttribute("data-copy-value")));
+        });
+        document.getElementById("downloadLinuxInstaller").addEventListener("click", () => {
+          downloadTextFile(
+            "kaline-offline-linux-mint.sh",
+            linuxInstallerContent,
+            "text/x-shellscript",
+          );
+          showToast("Instalador Linux baixado.");
+        });
+        document.getElementById("downloadWindowsInstaller").addEventListener("click", () => {
+          downloadTextFile(
+            "kaline-offline-windows.bat",
+            windowsInstallerContent,
+            "application/x-bat",
+          );
+          showToast("Instalador Windows baixado.");
+        });
+      })();
+    </script>
+  </body>
+</html>
