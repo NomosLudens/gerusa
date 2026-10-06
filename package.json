@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.gerusa.json",
+    "smoke:gerusa-db": "node scripts/smoke-gerusa-db.mjs",
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:watch": "vitest",
