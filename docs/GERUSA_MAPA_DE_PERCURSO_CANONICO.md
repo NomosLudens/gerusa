@@ -2,7 +2,8 @@
 
 **Atualizado em:** 2026-10-07  
 **Missão:** adaptação multiusuário de KALLISTIS para Gerusa  
-**Resultado da validação em produção:** `GERUSA_PEDAGOGICAL_PRODUCT_ADAPTATION_PASS`
+**Resultado da adaptação pedagógica anterior:** `GERUSA_PEDAGOGICAL_PRODUCT_ADAPTATION_PASS` — prova funcional parcial, não certifica o produto completo.
+**Gate único atual:** `GERUSA_PRODUCT_READY_INCIDENT`
 
 ## Antes desta adaptação
 
@@ -130,6 +131,72 @@ não foram alteradas nem apagadas durante esta missão.
 - As linhas pedagógicas de validação estão marcadas `Gate` e foram mantidas no
   PostgreSQL para auditoria; nenhuma linha foi apagada.
 
+## Gate único de produto — 2026-10-07
+
+O gate vigente exige provar o fluxo humano desde uma instalação sem professora,
+seguido do uso pela professora e pelos alunos. Os PASS anteriores deste mapa
+continuam como evidência de engenharia e do ciclo pedagógico com contas já
+existentes; eles não demonstram onboarding inicial nem tornam o produto pronto.
+
+### Implementação publicada
+
+- `5c39b2d5b906199e71fa2939427fa382e0a8a3e6` está em `master`, `origin/master`
+  e no clone da Mini.
+- Worker `gerusa` atualizado para a versão
+  `838eaa6d-5490-49e5-8622-42744816f5e0`; serviço Core ativo na Mini.
+- Migration `0006_product_accounts` aplicada em transação pelo banco e role
+  `gerusa`; nenhuma conta existente foi criada, removida ou desativada.
+- `/` oferece a configuração inicial quando não há Mestre. `/setup` cria a
+  primeira professora, role de sistema, mesa inicial e sessão em uma transação;
+  quando já existe Mestre ativo, a configuração fica fechada.
+- `/auth` aceita identificador + segredo no contrato de autenticação existente;
+  contas infantis usam username + PIN de seis dígitos, hash scrypt, limitação de
+  tentativas e resposta genérica.
+- A UI Mestre recebeu criação de aluno com nome, idade, username sugerido,
+  PIN, mesa/campanha opcional e observação privada; reset de PIN, desativação e
+  reativação preservam os dados e revogam sessões quando necessário.
+- A senha da professora pode ser alterada pela área Minha conta. A observação
+  privada não é retornada no perfil nem incluída no contexto pedagógico.
+- O fluxo de setup, login, criação e gestão de alunos ainda não foi comprovado
+  como professora autenticada em produção.
+
+### Evidência real deste gate
+
+- Build, typecheck, lint dos arquivos alterados e `git diff --check` passaram.
+- Home de produção e `/setup` responderam HTTP 200. `/api/setup/status` retornou
+  `available=false`; a tela informa que a configuração inicial foi concluída.
+- Sem sessão, `/api/auth/session` e `/api/admin/students` retornaram HTTP 401.
+- Core local e Core pelo Tunnel responderam `{"status":"ok"}`. A consulta
+  `READ ONLY` confirmou `current_database=gerusa`, `current_user=gerusa`,
+  migration `0006_product_accounts`, três usuários ativos e um Mestre ativo.
+- Navegador headless em 1440×900 e 390×844 abriu a home; a largura do documento
+  coube no viewport, sem erro de página. A home não fez chamada direta ao
+  OpenRouter e o bundle client não contém padrão de chave ou bearer.
+- O conector de navegador não conseguiu carregar a política de headers; uma
+  navegação headless validou apenas superfícies públicas. Não havia sessão de
+  professora disponível para executar criação/reset de aluno e ciclo de UI.
+- Nenhuma conta foi criada por SQL. Os três usuários preexistentes foram
+  preservados.
+
+### Veredito
+
+`GERUSA_PRODUCT_READY_INCIDENT`.
+
+O teste obrigatório de primeira professora não pode ser executado no banco de
+produção atual porque existe um Mestre ativo. O próprio requisito fecha `/setup`
+nesse estado. Remover/desativar a professora ou apagar dados para simular zero
+não foi autorizado; criar outra base ou Worker também contraria a arquitetura
+definida. Como o primeiro passo do teste humano não ocorreu, criação de Lucas e
+Maria pela UI, isolamento, reset, desativação/reativação e ciclo pedagógico
+integrado deste gate permanecem sem prova. O ciclo pedagógico anterior continua
+registrado como evidência parcial, não como substituto deste teste.
+
+Para retomar sem intervenção técnica no uso cotidiano, é necessário um alvo
+Gerusa de primeira instalação aprovado para o teste humano, sem dados finais
+preexistentes e compatível com as restrições de arquitetura do gate. Também é
+necessário completar a recuperação de senha esquecida da professora; a UI
+publicada altera a senha atual mediante confirmação da senha vigente.
+
 ## Incidentes anteriores preservados
 
 - Rotas `/auth`, `/home`, `/mestre` e `/conversa` chegaram a responder 404 no
@@ -159,8 +226,9 @@ não foram alteradas nem apagadas durante esta missão.
 
 ## Evidência de versão
 
-O código multiusuário, a adaptação pedagógica e a validação funcional foram
-executados em produção. O commit deste mapa e o deployment correspondente devem
-ser consultados no histórico Git e no registro de deployments do Worker; a
-igualdade entre `master`, Mini e runtime deve ser reconfirmada após publicar
-este registro.
+O código de onboarding e contas foi publicado do SHA
+`5c39b2d5b906199e71fa2939427fa382e0a8a3e6`. O Worker está na versão
+`838eaa6d-5490-49e5-8622-42744816f5e0`; a Mini está sincronizada ao código e
+serviu o Core após o restart. Este mapa é uma alteração somente documental e
+não exige novo deploy. `origin/master` deve receber esta atualização documental
+e a Mini deve sincronizar o clone; isso não altera o SHA do código publicado.
