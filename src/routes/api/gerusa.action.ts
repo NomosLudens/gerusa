@@ -355,7 +355,7 @@ export const Route = createFileRoute("/api/gerusa/action")({
               ],
               tool_choice: { type: "function", function: { name: `submit_${action}` } },
               temperature: 0.45,
-              max_tokens: 1800,
+              max_tokens: 4096,
             }),
             signal: AbortSignal.timeout(60_000),
           });
@@ -368,10 +368,11 @@ export const Route = createFileRoute("/api/gerusa/action")({
           return errorResponse("provider_rejected", status === 429 ? 503 : 502, requestId);
         }
         const payload = (await response.json().catch(() => null)) as {
-          choices?: Array<{ message?: Record<string, unknown> }>;
+          choices?: Array<{ message?: Record<string, unknown>; finish_reason?: string }>;
           error?: Record<string, unknown>;
         } | null;
-        const message = payload?.choices?.[0]?.message;
+        const choice = payload?.choices?.[0];
+        const message = choice?.message;
         const toolCalls = Array.isArray(message?.tool_calls) ? message.tool_calls : [];
         const firstToolCall = toolCalls[0];
         const toolArguments =
@@ -435,11 +436,32 @@ export const Route = createFileRoute("/api/gerusa/action")({
         } catch {
           const objectStart = trimmedContent.indexOf("{");
           const objectEnd = trimmedContent.lastIndexOf("}");
-          if (objectStart < 0 || objectEnd <= objectStart)
+          if (objectStart < 0 || objectEnd <= objectStart) {
+            console.warn(
+              JSON.stringify({
+                type: "gerusa_action_json_rejected",
+                action,
+                requestId,
+                finishReason: choice?.finish_reason ?? null,
+                contentLength: trimmedContent.length,
+                extraction: "object_delimiter_missing",
+              }),
+            );
             return errorResponse("invalid_provider_json", 502, requestId);
+          }
           try {
             candidate = JSON.parse(trimmedContent.slice(objectStart, objectEnd + 1));
           } catch {
+            console.warn(
+              JSON.stringify({
+                type: "gerusa_action_json_rejected",
+                action,
+                requestId,
+                finishReason: choice?.finish_reason ?? null,
+                contentLength: trimmedContent.length,
+                extraction: "object_parse_failed",
+              }),
+            );
             return errorResponse("invalid_provider_json", 502, requestId);
           }
         }
