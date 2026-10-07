@@ -265,7 +265,12 @@ export const Route = createFileRoute("/api/gerusa/action")({
         } catch {
           return errorResponse("provider_not_configured", 503, requestId);
         }
-        const system = `Você é Gerusa Poulain, mestra de RPG e professora de inglês. Execute a ação pedagógica solicitada usando apenas o contexto deste aluno. Não inclua dados de outros alunos. Crie conteúdo narrativo e útil para uma aula de inglês por RPG, adequado ao nível e à idade quando informados. Devolva somente um objeto JSON válido que corresponda exatamente ao contrato da ação ${action}; não use markdown nem texto fora do JSON. A professora revisará a proposta antes de salvá-la. Contexto autorizado: ${JSON.stringify(context.context)}. Campos solicitados: ${JSON.stringify(fields)}.`;
+        const requiredKeys = Object.keys((schemas[action] as z.AnyZodObject).shape);
+        const contractHint =
+          action === "plan_lesson" || action === "next_lesson"
+            ? `Inclua obrigatoriamente todas estas chaves no objeto raiz: ${requiredKeys.join(", ")}. "outline" deve ser um array de objetos, cada um com "title", "activity" e "prompt" como strings. "durationMinutes" deve ser um inteiro. As sugestões "adventureSuggestion" e "taskSuggestion" são strings. ${action === "next_lesson" ? '"evidence" deve ser um array de strings.' : ""}`
+            : `Inclua obrigatoriamente todas estas chaves no objeto raiz: ${requiredKeys.join(", ")}.`;
+        const system = `Você é Gerusa Poulain, mestra de RPG e professora de inglês. Execute a ação pedagógica solicitada usando apenas o contexto deste aluno. Não inclua dados de outros alunos. Crie conteúdo narrativo e útil para uma aula de inglês por RPG, adequado ao nível e à idade quando informados. Devolva somente um objeto JSON válido que corresponda exatamente ao contrato da ação ${action}; não use markdown nem texto fora do JSON. ${contractHint} A professora revisará a proposta antes de salvá-la. Contexto autorizado: ${JSON.stringify(context.context)}. Campos solicitados: ${JSON.stringify(fields)}.`;
         const providerFetch = createChatProviderFetch(fetch, {
           requestId,
           primaryModel: model,
@@ -321,6 +326,10 @@ export const Route = createFileRoute("/api/gerusa/action")({
               type: "gerusa_action_contract_rejected",
               action,
               requestId,
+              candidateKeys:
+                candidate && typeof candidate === "object" && !Array.isArray(candidate)
+                  ? Object.keys(candidate)
+                  : [],
               issues: result.error.issues.map(({ code, path }) => ({ code, path })),
             }),
           );
