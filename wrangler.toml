@@ -2,6 +2,19 @@ name = "gerusa"
 main = "dist/server/server.js"
 compatibility_date = "2026-10-05"
 compatibility_flags = ["nodejs_compat"]
+workers_dev = true
+
+[[routes]]
+pattern = "gerusa.nomosludens.ia.br"
+custom_domain = true
+enabled = true
+previews_enabled = false
+
+[[routes]]
+pattern = "www.gerusa.nomosludens.ia.br"
+custom_domain = true
+enabled = true
+previews_enabled = false
 
 [assets]
 directory = "dist/client"

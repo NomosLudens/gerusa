@@ -10,7 +10,8 @@ O Worker chama somente a API HTTPS do Core; somente o processo Core usa
 - Unidade systemd de usuário: `infra/systemd/gerusa-core.service`.
 - Porta: `127.0.0.1:4530`; não bindar em `0.0.0.0`.
 - Configuração protegida: `~/.config/gerusa/gerusa.env` (modo `0600`).
-- Variáveis: `GERUSA_DATABASE_URL`, `GERUSA_CORE_SECRET`, `GERUSA_CORE_PORT=4530`.
+- Variáveis: `GERUSA_DATABASE_URL`, `GERUSA_CORE_SECRET`,
+  `GERUSA_CREDENTIAL_LOOKUP_KEY`, `GERUSA_CORE_PORT=4530`.
 - O serviço usa Node.js e o pacote `pg` fixado em `8.16.3`.
 
 Após atualizar o clone GitHub na Mini, instale o pacote do serviço e habilite a
@@ -28,10 +29,16 @@ systemctl --user enable --now gerusa-core.service
 ## API interna
 
 - `GET /health`: testa PostgreSQL e confirma internamente database/role `gerusa`.
-- `POST /threads`: cria uma conversa.
-- `GET /threads/:threadId/messages`: lê até as 200 mensagens mais recentes.
-- `POST /threads/:threadId/messages`: grava uma mensagem `user` ou `assistant`.
+- `POST /auth/login`, `GET /auth/session` e `POST /auth/logout`: autenticação e
+  sessão persistida; o Core armazena somente o digest do token e hash scrypt da
+  senha.
+- `GET` e `PUT /profile`: identidade própria resolvida pela sessão.
+- `GET /master/summary`: alunos, mesas e campanhas das mesas de mestre ativas.
+- `POST /threads`: cria conversa de jogador vinculada ao usuário e à mesa ativa.
+- `GET` e `POST /threads/:threadId/messages`: lê/grava mensagens; o dono e a
+  professora vinculada à mesa podem acessar a conversa.
 - Exceto `/health`, todos os endpoints exigem `Authorization: Bearer <GERUSA_CORE_SECRET>`.
+- Rotas de identidade e conversa autenticada também exigem `X-Gerusa-Session`.
 - O Core não carrega persona, não chama OpenRouter e não aceita conexões do browser.
 
 ## Tunnel e Worker
