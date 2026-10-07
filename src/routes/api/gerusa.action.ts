@@ -200,6 +200,52 @@ const schemas: Record<string, z.ZodType> = {
     .strict(),
 };
 
+function toJsonSchema(schema: z.ZodTypeAny): Record<string, unknown> {
+  const definition = schema._def as {
+    typeName: string;
+    shape?: () => Record<string, z.ZodTypeAny>;
+    type?: z.ZodTypeAny;
+    innerType?: z.ZodTypeAny;
+    schema?: z.ZodTypeAny;
+    options?: z.ZodTypeAny[];
+    values?: string[];
+    checks?: Array<{ kind: string; value?: number }>;
+  };
+  switch (definition.typeName) {
+    case "ZodObject": {
+      const shape = definition.shape?.() ?? {};
+      return {
+        type: "object",
+        properties: Object.fromEntries(
+          Object.entries(shape).map(([key, value]) => [key, toJsonSchema(value)]),
+        ),
+        required: Object.keys(shape),
+        additionalProperties: false,
+      };
+    }
+    case "ZodArray":
+      return { type: "array", items: toJsonSchema(definition.type!) };
+    case "ZodString":
+      return { type: "string" };
+    case "ZodNumber":
+      return {
+        type: definition.checks?.some((check) => check.kind === "int") ? "integer" : "number",
+      };
+    case "ZodEnum":
+      return { type: "string", enum: definition.values };
+    case "ZodUnion":
+      return { anyOf: definition.options?.map(toJsonSchema) ?? [] };
+    case "ZodEffects":
+      return toJsonSchema(definition.schema!);
+    case "ZodOptional":
+    case "ZodNullable":
+    case "ZodDefault":
+      return toJsonSchema(definition.innerType!);
+    default:
+      return {};
+  }
+}
+
 const actionSchema = z
   .object({
     action: z.enum(Object.keys(schemas) as [string, ...string[]]),
@@ -296,7 +342,18 @@ export const Route = createFileRoute("/api/gerusa/action")({
                 { role: "system", content: system },
                 { role: "user", content: `Ação: ${action}. Gere a proposta estruturada agora.` },
               ],
-              response_format: { type: "json_object" },
+              tools: [
+                {
+                  type: "function",
+                  function: {
+                    name: `submit_${action}`,
+                    description: `Return the structured pedagogical proposal for ${action}.`,
+                    parameters: toJsonSchema(schemas[action]),
+                    strict: true,
+                  },
+                },
+              ],
+              tool_choice: { type: "function", function: { name: `submit_${action}` } },
               temperature: 0.45,
               max_tokens: 1800,
             }),
@@ -313,7 +370,20 @@ export const Route = createFileRoute("/api/gerusa/action")({
         const payload = (await response.json().catch(() => null)) as {
           choices?: Array<{ message?: Record<string, unknown> }>;
         } | null;
-        let content = payload?.choices?.[0]?.message?.content;
+        const message = payload?.choices?.[0]?.message;
+        const toolCalls = Array.isArray(message?.tool_calls) ? message.tool_calls : [];
+        const firstToolCall = toolCalls[0];
+        const toolArguments =
+          firstToolCall &&
+          typeof firstToolCall === "object" &&
+          "function" in firstToolCall &&
+          firstToolCall.function &&
+          typeof firstToolCall.function === "object" &&
+          "arguments" in firstToolCall.function &&
+          typeof firstToolCall.function.arguments === "string"
+            ? firstToolCall.function.arguments
+            : undefined;
+        let content = toolArguments ?? message?.content;
         if (Array.isArray(content)) {
           content = content
             .map((part) =>
@@ -324,14 +394,15 @@ export const Route = createFileRoute("/api/gerusa/action")({
             .join("\n");
         }
         if (typeof content !== "string") {
-          const message = payload?.choices?.[0]?.message;
           console.warn(
             JSON.stringify({
               type: "gerusa_action_response_shape_rejected",
               action,
               requestId,
+              payloadKeys: payload && typeof payload === "object" ? Object.keys(payload) : [],
               choiceCount: payload?.choices?.length ?? 0,
               messageKeys: message ? Object.keys(message) : [],
+              toolCallCount: toolCalls.length,
               contentType: Array.isArray(message?.content) ? "array" : typeof message?.content,
               contentPartTypes: Array.isArray(message?.content)
                 ? message.content.map((part) =>
