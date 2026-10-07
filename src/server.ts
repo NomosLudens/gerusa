@@ -163,14 +163,22 @@ export default {
       /^\/conversa\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         url.pathname,
       );
-    const isGerusaApi = url.pathname.startsWith("/api/gerusa/");
-    const isGerusaIdentityPage = ["/auth", "/home", "/mestre", "/conversa", "/conversa/"].includes(
-      url.pathname,
-    );
+    const isGerusaApi =
+      url.pathname.startsWith("/api/gerusa/") || url.pathname.startsWith("/api/setup/");
+    const isGerusaIdentityPage = [
+      "/auth",
+      "/setup",
+      "/home",
+      "/mestre",
+      "/conversa",
+      "/conversa/",
+    ].includes(url.pathname);
     const isGerusaIdentityApi = [
       "/api/auth/session",
+      "/api/auth/password",
       "/api/profile",
       "/api/master/characters",
+      "/api/admin/students",
     ].includes(url.pathname);
 
     let response: Response;

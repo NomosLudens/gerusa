@@ -16,10 +16,11 @@ async function destinationForSession() {
 
 function AuthPage() {
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [identifier, setIdentifier] = useState("");
+  const [secret, setSecret] = useState("");
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
+  const [setupAvailable, setSetupAvailable] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -29,7 +30,17 @@ function AuthPage() {
       })
       .catch(() => undefined)
       .finally(() => {
-        if (active) setChecking(false);
+        if (active) {
+          void fetch("/api/setup/status", { cache: "no-store" })
+            .then((response) => response.json())
+            .then((data: { available?: boolean }) => {
+              if (active) setSetupAvailable(data.available === true);
+            })
+            .catch(() => undefined)
+            .finally(() => {
+              if (active) setChecking(false);
+            });
+        }
       });
     return () => {
       active = false;
@@ -40,10 +51,10 @@ function AuthPage() {
     event.preventDefault();
     setLoading(true);
     try {
-      await signInLocal(email, password);
+      await signInLocal(identifier, secret);
       await navigate({ to: await destinationForSession(), replace: true });
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "E-mail ou senha inválidos");
+      toast.error(error instanceof Error ? error.message : "Acesso ou senha inválidos");
     } finally {
       setLoading(false);
     }
@@ -66,28 +77,28 @@ function AuthPage() {
         ) : (
           <form onSubmit={submit} className="auth-card__form">
             <div>
-              <Label htmlFor="auth-email">E-mail</Label>
+              <Label htmlFor="auth-email">E-mail ou nome de acesso</Label>
               <Input
                 id="auth-email"
-                name="email"
-                type="email"
+                name="identifier"
+                type="text"
                 required
                 autoComplete="username"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
+                value={identifier}
+                onChange={(event) => setIdentifier(event.target.value)}
                 className="auth-card__input"
               />
             </div>
             <div>
-              <Label htmlFor="auth-password">Senha</Label>
+              <Label htmlFor="auth-password">Senha ou PIN de 6 dígitos</Label>
               <Input
                 id="auth-password"
-                name="password"
+                name="secret"
                 type="password"
                 required
                 autoComplete="current-password"
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
+                value={secret}
+                onChange={(event) => setSecret(event.target.value)}
                 className="auth-card__input"
               />
             </div>
@@ -102,6 +113,11 @@ function AuthPage() {
           </form>
         )}
         <p className="auth-card__hint">Acesso para professora e alunos da Gerusa.</p>
+        {setupAvailable ? (
+          <Link className="auth-card__hint block underline" to="/setup">
+            Primeiro acesso da professora
+          </Link>
+        ) : null}
       </div>
     </main>
   );

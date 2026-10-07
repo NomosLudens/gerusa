@@ -12,9 +12,12 @@ async function readCredentials(request: Request) {
   const raw = await request.text();
   if (new TextEncoder().encode(raw).byteLength > 8_192) return null;
   const body = JSON.parse(raw) as Record<string, unknown>;
-  if (Object.keys(body).some((key) => !["email", "password"].includes(key))) return null;
-  if (typeof body.email !== "string" || typeof body.password !== "string") return null;
-  return { email: body.email, password: body.password };
+  if (Object.keys(body).some((key) => !["identifier", "secret", "email", "password"].includes(key)))
+    return null;
+  const identifier = typeof body.identifier === "string" ? body.identifier : body.email;
+  const secret = typeof body.secret === "string" ? body.secret : body.password;
+  if (typeof identifier !== "string" || typeof secret !== "string") return null;
+  return { identifier, secret };
 }
 
 export const Route = createFileRoute("/api/auth/session")({
@@ -37,7 +40,7 @@ export const Route = createFileRoute("/api/auth/session")({
       POST: async ({ request }) => {
         if (!isSameOrigin(request))
           return Response.json({ error: "csrf_rejected" }, { status: 403, headers });
-        let credentials: { email: string; password: string } | null;
+        let credentials: { identifier: string; secret: string } | null;
         try {
           credentials = await readCredentials(request);
         } catch {

@@ -200,9 +200,12 @@ async function getStudentView(pool, user, params) {
   const campaign = await pool.query(
     `SELECT m.id::text AS id,m.name AS "mesaName",c.id::text AS "campaignId",c.name AS "campaignName"
        FROM gerusa.mesas m JOIN gerusa.mesa_members mm ON mm.mesa_id=m.id
-       LEFT JOIN gerusa.campaigns c ON c.mesa_id=m.id AND c.status='active'
+       LEFT JOIN gerusa.campaigns c ON c.id=COALESCE(
+         (SELECT ch.campaign_id FROM gerusa.characters ch WHERE ch.owner_user_id=$2 AND ch.mesa_id=m.id LIMIT 1),
+         (SELECT fallback.id FROM gerusa.campaigns fallback WHERE fallback.mesa_id=m.id AND fallback.status='active' ORDER BY fallback.created_at DESC LIMIT 1)
+       ) AND c.status='active'
       WHERE m.id=$1 AND mm.user_id=$2 AND mm.member_role='jogador' AND mm.membership_status='active'
-      ORDER BY c.created_at DESC NULLS LAST LIMIT 1`,
+      LIMIT 1`,
     [mesaId, user.id],
   );
   if (!campaign.rowCount) fail("mesa_not_found", 404);
@@ -307,9 +310,10 @@ export async function getPedagogyAiContext(pool, user, params) {
     lesson,
     adventure,
   ] = await Promise.all([
-    pool.query(`SELECT display_name AS name,pronouns FROM gerusa.profiles WHERE id=$1`, [
-      studentId,
-    ]),
+    pool.query(
+      `SELECT display_name AS name,pronouns,age_years AS age FROM gerusa.profiles WHERE id=$1`,
+      [studentId],
+    ),
     pool.query(
       `SELECT m.name AS "mesaName",c.name AS "campaignName" FROM gerusa.mesa_members mm
        JOIN gerusa.mesas m ON m.id=mm.mesa_id LEFT JOIN gerusa.campaigns c ON c.mesa_id=m.id AND c.status='active'

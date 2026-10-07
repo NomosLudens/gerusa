@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { getLocalSession } from "@/lib/local-auth-client";
 
@@ -9,12 +9,26 @@ function GerusaHome() {
   const navigate = useNavigate();
   const [opening, setOpening] = useState(false);
   const [error, setError] = useState("");
+  const [setupAvailable, setSetupAvailable] = useState(false);
+
+  useEffect(() => {
+    void fetch("/api/setup/status", { cache: "no-store" })
+      .then((response) => response.json())
+      .then((result: { available?: boolean }) => setSetupAvailable(result.available === true))
+      .catch(() => undefined);
+  }, []);
 
   async function startStory() {
     if (opening) return;
     setOpening(true);
     setError("");
     try {
+      const setup = await fetch("/api/setup/status", { cache: "no-store" });
+      const status = (await setup.json().catch(() => ({}))) as { available?: boolean };
+      if (setup.ok && status.available) {
+        await navigate({ to: "/setup" });
+        return;
+      }
       const session = await getLocalSession();
       if (!session?.user) {
         await navigate({ to: "/auth" });
@@ -77,11 +91,16 @@ function GerusaHome() {
             onClick={() => void startStory()}
             aria-describedby="gerusa-note"
           >
-            {opening ? "Abrindo conversa…" : "Iniciar uma história"}{" "}
+            {opening
+              ? "Abrindo conversa…"
+              : setupAvailable
+                ? "Configurar a Gerusa"
+                : "Iniciar uma história"}{" "}
             <span aria-hidden="true">↗</span>
           </button>
           <p className="gerusa-note" id="gerusa-note" role={error ? "alert" : undefined}>
-            {error || "Uma conversa, sem pressa."}
+            {error ||
+              (setupAvailable ? "Primeiro acesso da professora." : "Uma conversa, sem pressa.")}
           </p>
           <p className="gerusa-signature">Por enquanto, podemos começar com uma boa pergunta.</p>
         </div>

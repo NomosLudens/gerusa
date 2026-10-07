@@ -101,6 +101,53 @@ function credentialDigest(email, password) {
     .digest("base64url");
 }
 
+function identifierDigest(identifier) {
+  return createHmac("sha256", credentialLookupKey)
+    .update(identifier.trim().toLowerCase(), "utf8")
+    .digest("base64url");
+}
+
+function normalizeIdentifier(value) {
+  return value.trim().toLowerCase();
+}
+
+function validIdentifier(value) {
+  return value.includes("@")
+    ? value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+    : /^[a-z0-9][a-z0-9._-]{1,39}$/.test(value);
+}
+
+function hashPassword(password) {
+  return new Promise((resolve, reject) => {
+    const salt = randomBytes(16);
+    scryptCallback(
+      password.trim(),
+      salt,
+      32,
+      { N: 16_384, r: 8, p: 1, maxmem: 64 * 1024 * 1024 },
+      (error, digest) => {
+        if (error) return reject(error);
+        resolve(
+          `scrypt$N=16384$r=8$p=1$${salt.toString("base64url")}$${digest.toString("base64url")}`,
+        );
+      },
+    );
+  });
+}
+
+const loginAttempts = new Map();
+function blockedLogin(key) {
+  const attempt = loginAttempts.get(key);
+  return attempt && attempt.blockedUntil > Date.now() ? attempt.blockedUntil : 0;
+}
+function failedLogin(key) {
+  const now = Date.now();
+  const previous = loginAttempts.get(key);
+  const count = previous && previous.windowUntil > now ? previous.count + 1 : 1;
+  const blockedUntil = count >= 5 ? now + Math.min(15 * 60_000, 30_000 * 2 ** (count - 5)) : 0;
+  loginAttempts.set(key, { count, windowUntil: now + 15 * 60_000, blockedUntil });
+}
+
 function verifyPassword(password, encodedHash) {
   return new Promise((resolve) => {
     const [prefix, n, r, p, encodedSalt, encodedDigest, extra] = String(encodedHash).split("$");
@@ -148,6 +195,7 @@ async function authenticatedUser(request) {
   if (!token) return null;
   const result = await pool.query(
     `SELECT u.id::text AS id, u.email, p.display_name AS "displayName", p.pronouns,
+            p.username, p.age_years AS "ageYears",
             EXISTS (SELECT 1 FROM gerusa.system_roles sr
                     WHERE sr.user_id=u.id AND sr.system_role='system_master') AS "isSystemMaster",
             EXISTS (SELECT 1 FROM gerusa.mesa_members mm
@@ -269,31 +317,132 @@ const server = createServer(async (request, response) => {
 
     if (!authorized(request)) return sendJson(response, 401, { error: "unauthorized" });
 
+    if (request.method === "GET" && url.pathname === "/setup/status") {
+      const result = await pool.query(
+        `SELECT NOT EXISTS (
+           SELECT 1 FROM gerusa.system_roles sr JOIN gerusa.users u ON u.id=sr.user_id
+            WHERE sr.system_role='system_master' AND u.status='active'
+         ) AS available`,
+      );
+      return sendJson(response, 200, { available: result.rows[0].available });
+    }
+
+    if (request.method === "POST" && url.pathname === "/setup/initialize") {
+      const body = await readJson(request);
+      const name = typeof body.name === "string" ? body.name.trim() : "";
+      const identifier =
+        typeof body.identifier === "string" ? normalizeIdentifier(body.identifier) : "";
+      const password = typeof body.secret === "string" ? body.secret : "";
+      if (
+        Object.keys(body).some((key) => !["name", "identifier", "secret"].includes(key)) ||
+        name.length < 2 ||
+        name.length > 60 ||
+        !identifier.includes("@") ||
+        !validIdentifier(identifier) ||
+        password.length < 12 ||
+        password.length > 256
+      ) {
+        return sendJson(response, 400, { error: "invalid_setup" });
+      }
+      const client = await pool.connect();
+      let open = false;
+      try {
+        await client.query("BEGIN");
+        open = true;
+        await client.query("SELECT pg_advisory_xact_lock(hashtext('gerusa-first-system-master'))");
+        const existing = await client.query(
+          `SELECT 1 FROM gerusa.system_roles sr JOIN gerusa.users u ON u.id=sr.user_id
+            WHERE sr.system_role='system_master' AND u.status='active' LIMIT 1`,
+        );
+        if (existing.rowCount) {
+          await client.query("ROLLBACK");
+          open = false;
+          return sendJson(response, 409, { error: "setup_closed" });
+        }
+        const userId = randomUUID();
+        const token = randomBytes(32).toString("base64url");
+        const passwordHash = await hashPassword(password);
+        await client.query("INSERT INTO gerusa.users (id,email) VALUES ($1,$2)", [
+          userId,
+          identifier,
+        ]);
+        await client.query(
+          "INSERT INTO gerusa.profiles (id,display_name,onboarding_completed) VALUES ($1,$2,true)",
+          [userId, name],
+        );
+        await client.query(
+          "INSERT INTO gerusa.credentials (user_id,credential_lookup_digest,credential_hash) VALUES ($1,$2,$3)",
+          [userId, credentialDigest(identifier, password), passwordHash],
+        );
+        await client.query(
+          "INSERT INTO gerusa.system_roles (user_id,system_role) VALUES ($1,'system_master')",
+          [userId],
+        );
+        const mesaId = randomUUID();
+        const slug = `mesa-${mesaId.slice(0, 8)}`;
+        await client.query(
+          "INSERT INTO gerusa.mesas (id,slug,name) VALUES ($1,$2,'Minha primeira mesa')",
+          [mesaId, slug],
+        );
+        await client.query(
+          "INSERT INTO gerusa.mesa_members (mesa_id,user_id,member_role) VALUES ($1,$2,'mestre')",
+          [mesaId, userId],
+        );
+        await client.query(
+          "INSERT INTO gerusa.sessions (user_id,token_digest,expires_at) VALUES ($1,$2,now()+interval '30 days')",
+          [userId, tokenDigest(token)],
+        );
+        await client.query("COMMIT");
+        open = false;
+        return sendJson(response, 201, { token, user: { id: userId } });
+      } catch (error) {
+        if (open) await client.query("ROLLBACK").catch(() => {});
+        if (error?.code === "23505")
+          return sendJson(response, 409, { error: "identifier_unavailable" });
+        throw error;
+      } finally {
+        client.release();
+      }
+    }
+
     if (request.method === "POST" && url.pathname === "/auth/login") {
       const body = await readJson(request);
-      const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
-      const password = typeof body.password === "string" ? body.password.trim() : "";
+      const identifier =
+        typeof body.identifier === "string" ? normalizeIdentifier(body.identifier) : "";
+      const secretValue = typeof body.secret === "string" ? body.secret.trim() : "";
+      const legacy = typeof body.email === "string" && typeof body.password === "string";
+      const loginIdentifier = identifier || (legacy ? normalizeIdentifier(body.email) : "");
+      const loginSecret = secretValue || (legacy ? body.password.trim() : "");
+      const attemptKey = identifierDigest(loginIdentifier || "invalid");
       if (
-        Object.keys(body).some((key) => !["email", "password"].includes(key)) ||
-        !email ||
-        email.length > 254 ||
-        password.length < 8 ||
-        password.length > 256
+        Object.keys(body).some(
+          (key) => !["identifier", "secret", "email", "password"].includes(key),
+        ) ||
+        !validIdentifier(loginIdentifier) ||
+        loginSecret.length < 6 ||
+        loginSecret.length > 256 ||
+        (!loginIdentifier.includes("@") && !/^\d{6}$/.test(loginSecret))
       ) {
         return sendJson(response, 400, { error: "invalid_credentials" });
       }
+      if (blockedLogin(attemptKey))
+        return sendJson(response, 429, { error: "invalid_credentials" });
       const credentials = await pool.query(
         `SELECT u.id::text AS id, c.credential_hash
            FROM gerusa.credentials c JOIN gerusa.users u ON u.id=c.user_id
-          WHERE c.credential_lookup_digest=$1 AND c.revoked_at IS NULL AND u.status='active'
+          WHERE (c.login_identifier_digest=$1 OR c.credential_lookup_digest=$2)
+            AND c.revoked_at IS NULL AND u.status='active'
           LIMIT 1`,
-        [credentialDigest(email, password)],
+        [identifierDigest(loginIdentifier), credentialDigest(loginIdentifier, loginSecret)],
       );
       if (
         !credentials.rowCount ||
-        !(await verifyPassword(password, credentials.rows[0].credential_hash))
-      )
+        !(await verifyPassword(loginSecret, credentials.rows[0].credential_hash))
+      ) {
+        failedLogin(attemptKey);
         return sendJson(response, 401, { error: "invalid_credentials" });
+      }
+      loginAttempts.delete(attemptKey);
       const token = randomBytes(32).toString("base64url");
       const sessionId = randomUUID();
       await pool.query(
@@ -302,6 +451,42 @@ const server = createServer(async (request, response) => {
         [sessionId, credentials.rows[0].id, tokenDigest(token)],
       );
       return sendJson(response, 200, { token, user: { id: credentials.rows[0].id } });
+    }
+
+    if (request.method === "POST" && url.pathname === "/auth/change-password") {
+      const user = await authenticatedUser(request);
+      if (!user) return sendJson(response, 401, { error: "unauthorized" });
+      if (!user.email) return sendJson(response, 409, { error: "password_change_unavailable" });
+      const body = await readJson(request);
+      const currentPassword = typeof body.currentPassword === "string" ? body.currentPassword : "";
+      const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+      if (
+        Object.keys(body).some((key) => !["currentPassword", "newPassword"].includes(key)) ||
+        currentPassword.length < 8 ||
+        newPassword.length < 12 ||
+        newPassword.length > 256
+      )
+        return sendJson(response, 400, { error: "invalid_password" });
+      const current = await pool.query(
+        `SELECT credential_hash FROM gerusa.credentials WHERE user_id=$1 AND credential_lookup_digest=$2 AND revoked_at IS NULL LIMIT 1`,
+        [user.id, credentialDigest(user.email, currentPassword)],
+      );
+      if (
+        !current.rowCount ||
+        !(await verifyPassword(currentPassword, current.rows[0].credential_hash))
+      )
+        return sendJson(response, 401, { error: "invalid_password" });
+      const nextHash = await hashPassword(newPassword);
+      const token = sessionToken(request);
+      await pool.query(
+        `UPDATE gerusa.credentials SET credential_lookup_digest=$1,credential_hash=$2,updated_at=now() WHERE user_id=$3 AND revoked_at IS NULL`,
+        [credentialDigest(user.email, newPassword), nextHash, user.id],
+      );
+      await pool.query(
+        `UPDATE gerusa.sessions SET revoked_at=now() WHERE user_id=$1 AND token_digest<>$2 AND revoked_at IS NULL`,
+        [user.id, tokenDigest(token)],
+      );
+      return sendJson(response, 200, { ok: true });
     }
 
     if (request.method === "GET" && url.pathname === "/auth/session") {
@@ -372,6 +557,190 @@ const server = createServer(async (request, response) => {
         [user.id, body.display_name?.trim() || null, body.pronouns?.trim() || null],
       );
       return sendJson(response, 200, { profile: profile.rows[0] });
+    }
+
+    if (url.pathname === "/admin/students" || url.pathname.startsWith("/admin/students/")) {
+      const master = await authenticatedUser(request);
+      if (!master) return sendJson(response, 401, { error: "unauthorized" });
+      if (!master.isSystemMaster && !master.isMaster)
+        return sendJson(response, 403, { error: "forbidden" });
+
+      if (request.method === "GET" && url.pathname === "/admin/students") {
+        const result = await pool.query(
+          `SELECT u.id::text AS id,p.display_name AS name,p.age_years AS age,COALESCE(p.username,u.email) AS username,u.status,
+                  m.id::text AS "mesaId",m.name AS "mesaName",c.name AS "campaignName",
+                  (SELECT max(s.last_seen_at) FROM gerusa.sessions s WHERE s.user_id=u.id AND s.revoked_at IS NULL) AS "lastAccess"
+             FROM gerusa.users u JOIN gerusa.profiles p ON p.id=u.id
+             JOIN gerusa.mesa_members mm ON mm.user_id=u.id AND mm.member_role='jogador'
+             JOIN gerusa.mesas m ON m.id=mm.mesa_id
+             LEFT JOIN LATERAL (SELECT name FROM gerusa.campaigns WHERE mesa_id=m.id AND status='active' ORDER BY updated_at DESC LIMIT 1) c ON true
+            WHERE u.id<>$1 AND EXISTS (SELECT 1 FROM gerusa.mesa_members own WHERE own.user_id=$1 AND own.mesa_id=m.id AND own.member_role='mestre' AND own.membership_status='active')
+            ORDER BY p.display_name,m.name`,
+          [master.id],
+        );
+        return sendJson(response, 200, { students: result.rows });
+      }
+
+      if (request.method === "POST" && url.pathname === "/admin/students") {
+        const body = await readJson(request);
+        const name = typeof body.name === "string" ? body.name.trim() : "";
+        const username =
+          typeof body.username === "string" ? normalizeIdentifier(body.username) : "";
+        const pin = typeof body.pin === "string" ? body.pin : "";
+        const age =
+          body.age === undefined || body.age === null || body.age === "" ? null : Number(body.age);
+        const mesaId = typeof body.mesaId === "string" ? body.mesaId : null;
+        const campaignId = typeof body.campaignId === "string" ? body.campaignId : null;
+        const note = typeof body.note === "string" ? body.note.trim() : "";
+        if (
+          Object.keys(body).some(
+            (key) =>
+              !["name", "username", "pin", "age", "mesaId", "campaignId", "note"].includes(key),
+          ) ||
+          name.length < 2 ||
+          name.length > 60 ||
+          !/^[a-z0-9][a-z0-9._-]{1,39}$/.test(username) ||
+          !/^\d{6}$/.test(pin) ||
+          (age !== null && (!Number.isInteger(age) || age < 5 || age > 120)) ||
+          note.length > 2000
+        ) {
+          return sendJson(response, 400, { error: "invalid_student" });
+        }
+        const client = await pool.connect();
+        let open = false;
+        try {
+          await client.query("BEGIN");
+          open = true;
+          const mesa = mesaId
+            ? await client.query(
+                `SELECT m.id FROM gerusa.mesas m JOIN gerusa.mesa_members mm ON mm.mesa_id=m.id WHERE m.id=$1 AND mm.user_id=$2 AND mm.member_role='mestre' AND mm.membership_status='active'`,
+                [mesaId, master.id],
+              )
+            : await client.query(
+                `SELECT m.id FROM gerusa.mesas m JOIN gerusa.mesa_members mm ON mm.mesa_id=m.id WHERE mm.user_id=$1 AND mm.member_role='mestre' AND mm.membership_status='active' ORDER BY m.created_at LIMIT 1`,
+                [master.id],
+              );
+          if (!mesa.rowCount) {
+            await client.query("ROLLBACK");
+            open = false;
+            return sendJson(response, 409, { error: "mesa_required" });
+          }
+          if (campaignId) {
+            const campaign = await client.query(
+              "SELECT id FROM gerusa.campaigns WHERE id=$1 AND mesa_id=$2 AND status='active'",
+              [campaignId, mesa.rows[0].id],
+            );
+            if (!campaign.rowCount) {
+              await client.query("ROLLBACK");
+              open = false;
+              return sendJson(response, 409, { error: "campaign_unavailable" });
+            }
+          }
+          const userId = randomUUID();
+          const passHash = await hashPassword(pin);
+          await client.query("INSERT INTO gerusa.users (id) VALUES ($1)", [userId]);
+          await client.query(
+            "INSERT INTO gerusa.profiles (id,display_name,username,age_years,teacher_note,onboarding_completed) VALUES ($1,$2,$3,$4,$5,true)",
+            [userId, name, username, age, note || null],
+          );
+          await client.query(
+            `INSERT INTO gerusa.credentials (user_id,credential_lookup_digest,login_identifier_digest,credential_hash) VALUES ($1,$2,$3,$4)`,
+            [userId, credentialDigest(username, pin), identifierDigest(username), passHash],
+          );
+          await client.query(
+            `INSERT INTO gerusa.mesa_members (mesa_id,user_id,member_role,membership_status) VALUES ($1,$2,'jogador','active')`,
+            [mesa.rows[0].id, userId],
+          );
+          await client.query(
+            `INSERT INTO gerusa.characters (owner_user_id,mesa_id,campaign_id,name,sheet) VALUES ($1,$2,$3,$4,'{}'::jsonb)`,
+            [userId, mesa.rows[0].id, campaignId, name],
+          );
+          await client.query(
+            "INSERT INTO gerusa.user_preferences (user_id) VALUES ($1) ON CONFLICT DO NOTHING",
+            [userId],
+          );
+          await client.query("COMMIT");
+          open = false;
+          return sendJson(response, 201, {
+            student: { id: userId, name, age, username, status: "active", mesaId: mesa.rows[0].id },
+            pin,
+          });
+        } catch (error) {
+          if (open) await client.query("ROLLBACK").catch(() => {});
+          if (error?.code === "23505")
+            return sendJson(response, 409, { error: "username_unavailable" });
+          throw error;
+        } finally {
+          client.release();
+        }
+      }
+
+      const studentId = url.pathname.match(/^\/admin\/students\/([0-9a-f-]+)$/i)?.[1];
+      if (studentId && request.method === "PATCH" && threadIdPattern.test(studentId)) {
+        const body = await readJson(request);
+        if (Object.keys(body).length !== 1 || !["resetPin", "status"].some((key) => key in body))
+          return sendJson(response, 400, { error: "invalid_student_action" });
+        const owned = await pool.query(
+          `SELECT u.id FROM gerusa.users u WHERE u.id=$1 AND NOT EXISTS (SELECT 1 FROM gerusa.system_roles sr WHERE sr.user_id=u.id)
+            AND EXISTS (SELECT 1 FROM gerusa.mesa_members own JOIN gerusa.mesa_members target USING (mesa_id) WHERE own.user_id=$2 AND own.member_role='mestre' AND own.membership_status='active' AND target.user_id=u.id AND target.member_role='jogador')`,
+          [studentId, master.id],
+        );
+        if (!owned.rowCount) return sendJson(response, 404, { error: "student_not_found" });
+        if (body.resetPin === true) {
+          const pin = randomBytes(4).readUInt32BE(0).toString().padStart(10, "0").slice(-6);
+          const passHash = await hashPassword(pin);
+          const profile = await pool.query(
+            "SELECT username,display_name FROM gerusa.profiles WHERE id=$1",
+            [studentId],
+          );
+          let username = profile.rows[0]?.username;
+          if (!username) {
+            const stem =
+              normalizeIdentifier(profile.rows[0]?.display_name ?? "aluno")
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "")
+                .replace(/[^a-z0-9._-]/g, "")
+                .slice(0, 34) || "aluno";
+            username = stem;
+            let suffix = 2;
+            while (
+              (
+                await pool.query("SELECT 1 FROM gerusa.profiles WHERE lower(username)=lower($1)", [
+                  username,
+                ])
+              ).rowCount
+            ) {
+              username = `${stem.slice(0, 36)}${suffix++}`;
+            }
+            await pool.query(
+              "UPDATE gerusa.profiles SET username=$1,updated_at=now() WHERE id=$2",
+              [username, studentId],
+            );
+          }
+          await pool.query(
+            `UPDATE gerusa.credentials SET credential_lookup_digest=$1,login_identifier_digest=$2,credential_hash=$3,updated_at=now() WHERE user_id=$4 AND revoked_at IS NULL`,
+            [credentialDigest(username, pin), identifierDigest(username), passHash, studentId],
+          );
+          await pool.query(
+            "UPDATE gerusa.sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL",
+            [studentId],
+          );
+          return sendJson(response, 200, { pin });
+        }
+        if (!["active", "disabled"].includes(body.status))
+          return sendJson(response, 400, { error: "invalid_status" });
+        await pool.query(
+          "UPDATE gerusa.users SET status=$1,disabled_at=CASE WHEN $1='disabled' THEN now() ELSE NULL END,updated_at=now() WHERE id=$2",
+          [body.status, studentId],
+        );
+        if (body.status === "disabled")
+          await pool.query(
+            "UPDATE gerusa.sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL",
+            [studentId],
+          );
+        return sendJson(response, 200, { ok: true, status: body.status });
+      }
+      return sendJson(response, 404, { error: "not_found" });
     }
 
     if (url.pathname === "/master/summary" && request.method === "GET") {

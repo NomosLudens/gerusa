@@ -24,15 +24,18 @@ export async function restoreLocalSessionFromSupabase(): Promise<LocalSessionRes
   return getLocalSession();
 }
 
-export async function signInLocal(email: string, password: string): Promise<LocalSessionResponse> {
+export async function signInLocal(
+  identifier: string,
+  secret: string,
+): Promise<LocalSessionResponse> {
   const response = await fetch("/api/auth/session", {
     method: "POST",
     credentials: "same-origin",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ identifier, secret }),
   });
   const result = await readResponse(response);
-  if (!result) throw new Error("E-mail ou senha inválidos");
+  if (!result) throw new Error("Acesso ou senha inválidos");
   return result;
 }
 

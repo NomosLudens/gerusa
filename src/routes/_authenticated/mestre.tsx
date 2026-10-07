@@ -6,6 +6,8 @@ import { MesaLiveSessionPanel } from "@/components/MesaLiveSessionPanel";
 import { CampaignContinuityManager } from "@/components/CampaignContinuityManager";
 import { CharacterReviewQueue } from "@/components/CharacterReviewQueue";
 import { MasterOperationalRail } from "@/components/MasterOperationalRail";
+import { GerusaStudentsPanel } from "@/components/GerusaStudentsPanel";
+import { GerusaAccountPanel } from "@/components/GerusaAccountPanel";
 import { useProfile } from "@/lib/use-profile";
 import { signOutLocal } from "@/lib/local-auth-client";
 import { toast } from "sonner";
@@ -82,6 +84,8 @@ function MestrePage() {
         <nav className="mb-5 flex gap-2 overflow-x-auto pb-2" aria-label="Ferramentas pedagógicas">
           {[
             ["overview", "Visão geral"],
+            ["students", "Alunos"],
+            ["account", "Minha conta"],
             ["planning", "Planejamento"],
             ["adventures", "Aventuras"],
             ["lesson", "Aula ao vivo"],
@@ -116,6 +120,15 @@ function MestrePage() {
             />
           </>
         ) : null}
+        {tab === "students" ? (
+          <GerusaStudentsPanel
+            onOpenStudent={(studentId) => {
+              setSelectedStudent(studentId);
+              setTab("overview");
+            }}
+          />
+        ) : null}
+        {tab === "account" ? <GerusaAccountPanel /> : null}
         {tab === "planning" ? (
           <MasterSheetsPanel
             selectedMesa={selectedMesa}
