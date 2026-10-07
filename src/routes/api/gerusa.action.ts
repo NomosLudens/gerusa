@@ -314,10 +314,22 @@ export const Route = createFileRoute("/api/gerusa/action")({
         if (typeof content !== "string")
           return errorResponse("invalid_provider_response", 502, requestId);
         let candidate: unknown;
+        const trimmedContent = content
+          .trim()
+          .replace(/^```(?:json)?\s*/i, "")
+          .replace(/\s*```$/, "");
         try {
-          candidate = JSON.parse(content);
+          candidate = JSON.parse(trimmedContent);
         } catch {
-          return errorResponse("invalid_provider_json", 502, requestId);
+          const objectStart = trimmedContent.indexOf("{");
+          const objectEnd = trimmedContent.lastIndexOf("}");
+          if (objectStart < 0 || objectEnd <= objectStart)
+            return errorResponse("invalid_provider_json", 502, requestId);
+          try {
+            candidate = JSON.parse(trimmedContent.slice(objectStart, objectEnd + 1));
+          } catch {
+            return errorResponse("invalid_provider_json", 502, requestId);
+          }
         }
         const result = schemas[action].safeParse(candidate);
         if (!result.success) {
