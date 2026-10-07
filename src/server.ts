@@ -176,6 +176,7 @@ export default {
     const isGerusaIdentityApi = [
       "/api/auth/session",
       "/api/auth/password",
+      "/api/auth/recover",
       "/api/profile",
       "/api/master/characters",
       "/api/admin/students",

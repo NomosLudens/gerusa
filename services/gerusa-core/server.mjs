@@ -361,7 +361,9 @@ const server = createServer(async (request, response) => {
         }
         const userId = randomUUID();
         const token = randomBytes(32).toString("base64url");
+        const recoveryCode = randomBytes(18).toString("base64url").toUpperCase();
         const passwordHash = await hashPassword(password);
+        const recoveryHash = await hashPassword(recoveryCode);
         await client.query("INSERT INTO gerusa.users (id,email) VALUES ($1,$2)", [
           userId,
           identifier,
@@ -371,8 +373,8 @@ const server = createServer(async (request, response) => {
           [userId, name],
         );
         await client.query(
-          "INSERT INTO gerusa.credentials (user_id,credential_lookup_digest,credential_hash) VALUES ($1,$2,$3)",
-          [userId, credentialDigest(identifier, password), passwordHash],
+          "INSERT INTO gerusa.credentials (user_id,credential_lookup_digest,credential_hash,recovery_hash) VALUES ($1,$2,$3,$4)",
+          [userId, credentialDigest(identifier, password), passwordHash, recoveryHash],
         );
         await client.query(
           "INSERT INTO gerusa.system_roles (user_id,system_role) VALUES ($1,'system_master')",
@@ -394,7 +396,7 @@ const server = createServer(async (request, response) => {
         );
         await client.query("COMMIT");
         open = false;
-        return sendJson(response, 201, { token, user: { id: userId } });
+        return sendJson(response, 201, { token, recoveryCode, user: { id: userId } });
       } catch (error) {
         if (open) await client.query("ROLLBACK").catch(() => {});
         if (error?.code === "23505")
@@ -486,6 +488,79 @@ const server = createServer(async (request, response) => {
         `UPDATE gerusa.sessions SET revoked_at=now() WHERE user_id=$1 AND token_digest<>$2 AND revoked_at IS NULL`,
         [user.id, tokenDigest(token)],
       );
+      return sendJson(response, 200, { ok: true });
+    }
+
+    if (request.method === "POST" && url.pathname === "/auth/recover") {
+      const body = await readJson(request);
+      const identifier =
+        typeof body.identifier === "string" ? normalizeIdentifier(body.identifier) : "";
+      const recoveryCode =
+        typeof body.recoveryCode === "string" ? body.recoveryCode.trim().toUpperCase() : "";
+      const newPassword = typeof body.newPassword === "string" ? body.newPassword : "";
+      if (
+        Object.keys(body).some(
+          (key) => !["identifier", "recoveryCode", "newPassword"].includes(key),
+        ) ||
+        !validIdentifier(identifier) ||
+        !identifier.includes("@") ||
+        recoveryCode.length < 16 ||
+        recoveryCode.length > 128 ||
+        newPassword.length < 12 ||
+        newPassword.length > 256
+      )
+        return sendJson(response, 400, { error: "invalid_recovery" });
+      const attemptKey = identifierDigest(identifier);
+      if (blockedLogin(attemptKey)) return sendJson(response, 429, { error: "invalid_recovery" });
+      const credential = await pool.query(
+        `SELECT c.user_id::text AS user_id,c.recovery_hash FROM gerusa.credentials c
+          JOIN gerusa.users u ON u.id=c.user_id
+          JOIN gerusa.system_roles sr ON sr.user_id=u.id AND sr.system_role='system_master'
+         WHERE lower(u.email)=lower($1) AND u.status='active' AND c.revoked_at IS NULL AND c.recovery_hash IS NOT NULL LIMIT 1`,
+        [identifier],
+      );
+      if (
+        !credential.rowCount ||
+        !(await verifyPassword(recoveryCode, credential.rows[0].recovery_hash))
+      ) {
+        failedLogin(attemptKey);
+        return sendJson(response, 401, { error: "invalid_recovery" });
+      }
+      const passwordHash = await hashPassword(newPassword);
+      const client = await pool.connect();
+      let open = false;
+      try {
+        await client.query("BEGIN");
+        open = true;
+        const updated = await client.query(
+          `UPDATE gerusa.credentials SET credential_lookup_digest=$1,credential_hash=$2,recovery_hash=NULL,updated_at=now()
+            WHERE user_id=$3 AND recovery_hash=$4 AND revoked_at IS NULL RETURNING user_id`,
+          [
+            credentialDigest(identifier, newPassword),
+            passwordHash,
+            credential.rows[0].user_id,
+            credential.rows[0].recovery_hash,
+          ],
+        );
+        if (!updated.rowCount) {
+          await client.query("ROLLBACK");
+          open = false;
+          failedLogin(attemptKey);
+          return sendJson(response, 401, { error: "invalid_recovery" });
+        }
+        await client.query(
+          "UPDATE gerusa.sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL",
+          [credential.rows[0].user_id],
+        );
+        await client.query("COMMIT");
+        open = false;
+      } catch (error) {
+        if (open) await client.query("ROLLBACK").catch(() => {});
+        throw error;
+      } finally {
+        client.release();
+      }
+      loginAttempts.delete(attemptKey);
       return sendJson(response, 200, { ok: true });
     }
 

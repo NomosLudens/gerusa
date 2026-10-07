@@ -11,6 +11,8 @@ function SetupPage() {
   const navigate = useNavigate();
   const [available, setAvailable] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const [copied, setCopied] = useState(false);
   useEffect(() => {
     let active = true;
     void fetch("/api/setup/status", { cache: "no-store" })
@@ -55,7 +57,12 @@ function SetupPage() {
             ? "A configuração inicial já foi concluída."
             : "Não foi possível criar a conta agora.",
         );
-      await navigate({ to: "/mestre", replace: true });
+      const result = (await response.json()) as { recoveryCode?: string };
+      if (!result.recoveryCode)
+        throw new Error(
+          "A conta foi criada, mas não foi possível exibir o código de recuperação. Guarde esta tela e procure o suporte.",
+        );
+      setRecoveryCode(result.recoveryCode);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Não foi possível criar a conta.");
     } finally {
@@ -75,7 +82,42 @@ function SetupPage() {
           <p>Crie a conta da professora para preparar as histórias e acompanhar seus alunos.</p>
         </div>
         <div className="auth-card__rule" />
-        {available === null ? (
+        {recoveryCode ? (
+          <section className="space-y-4" aria-live="polite">
+            <h2 className="serif text-2xl">Guarde seu código de recuperação</h2>
+            <p className="text-sm">
+              Ele será mostrado somente agora e permite redefinir a senha se você a esquecer.
+              Guarde-o em um local seguro, separado da senha.
+            </p>
+            <p className="break-all rounded-lg border border-[#8a3045] bg-[#10070b] p-4 font-mono text-sm tracking-wide">
+              {recoveryCode}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                className="auth-card__submit"
+                onClick={() => {
+                  void navigator.clipboard
+                    .writeText(recoveryCode)
+                    .then(() => setCopied(true))
+                    .catch(() => toast.error("Selecione e copie o código manualmente."));
+                }}
+              >
+                {copied ? "Copiado" : "Copiar código"}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => window.print()}>
+                Imprimir
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => void navigate({ to: "/mestre", replace: true })}
+              >
+                Já guardei · Ir ao Mestre
+              </Button>
+            </div>
+          </section>
+        ) : available === null ? (
           <p className="auth-card__hint">Verificando a configuração…</p>
         ) : !available ? (
           <div>

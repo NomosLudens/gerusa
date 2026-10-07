@@ -21,6 +21,9 @@ function AuthPage() {
   const [loading, setLoading] = useState(false);
   const [checking, setChecking] = useState(true);
   const [setupAvailable, setSetupAvailable] = useState(false);
+  const [recovering, setRecovering] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
 
   useEffect(() => {
     let active = true;
@@ -60,6 +63,28 @@ function AuthPage() {
     }
   }
 
+  async function recover(event: React.FormEvent) {
+    event.preventDefault();
+    setLoading(true);
+    try {
+      const response = await fetch("/api/auth/recover", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ identifier, recoveryCode, newPassword }),
+      });
+      if (!response.ok) throw new Error("E-mail ou código inválido.");
+      toast.success("Senha redefinida. Entre com a nova senha.");
+      setRecovering(false);
+      setRecoveryCode("");
+      setNewPassword("");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Não foi possível redefinir a senha.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="auth-page">
       <Link to="/" className="auth-page__back">
@@ -75,9 +100,11 @@ function AuthPage() {
         {checking ? (
           <p className="auth-card__hint">Verificando sua sessão…</p>
         ) : (
-          <form onSubmit={submit} className="auth-card__form">
+          <form onSubmit={recovering ? recover : submit} className="auth-card__form">
             <div>
-              <Label htmlFor="auth-email">E-mail ou nome de acesso</Label>
+              <Label htmlFor="auth-email">
+                {recovering ? "E-mail da professora" : "E-mail ou nome de acesso"}
+              </Label>
               <Input
                 id="auth-email"
                 name="identifier"
@@ -89,30 +116,69 @@ function AuthPage() {
                 className="auth-card__input"
               />
             </div>
-            <div>
-              <Label htmlFor="auth-password">Senha ou PIN de 6 dígitos</Label>
-              <Input
-                id="auth-password"
-                name="secret"
-                type="password"
-                required
-                autoComplete="current-password"
-                value={secret}
-                onChange={(event) => setSecret(event.target.value)}
-                className="auth-card__input"
-              />
-            </div>
+            {recovering ? (
+              <>
+                <div>
+                  <Label htmlFor="recovery-code">Código de recuperação</Label>
+                  <Input
+                    id="recovery-code"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    value={recoveryCode}
+                    onChange={(event) => setRecoveryCode(event.target.value)}
+                    className="auth-card__input"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="new-password">Nova senha (mínimo 12 caracteres)</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    required
+                    minLength={12}
+                    autoComplete="new-password"
+                    value={newPassword}
+                    onChange={(event) => setNewPassword(event.target.value)}
+                    className="auth-card__input"
+                  />
+                </div>
+              </>
+            ) : (
+              <div>
+                <Label htmlFor="auth-password">Senha ou PIN de 6 dígitos</Label>
+                <Input
+                  id="auth-password"
+                  name="secret"
+                  type="password"
+                  required
+                  autoComplete="current-password"
+                  value={secret}
+                  onChange={(event) => setSecret(event.target.value)}
+                  className="auth-card__input"
+                />
+              </div>
+            )}
             <Button
               type="submit"
               className="auth-card__submit"
               disabled={loading}
               aria-busy={loading}
             >
-              {loading ? "Entrando…" : "Entrar"}
+              {loading ? "Aguarde…" : recovering ? "Redefinir senha" : "Entrar"}
             </Button>
           </form>
         )}
         <p className="auth-card__hint">Acesso para professora e alunos da Gerusa.</p>
+        {!checking ? (
+          <button
+            type="button"
+            onClick={() => setRecovering((value) => !value)}
+            className="auth-card__hint block underline"
+          >
+            {recovering ? "Voltar ao login" : "Esqueci a senha da professora"}
+          </button>
+        ) : null}
         {setupAvailable ? (
           <Link className="auth-card__hint block underline" to="/setup">
             Primeiro acesso da professora

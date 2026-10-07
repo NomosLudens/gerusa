@@ -26,6 +26,7 @@ import { Route as ApiGerusaPedagogyRouteImport } from './routes/api/gerusa.pedag
 import { Route as ApiGerusaChatRouteImport } from './routes/api/gerusa.chat'
 import { Route as ApiGerusaActionRouteImport } from './routes/api/gerusa.action'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiAuthRecoverRouteImport } from './routes/api/auth/recover'
 import { Route as ApiAuthPasswordRouteImport } from './routes/api/auth/password'
 import { Route as ApiAdminStudentsRouteImport } from './routes/api/admin/students'
 
@@ -113,6 +114,11 @@ const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
   path: '/api/auth/session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthRecoverRoute = ApiAuthRecoverRouteImport.update({
+  id: '/api/auth/recover',
+  path: '/api/auth/recover',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthPasswordRoute = ApiAuthPasswordRouteImport.update({
   id: '/api/auth/password',
   path: '/api/auth/password',
@@ -135,6 +141,7 @@ export interface FileRoutesByFullPath {
   '/conversa/': typeof ConversaIndexRoute
   '/api/admin/students': typeof ApiAdminStudentsRoute
   '/api/auth/password': typeof ApiAuthPasswordRoute
+  '/api/auth/recover': typeof ApiAuthRecoverRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/conversa': typeof ConversaIndexRoute
   '/api/admin/students': typeof ApiAdminStudentsRoute
   '/api/auth/password': typeof ApiAuthPasswordRoute
+  '/api/auth/recover': typeof ApiAuthRecoverRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
@@ -177,6 +185,7 @@ export interface FileRoutesById {
   '/conversa/': typeof ConversaIndexRoute
   '/api/admin/students': typeof ApiAdminStudentsRoute
   '/api/auth/password': typeof ApiAuthPasswordRoute
+  '/api/auth/recover': typeof ApiAuthRecoverRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
@@ -199,6 +208,7 @@ export interface FileRouteTypes {
     | '/conversa/'
     | '/api/admin/students'
     | '/api/auth/password'
+    | '/api/auth/recover'
     | '/api/auth/session'
     | '/api/gerusa/action'
     | '/api/gerusa/chat'
@@ -219,6 +229,7 @@ export interface FileRouteTypes {
     | '/conversa'
     | '/api/admin/students'
     | '/api/auth/password'
+    | '/api/auth/recover'
     | '/api/auth/session'
     | '/api/gerusa/action'
     | '/api/gerusa/chat'
@@ -240,6 +251,7 @@ export interface FileRouteTypes {
     | '/conversa/'
     | '/api/admin/students'
     | '/api/auth/password'
+    | '/api/auth/recover'
     | '/api/auth/session'
     | '/api/gerusa/action'
     | '/api/gerusa/chat'
@@ -260,6 +272,7 @@ export interface RootRouteChildren {
   ConversaIndexRoute: typeof ConversaIndexRoute
   ApiAdminStudentsRoute: typeof ApiAdminStudentsRoute
   ApiAuthPasswordRoute: typeof ApiAuthPasswordRoute
+  ApiAuthRecoverRoute: typeof ApiAuthRecoverRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiGerusaActionRoute: typeof ApiGerusaActionRoute
   ApiGerusaChatRoute: typeof ApiGerusaChatRoute
@@ -391,6 +404,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/recover': {
+      id: '/api/auth/recover'
+      path: '/api/auth/recover'
+      fullPath: '/api/auth/recover'
+      preLoaderRoute: typeof ApiAuthRecoverRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/password': {
       id: '/api/auth/password'
       path: '/api/auth/password'
@@ -431,6 +451,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConversaIndexRoute: ConversaIndexRoute,
   ApiAdminStudentsRoute: ApiAdminStudentsRoute,
   ApiAuthPasswordRoute: ApiAuthPasswordRoute,
+  ApiAuthRecoverRoute: ApiAuthRecoverRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiGerusaActionRoute: ApiGerusaActionRoute,
   ApiGerusaChatRoute: ApiGerusaChatRoute,

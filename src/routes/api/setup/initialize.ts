@@ -21,19 +21,20 @@ export const Route = createFileRoute("/api/setup/initialize")({
         )
           return Response.json({ error: "invalid_setup" }, { status: 400 });
         try {
-          const result = await gerusaCoreRequest<{ token: string; user: { id: string } }>(
-            "/setup/initialize",
-            {
-              method: "POST",
-              body: JSON.stringify({
-                name: body.name,
-                identifier: body.identifier,
-                secret: body.secret,
-              }),
-            },
-          );
+          const result = await gerusaCoreRequest<{
+            token: string;
+            recoveryCode: string;
+            user: { id: string };
+          }>("/setup/initialize", {
+            method: "POST",
+            body: JSON.stringify({
+              name: body.name,
+              identifier: body.identifier,
+              secret: body.secret,
+            }),
+          });
           return Response.json(
-            { user: result.user },
+            { user: result.user, recoveryCode: result.recoveryCode },
             {
               status: 201,
               headers: {
