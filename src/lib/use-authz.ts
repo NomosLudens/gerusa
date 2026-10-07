@@ -84,27 +84,19 @@ export function getAllowedApps(user: AuthzUser | AuthzState): AppRegistryItem[] 
 }
 
 export function getSidebarApps(user: AuthzUser | AuthzState): AppRegistryItem[] {
-  const allowed = new Set(["personagens", "kallistis-chat", "mesa-do-mestre", "perfil"]);
+  const allowed = new Set(["kallistis-chat", "mesa-do-mestre"]);
   return getSidebarRegistryApps()
     .filter((app) => allowed.has(app.id) && canAccessApp(user, app))
     .map((app) => ({
       ...app,
+      path: app.id === "kallistis-chat" ? "/conversa" : "/mestre",
       label:
         app.id === "kallistis-chat"
           ? "Conversa com Gerusa"
           : app.id === "mesa-do-mestre"
             ? "Mesa da professora"
-            : app.id === "personagens"
-              ? "Meu personagem"
-              : "Meu perfil",
-      sidebarLabel:
-        app.id === "kallistis-chat"
-          ? "Gerusa"
-          : app.id === "mesa-do-mestre"
-            ? "Professora"
-            : app.id === "personagens"
-              ? "Personagem"
-              : "Perfil",
+            : "Mesa da professora",
+      sidebarLabel: app.id === "kallistis-chat" ? "Gerusa" : "Professora",
     }));
 }
 
