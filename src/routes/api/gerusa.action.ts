@@ -326,51 +326,62 @@ export const Route = createFileRoute("/api/gerusa/action")({
           fallbackModel: model,
           maxRetries: 0,
         });
-        let response: Response;
-        try {
-          response = await providerFetch("https://openrouter.ai/api/v1/chat/completions", {
-            method: "POST",
-            headers: {
-              Authorization: `Bearer ${key}`,
-              "Content-Type": "application/json",
-              "HTTP-Referer": new URL(request.url).origin,
-              "X-Title": "Gerusa Poulain",
+        const providerRequestBody = JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: system },
+            { role: "user", content: `Ação: ${action}. Gere a proposta estruturada agora.` },
+          ],
+          tools: [
+            {
+              type: "function",
+              function: {
+                name: `submit_${action}`,
+                description: `Return the structured pedagogical proposal for ${action}.`,
+                parameters: toJsonSchema(schemas[action]),
+                strict: true,
+              },
             },
-            body: JSON.stringify({
-              model,
-              messages: [
-                { role: "system", content: system },
-                { role: "user", content: `Ação: ${action}. Gere a proposta estruturada agora.` },
-              ],
-              tools: [
-                {
-                  type: "function",
-                  function: {
-                    name: `submit_${action}`,
-                    description: `Return the structured pedagogical proposal for ${action}.`,
-                    parameters: toJsonSchema(schemas[action]),
-                    strict: true,
-                  },
-                },
-              ],
-              tool_choice: { type: "function", function: { name: `submit_${action}` } },
-              temperature: 0.45,
-              max_tokens: 4096,
-            }),
-            signal: AbortSignal.timeout(60_000),
-          });
-        } catch {
-          return errorResponse("provider_unavailable", 502, requestId);
-        }
-        if (!response.ok) {
-          const status = response.status;
-          await response.body?.cancel().catch(() => {});
-          return errorResponse("provider_rejected", status === 429 ? 503 : 502, requestId);
-        }
-        const payload = (await response.json().catch(() => null)) as {
+          ],
+          tool_choice: { type: "function", function: { name: `submit_${action}` } },
+          temperature: 0.45,
+          max_tokens: 4096,
+        });
+        type ProviderPayload = {
           choices?: Array<{ message?: Record<string, unknown>; finish_reason?: string }>;
           error?: Record<string, unknown>;
-        } | null;
+        };
+        let payload: ProviderPayload | null = null;
+        for (let attempt = 0; attempt < 3; attempt += 1) {
+          let response: Response;
+          try {
+            response = await providerFetch("https://openrouter.ai/api/v1/chat/completions", {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${key}`,
+                "Content-Type": "application/json",
+                "HTTP-Referer": new URL(request.url).origin,
+                "X-Title": "Gerusa Poulain",
+              },
+              body: providerRequestBody,
+              signal: AbortSignal.timeout(60_000),
+            });
+          } catch {
+            if (attempt < 2) continue;
+            return errorResponse("provider_unavailable", 502, requestId);
+          }
+          if (!response.ok) {
+            const status = response.status;
+            await response.body?.cancel().catch(() => {});
+            if ((status === 429 || status >= 500) && attempt < 2) continue;
+            return errorResponse("provider_rejected", status === 429 ? 503 : 502, requestId);
+          }
+          payload = (await response.json().catch(() => null)) as ProviderPayload | null;
+          const upstreamCode = Number(payload?.error?.code ?? payload?.error?.status);
+          if (!payload?.choices?.length && [429, 502, 503].includes(upstreamCode) && attempt < 2)
+            continue;
+          break;
+        }
         const choice = payload?.choices?.[0];
         const message = choice?.message;
         const toolCalls = Array.isArray(message?.tool_calls) ? message.tool_calls : [];
@@ -424,7 +435,11 @@ export const Route = createFileRoute("/api/gerusa/action")({
                 : [],
             }),
           );
-          return errorResponse("invalid_provider_response", 502, requestId);
+          return errorResponse(
+            payload?.error ? "provider_unavailable" : "invalid_provider_response",
+            502,
+            requestId,
+          );
         }
         let candidate: unknown;
         const trimmedContent = content
