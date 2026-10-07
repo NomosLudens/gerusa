@@ -8,6 +8,9 @@ import { gerusaCoreRequest, isSameOrigin } from "@/server/gerusa/store";
 
 const headers = { "Cache-Control": "no-store" };
 const list = z.array(z.string().trim().min(1).max(500)).max(20);
+const textOrList = z
+  .union([z.string(), list])
+  .transform((value) => (Array.isArray(value) ? value.join(", ") : value));
 const outline = z
   .array(z.object({ title: z.string(), activity: z.string(), prompt: z.string() }).strict())
   .max(12);
@@ -51,7 +54,7 @@ const schemas: Record<string, z.ZodType> = {
     .object({
       objective: z.string(),
       grammar: z.string(),
-      vocabulary: z.string(),
+      vocabulary: textOrList,
       durationMinutes: z.number().int().min(5).max(240),
       outline,
       adventureSuggestion: z.string(),
@@ -62,7 +65,7 @@ const schemas: Record<string, z.ZodType> = {
     .object({
       objective: z.string(),
       grammar: z.string(),
-      vocabulary: z.string(),
+      vocabulary: textOrList,
       durationMinutes: z.number().int().min(5).max(240),
       outline,
       adventureSuggestion: z.string(),
