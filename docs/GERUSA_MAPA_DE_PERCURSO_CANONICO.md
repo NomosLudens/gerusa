@@ -2,7 +2,7 @@
 
 **Atualizado em:** 2026-10-07  
 **Missão:** adaptação multiusuário de KALLISTIS para Gerusa  
-**Resultado da validação em produção:** `GERUSA_KALLISTIS_ADAPTATION_PASS`
+**Resultado da validação em produção:** `GERUSA_PEDAGOGICAL_PRODUCT_ADAPTATION_PASS`
 
 ## Antes desta adaptação
 
@@ -101,6 +101,35 @@ não foram alteradas nem apagadas durante esta missão.
 - Mobile a 390 × 844: home de ALUNO B, menu reduzido, login/logout e conversa
   Gerusa renderizados; a largura do documento cabe no viewport.
 
+## Gate pedagógico e modelo gratuito — 2026-10-07
+
+- Modelo configurado no Worker `gerusa` por Secret: `nvidia/nemotron-3-ultra-550b-a55b:free`.
+  A chave OpenRouter permanece exclusivamente server-side. As chamadas reais
+  registraram o modelo selecionado; nenhuma chamada direta ao provedor ou
+  credencial apareceu no client.
+- O chat real respondeu em inglês, exibiu 26 atualizações progressivas no
+  browser (primeiro delta visível em 323 ms) e preservou usuário e resposta
+  após reload. Resposta final: 642 caracteres. HTTP 200; zero erros de página.
+- Com a mesma configuração, ações estruturadas reais completaram planejamento,
+  aventura, continuação de cena, resumo, tarefa contextualizada e próxima aula.
+  Um retorno transitório de sobrecarga 503 do provedor foi recuperado pelo
+  retry limitado já registrado no histórico de commits.
+- O fluxo pedagógico foi executado em produção para ALUNO A: planejar e salvar
+  aula, gerar e salvar aventura, iniciar sessão, registrar observação e
+  progresso, incluir cena, salvar resumo, encerrar a sessão, publicar tarefa,
+  responder como aluno, reler após reload, receber correção da professora e
+  salvar a próxima aula baseada no histórico.
+- ALUNO B autenticou em contexto separado e não recebeu aula, aventura ou tarefa
+  de A. A tentativa de consultar o contexto de outra mesa retornou 404.
+- A consulta PostgreSQL em transação `READ ONLY` confirmou no banco e papel
+  `gerusa`: aula e aventura existentes, sessão encerrada, progresso confirmado,
+  tarefa com resposta enviada e correção salva, e próxima aula persistida.
+- Desktop passou em 1440 px. Mobile passou em 390 × 844 sem overflow
+  horizontal. Não houve erros de página; erros de console observados foram os
+  401 da checagem sem sessão e o 404 esperado do teste de isolamento.
+- As linhas pedagógicas de validação estão marcadas `Gate` e foram mantidas no
+  PostgreSQL para auditoria; nenhuma linha foi apagada.
+
 ## Incidentes anteriores preservados
 
 - Rotas `/auth`, `/home`, `/mestre` e `/conversa` chegaram a responder 404 no
@@ -124,14 +153,14 @@ não foram alteradas nem apagadas durante esta missão.
   através do hostname Core/Tunnel autenticado; o túnel SSH local foi usado
   somente para diagnóstico PostgreSQL e não é o caminho de produção do Worker.
 - PostgreSQL é o banco Gerusa isolado. Totalidade permanece fora do fluxo.
-- Esta missão encerra na identidade, memberships, isolamento e chat. Tarefas,
-  aventuras estruturadas, planejamento e planilha pedagógica continuam fora de
-  escopo e não foram iniciados.
+- A adaptação pedagógica validada cobre planejamento, aventura, sessão ao vivo,
+  registros de progresso, tarefas/respostas/revisão e próxima aula. Escopos
+  adicionais não descritos aqui não são certificados por este gate.
 
 ## Evidência de versão
 
-O código multiusuário e a validação funcional foram executados com o checkout
-sincronizado a `origin/master` antes deste registro. O commit deste documento
-e o deploy final correspondente devem ser consultados no histórico Git e no
-registro de deployments do Worker; a igualdade entre `master` e o runtime foi
-reconfirmada após publicar este mapa.
+O código multiusuário, a adaptação pedagógica e a validação funcional foram
+executados em produção. O commit deste mapa e o deployment correspondente devem
+ser consultados no histórico Git e no registro de deployments do Worker; a
+igualdade entre `master`, Mini e runtime deve ser reconfirmada após publicar
+este registro.
