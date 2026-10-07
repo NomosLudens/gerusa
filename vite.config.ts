@@ -29,7 +29,7 @@ export default defineConfig({
       router: {
         // Keep legacy routes out while adding only Gerusa's public chat and API.
         routeFileIgnorePattern:
-          "^(?!(?:index|__root)\\.tsx$|auth\\.tsx$|route\\.tsx$|home\\.tsx$|perfil\\.tsx$|mestre\\.tsx$|session\\.ts$|profile\\.ts$|characters\\.ts$|_authenticated$|api$|auth$|master$|gerusa\\.(?:chat|thread)\\.ts$|conversa\\.(?:index|\\$threadId)\\.tsx$).*",
+          "^(?!(?:index|__root)\\.tsx$|auth\\.tsx$|route\\.tsx$|home\\.tsx$|mestre\\.tsx$|session\\.ts$|profile\\.ts$|characters\\.ts$|_authenticated$|api$|auth$|master$|gerusa\\.(?:chat|thread)\\.ts$|conversa\\.(?:index|\\$threadId)\\.tsx$).*",
         // Divide o componente de cada rota em chunk próprio. Sem isso, o glue
         // code das ~50 rotas ia inteiro no chunk principal (~310 KB gzip antes
         // de qualquer interação) — custo de parse/exec pesado no WebKit,

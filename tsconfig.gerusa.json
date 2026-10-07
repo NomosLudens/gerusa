@@ -12,7 +12,6 @@
     "src/routes/auth.tsx",
     "src/routes/_authenticated/route.tsx",
     "src/routes/_authenticated/home.tsx",
-    "src/routes/_authenticated/perfil.tsx",
     "src/routes/_authenticated/mestre.tsx",
     "src/routes/api/auth/session.ts",
     "src/routes/api/profile.ts",

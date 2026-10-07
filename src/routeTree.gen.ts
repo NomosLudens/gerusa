@@ -15,7 +15,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConversaIndexRouteImport } from './routes/conversa.index'
 import { Route as ConversaThreadIdRouteImport } from './routes/conversa.$threadId'
 import { Route as ApiProfileRouteImport } from './routes/api/profile'
-import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
 import { Route as AuthenticatedMestreRouteImport } from './routes/_authenticated/mestre'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as ApiMasterCharactersRouteImport } from './routes/api/master/characters'
@@ -51,11 +50,6 @@ const ApiProfileRoute = ApiProfileRouteImport.update({
   id: '/api/profile',
   path: '/api/profile',
   getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
-  id: '/perfil',
-  path: '/perfil',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedMestreRoute = AuthenticatedMestreRouteImport.update({
   id: '/mestre',
@@ -93,7 +87,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/home': typeof AuthenticatedHomeRoute
   '/mestre': typeof AuthenticatedMestreRoute
-  '/perfil': typeof AuthenticatedPerfilRoute
   '/api/profile': typeof ApiProfileRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa/': typeof ConversaIndexRoute
@@ -107,7 +100,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/home': typeof AuthenticatedHomeRoute
   '/mestre': typeof AuthenticatedMestreRoute
-  '/perfil': typeof AuthenticatedPerfilRoute
   '/api/profile': typeof ApiProfileRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa': typeof ConversaIndexRoute
@@ -123,7 +115,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/mestre': typeof AuthenticatedMestreRoute
-  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
   '/api/profile': typeof ApiProfileRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa/': typeof ConversaIndexRoute
@@ -139,7 +130,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/mestre'
-    | '/perfil'
     | '/api/profile'
     | '/conversa/$threadId'
     | '/conversa/'
@@ -153,7 +143,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/home'
     | '/mestre'
-    | '/perfil'
     | '/api/profile'
     | '/conversa/$threadId'
     | '/conversa'
@@ -168,7 +157,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/home'
     | '/_authenticated/mestre'
-    | '/_authenticated/perfil'
     | '/api/profile'
     | '/conversa/$threadId'
     | '/conversa/'
@@ -235,13 +223,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/perfil': {
-      id: '/_authenticated/perfil'
-      path: '/perfil'
-      fullPath: '/perfil'
-      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
     '/_authenticated/mestre': {
       id: '/_authenticated/mestre'
       path: '/mestre'
@@ -290,13 +271,11 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
   AuthenticatedMestreRoute: typeof AuthenticatedMestreRoute
-  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedHomeRoute: AuthenticatedHomeRoute,
   AuthenticatedMestreRoute: AuthenticatedMestreRoute,
-  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

@@ -165,6 +165,14 @@ export default {
       );
     const isGerusaApi =
       url.pathname === "/api/gerusa/thread" || url.pathname === "/api/gerusa/chat";
+    const isGerusaIdentityPage = ["/auth", "/home", "/mestre", "/conversa", "/conversa/"].includes(
+      url.pathname,
+    );
+    const isGerusaIdentityApi = [
+      "/api/auth/session",
+      "/api/profile",
+      "/api/master/characters",
+    ].includes(url.pathname);
 
     let response: Response;
     let errorMessage: string | undefined;
@@ -173,6 +181,8 @@ export default {
         url.pathname !== "/" &&
         !isGerusaConversation &&
         !isGerusaApi &&
+        !isGerusaIdentityPage &&
+        !isGerusaIdentityApi &&
         url.pathname !== "/gerusa.png" &&
         url.pathname !== "/gerusa-logo.png" &&
         !url.pathname.startsWith("/assets/")

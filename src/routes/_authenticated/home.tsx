@@ -50,7 +50,7 @@ function StudentHome() {
             </p>
           ) : null}
         </section>
-        <section className="grid gap-3 sm:grid-cols-2">
+        <section className="grid gap-3">
           <Link
             to="/conversa"
             className="rounded-xl border border-[#8a3045]/60 bg-[#4c1425] p-5 transition hover:bg-[#641a30]"
@@ -58,14 +58,6 @@ function StudentHome() {
             <p className="text-xs uppercase tracking-[0.16em] text-[#f0c59a]">Conversa</p>
             <h2 className="serif mt-1 text-2xl">Falar com Gerusa</h2>
             <p className="mt-2 text-sm text-[#f5e9df]/75">Seu histórico fica salvo na sua conta.</p>
-          </Link>
-          <Link
-            to="/perfil"
-            className="rounded-xl border border-[#742233]/45 bg-[#180b11] p-5 transition hover:bg-[#220d15]"
-          >
-            <p className="text-xs uppercase tracking-[0.16em] text-[#d5a56c]">Conta</p>
-            <h2 className="serif mt-1 text-2xl">Meu perfil</h2>
-            <p className="mt-2 text-sm text-[#e7c9b7]/70">Confira seu nome e seus dados.</p>
           </Link>
         </section>
       </main>
