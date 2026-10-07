@@ -146,6 +146,8 @@ existentes; eles não demonstram onboarding inicial nem tornam o produto pronto.
   `838eaa6d-5490-49e5-8622-42744816f5e0`; serviço Core ativo na Mini.
 - Migration `0006_product_accounts` aplicada em transação pelo banco e role
   `gerusa`; nenhuma conta existente foi criada, removida ou desativada.
+- Migration `0007_teacher_recovery` aplicada à mesma base/role, sem alteração
+  dos usuários existentes.
 - `/` oferece a configuração inicial quando não há Mestre. `/setup` cria a
   primeira professora, role de sistema, mesa inicial e sessão em uma transação;
   quando já existe Mestre ativo, a configuração fica fechada.
@@ -157,6 +159,12 @@ existentes; eles não demonstram onboarding inicial nem tornam o produto pronto.
   reativação preservam os dados e revogam sessões quando necessário.
 - A senha da professora pode ser alterada pela área Minha conta. A observação
   privada não é retornada no perfil nem incluída no contexto pedagógico.
+- Uma nova professora recebe no setup um código de recuperação de uso único;
+  apenas o hash scrypt fica no registro de credentials. A tela `/auth` oferece
+  redefinição com e-mail, código e nova senha; o sucesso consome o código e
+  revoga sessões numa transação. Este caminho ainda não foi exercitado com uma
+  primeira professora real. A professora ativa atual antecede esse recurso e
+  não possui código de recuperação armazenado.
 - O fluxo de setup, login, criação e gestão de alunos ainda não foi comprovado
   como professora autenticada em produção.
 
@@ -168,7 +176,8 @@ existentes; eles não demonstram onboarding inicial nem tornam o produto pronto.
 - Sem sessão, `/api/auth/session` e `/api/admin/students` retornaram HTTP 401.
 - Core local e Core pelo Tunnel responderam `{"status":"ok"}`. A consulta
   `READ ONLY` confirmou `current_database=gerusa`, `current_user=gerusa`,
-  migration `0006_product_accounts`, três usuários ativos e um Mestre ativo.
+  migrations `0006_product_accounts` e `0007_teacher_recovery`, três usuários
+  ativos e um Mestre ativo.
 - Navegador headless em 1440×900 e 390×844 abriu a home; a largura do documento
   coube no viewport, sem erro de página. A home não fez chamada direta ao
   OpenRouter e o bundle client não contém padrão de chave ou bearer.
@@ -191,11 +200,11 @@ Maria pela UI, isolamento, reset, desativação/reativação e ciclo pedagógico
 integrado deste gate permanecem sem prova. O ciclo pedagógico anterior continua
 registrado como evidência parcial, não como substituto deste teste.
 
-Para retomar sem intervenção técnica no uso cotidiano, é necessário um alvo
-Gerusa de primeira instalação aprovado para o teste humano, sem dados finais
-preexistentes e compatível com as restrições de arquitetura do gate. Também é
-necessário completar a recuperação de senha esquecida da professora; a UI
-publicada altera a senha atual mediante confirmação da senha vigente.
+Para retomar o fluxo humano, é necessário um alvo Gerusa de primeira instalação
+aprovado para o teste, sem dados finais preexistentes e compatível com as
+restrições de arquitetura do gate. O código de recuperação cobre novas contas;
+a conta ativa de produção antecede esse recurso e permanece sem código. A
+alteração de senha existente exige a senha atual.
 
 ## Incidentes anteriores preservados
 
@@ -226,9 +235,9 @@ publicada altera a senha atual mediante confirmação da senha vigente.
 
 ## Evidência de versão
 
-O código de onboarding e contas foi publicado do SHA
-`5c39b2d5b906199e71fa2939427fa382e0a8a3e6`. O Worker está na versão
-`838eaa6d-5490-49e5-8622-42744816f5e0`; a Mini está sincronizada ao código e
-serviu o Core após o restart. A atualização documental está em `master` e foi
-sincronizada ao clone da Mini. Como ela não altera runtime, não exige novo
-deploy; o Worker permanece no SHA de código acima.
+O provisioning e login de alunos foram publicados do SHA
+`5c39b2d5b906199e71fa2939427fa382e0a8a3e6`; a recuperação do primeiro Mestre
+foi publicada do SHA `c27221d8fb305b157c8978abf4ce5bd64d34109c`. O Worker está
+na versão `4f85de0d-c4bb-48be-b570-bb39f73daca1`; a Mini está sincronizada ao
+HEAD e serviu o Core após as migrations e o restart. Esta atualização do mapa
+é somente documental e não exige novo deploy.
