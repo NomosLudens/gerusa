@@ -1,5 +1,4 @@
 import { randomUUID } from "node:crypto";
-import type { Pool, PoolClient } from "pg";
 import { createFileRoute } from "@tanstack/react-router";
 import { z } from "zod";
 import {
@@ -8,7 +7,7 @@ import {
   getOpenRouterApiKey,
 } from "@/lib/openrouter.server";
 import { getGerusaPersona } from "@/server/gerusa/persona.server";
-import { createGerusaPool, isSameOrigin, THREAD_ID_PATTERN } from "@/server/gerusa/store";
+import { gerusaCoreRequest, isSameOrigin, THREAD_ID_PATTERN } from "@/server/gerusa/store";
 
 const FREE_MODEL_ROUTER = "openrouter/free";
 const MAX_MESSAGE_LENGTH = 4000;
@@ -96,51 +95,20 @@ export const Route = createFileRoute("/api/gerusa/chat")({
 
         const persona = getGerusaPersona();
 
-        let pool: Pool | undefined;
-        let connection: PoolClient | undefined;
         try {
-          const dbPool = createGerusaPool();
-          pool = dbPool;
-          connection = await dbPool.connect();
-          await connection.query("BEGIN");
-          const thread = await connection.query(
-            "SELECT id FROM gerusa.conversations WHERE id = $1 FOR UPDATE",
-            [parsed.data.threadId],
-          );
-          if (!thread.rowCount) {
-            await connection.query("ROLLBACK");
-            connection.release();
-            await dbPool.end();
-            return errorResponse("thread_not_found", 404, requestId);
-          }
-          await connection.query(
-            "INSERT INTO gerusa.messages (conversation_id, role, content) VALUES ($1, 'user', $2)",
-            [parsed.data.threadId, parsed.data.content],
-          );
-          await connection.query(
-            "UPDATE gerusa.conversations SET updated_at = now() WHERE id = $1",
-            [parsed.data.threadId],
-          );
-          await connection.query("COMMIT");
-          const recent = await connection.query(
-            `SELECT role, content
-             FROM (
-               SELECT role, content, created_at, id
-               FROM gerusa.messages
-               WHERE conversation_id = $1
-               ORDER BY created_at DESC, id DESC
-               LIMIT $2
-             ) recent
-             ORDER BY created_at ASC, id ASC`,
-            [parsed.data.threadId, RECENT_MESSAGE_LIMIT],
-          );
-          connection.release();
-          connection = undefined;
+          await gerusaCoreRequest(`/threads/${parsed.data.threadId}/messages`, {
+            method: "POST",
+            body: JSON.stringify({ role: "user", content: parsed.data.content }),
+          });
+          const history = await gerusaCoreRequest<{
+            messages: Array<{ role: "user" | "assistant"; content: string }>;
+          }>(`/threads/${parsed.data.threadId}/messages`);
+          const recent = history.messages.slice(-RECENT_MESSAGE_LIMIT);
 
           const system = `${persona.trim()}\n\n## Regras desta conversa\n- Responda no idioma usado pela pessoa.\n- Seja observadora, elegante, gentil e curiosa; use humor seco e sarcasmo leve, sem crueldade.\n- Prefira respostas concisas e específicas, com uma boa pergunta quando fizer sentido.\n- Não fale como assistente virtual e não invente memórias fora do histórico fornecido.\n- Não diga que iniciou ações ou recursos que o produto não oferece.`;
           const messages = [
             { role: "system", content: system },
-            ...recent.rows.map((message) => ({ role: message.role, content: message.content })),
+            ...recent.map((message) => ({ role: message.role, content: message.content })),
           ];
           const providerFetch = createChatProviderFetch(fetch, {
             requestId,
@@ -185,7 +153,6 @@ export const Route = createFileRoute("/api/gerusa/chat")({
                     : "network",
               }),
             );
-            await dbPool.end();
             return errorResponse(
               "provider_unavailable",
               error instanceof Error && error.name === "ProviderTimeoutError" ? 504 : 502,
@@ -199,7 +166,6 @@ export const Route = createFileRoute("/api/gerusa/chat")({
             console.error(
               JSON.stringify({ type: "gerusa_provider_rejected", request_id: requestId, status }),
             );
-            await dbPool.end();
             return errorResponse("provider_rejected", status, requestId);
           }
           if (
@@ -207,7 +173,6 @@ export const Route = createFileRoute("/api/gerusa/chat")({
             !providerResponse.headers.get("content-type")?.includes("text/event-stream")
           ) {
             await providerResponse.body?.cancel().catch(() => {});
-            await pool.end();
             return errorResponse("provider_stream_unavailable", 502, requestId);
           }
 
@@ -276,39 +241,19 @@ export const Route = createFileRoute("/api/gerusa/chat")({
                   if (!sawDone && !sawFinish) throw new Error("provider_stream_incomplete");
                   if (!answer.trim()) throw new Error("provider_response_empty");
 
-                  const assistantConnection = await dbPool.connect();
-                  let transactionOpen = false;
-                  let saved: { rows: Array<{ id: string; createdAt: Date }> };
-                  try {
-                    await assistantConnection.query("BEGIN");
-                    transactionOpen = true;
-                    saved = await assistantConnection.query(
-                      `INSERT INTO gerusa.messages (conversation_id, role, content)
-                       VALUES ($1, 'assistant', $2)
-                       RETURNING id::text AS id, created_at AS "createdAt"`,
-                      [parsed.data.threadId, answer],
-                    );
-                    await assistantConnection.query(
-                      "UPDATE gerusa.conversations SET updated_at = now() WHERE id = $1",
-                      [parsed.data.threadId],
-                    );
-                    await assistantConnection.query("COMMIT");
-                    transactionOpen = false;
-                  } catch (error) {
-                    if (transactionOpen)
-                      await assistantConnection.query("ROLLBACK").catch(() => {});
-                    throw error;
-                  } finally {
-                    assistantConnection.release();
-                  }
+                  const saved = await gerusaCoreRequest<{
+                    message: { id: string; createdAt: string };
+                  }>(`/threads/${parsed.data.threadId}/messages`, {
+                    method: "POST",
+                    body: JSON.stringify({ role: "assistant", content: answer }),
+                  });
                   controller.enqueue(
                     ndjson({
                       type: "done",
-                      message: { ...saved.rows[0], role: "assistant", content: answer },
+                      message: { ...saved.message, role: "assistant", content: answer },
                     }),
                   );
                 } catch {
-                  await dbPool.query("ROLLBACK").catch(() => {});
                   console.error(
                     JSON.stringify({ type: "gerusa_stream_failed", request_id: requestId }),
                   );
@@ -320,7 +265,6 @@ export const Route = createFileRoute("/api/gerusa/chat")({
                 } finally {
                   clearTimeout(streamTimeout);
                   await providerReader.cancel().catch(() => {});
-                  await dbPool.end().catch(() => {});
                   try {
                     controller.close();
                   } catch {
@@ -343,8 +287,6 @@ export const Route = createFileRoute("/api/gerusa/chat")({
             },
           });
         } catch {
-          connection?.release();
-          await pool?.end().catch(() => {});
           return errorResponse("chat_unavailable", 503, requestId);
         }
       },

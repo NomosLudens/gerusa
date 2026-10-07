@@ -1,6 +1,5 @@
-import { randomUUID } from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
-import { createGerusaPool, isSameOrigin, THREAD_ID_PATTERN } from "@/server/gerusa/store";
+import { gerusaCoreRequest, isSameOrigin, THREAD_ID_PATTERN } from "@/server/gerusa/store";
 
 const jsonHeaders = { "Cache-Control": "no-store" };
 
@@ -27,19 +26,17 @@ export const Route = createFileRoute("/api/gerusa/thread")({
           return Response.json({ error: "invalid_json" }, { status: 400, headers: jsonHeaders });
         }
 
-        let pool;
         try {
-          pool = createGerusaPool();
-          const threadId = randomUUID();
-          await pool.query("INSERT INTO gerusa.conversations (id) VALUES ($1)", [threadId]);
-          return Response.json({ threadId }, { headers: jsonHeaders });
+          const result = await gerusaCoreRequest<{ thread: { id: string } }>("/threads", {
+            method: "POST",
+            body: "{}",
+          });
+          return Response.json({ threadId: result.thread.id }, { headers: jsonHeaders });
         } catch {
           return Response.json(
             { error: "thread_unavailable" },
             { status: 503, headers: jsonHeaders },
           );
-        } finally {
-          await pool?.end().catch(() => {});
         }
       },
       GET: async ({ request }) => {
@@ -48,42 +45,30 @@ export const Route = createFileRoute("/api/gerusa/thread")({
           return Response.json({ error: "invalid_thread" }, { status: 400, headers: jsonHeaders });
         }
 
-        let pool;
         try {
-          pool = createGerusaPool();
-          const thread = await pool.query(
-            'SELECT id, created_at AS "createdAt" FROM gerusa.conversations WHERE id = $1',
-            [threadId],
+          const result = await gerusaCoreRequest<{
+            messages: Array<{
+              id: string;
+              role: "user" | "assistant";
+              content: string;
+              createdAt: string;
+            }>;
+          }>(`/threads/${threadId}/messages`);
+          return Response.json(
+            { thread: { id: threadId }, messages: result.messages },
+            { headers: jsonHeaders },
           );
-          if (!thread.rowCount) {
+        } catch (error) {
+          if (error instanceof Error && error.message === "gerusa_core_http_404") {
             return Response.json(
               { error: "thread_not_found" },
               { status: 404, headers: jsonHeaders },
             );
           }
-          const messages = await pool.query(
-            `SELECT id::text AS id, role, content, created_at AS "createdAt"
-             FROM (
-               SELECT id, role, content, created_at
-               FROM gerusa.messages
-               WHERE conversation_id = $1
-               ORDER BY created_at DESC, id DESC
-               LIMIT 200
-             ) recent
-             ORDER BY created_at ASC, id ASC`,
-            [threadId],
-          );
-          return Response.json(
-            { thread: thread.rows[0], messages: messages.rows },
-            { headers: jsonHeaders },
-          );
-        } catch {
           return Response.json(
             { error: "history_unavailable" },
             { status: 503, headers: jsonHeaders },
           );
-        } finally {
-          await pool?.end().catch(() => {});
         }
       },
     },

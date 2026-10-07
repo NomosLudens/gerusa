@@ -1,32 +1,38 @@
-import { Pool } from "pg";
+type CoreResponse<T> = T & { error?: string };
 
-export function createGerusaPool(): Pool {
-  const connectionString = process.env.GERUSA_DATABASE_URL?.trim();
-  if (!connectionString) throw new Error("gerusa_database_not_configured");
+export async function gerusaCoreRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const configuredUrl = process.env.GERUSA_CORE_URL?.trim();
+  const secret = process.env.GERUSA_CORE_SECRET;
+  if (!configuredUrl || !secret) throw new Error("gerusa_core_not_configured");
 
-  let parsed: URL;
+  let baseUrl: URL;
   try {
-    parsed = new URL(connectionString);
+    baseUrl = new URL(configuredUrl);
   } catch {
-    throw new Error("gerusa_database_url_invalid");
+    throw new Error("gerusa_core_url_invalid");
   }
-
   if (
-    !["postgres:", "postgresql:"].includes(parsed.protocol) ||
-    parsed.pathname !== "/gerusa" ||
-    decodeURIComponent(parsed.username) !== "gerusa" ||
-    !parsed.password
+    baseUrl.protocol !== "https:" ||
+    baseUrl.username ||
+    baseUrl.password ||
+    baseUrl.search ||
+    baseUrl.hash
   ) {
-    throw new Error("gerusa_database_isolation_required");
+    throw new Error("gerusa_core_https_required");
   }
 
-  return new Pool({
-    connectionString,
-    application_name: "gerusa",
-    max: 2,
-    connectionTimeoutMillis: 5000,
-    idleTimeoutMillis: 1000,
+  const headers = new Headers(init.headers);
+  headers.set("Authorization", `Bearer ${secret}`);
+  if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
+
+  const response = await fetch(new URL(path, baseUrl), {
+    ...init,
+    headers,
+    signal: init.signal ?? AbortSignal.timeout(12_000),
+    cache: "no-store",
   });
+  if (!response.ok) throw new Error(`gerusa_core_http_${response.status}`);
+  return (await response.json()) as CoreResponse<T>;
 }
 
 export const THREAD_ID_PATTERN =
