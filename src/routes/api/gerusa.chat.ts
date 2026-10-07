@@ -55,6 +55,23 @@ function textFromDelta(delta: unknown): string {
     .join("");
 }
 
+function streamFailureReason(error: unknown): string {
+  if (!(error instanceof Error)) return "unknown";
+  if (
+    [
+      "invalid_provider_event",
+      "provider_stream_error",
+      "provider_stream_incomplete",
+      "provider_response_empty",
+    ].includes(error.message)
+  ) {
+    return error.message;
+  }
+  const coreStatus = error.message.match(/^gerusa_core_http_(\d{3})$/)?.[1];
+  if (coreStatus) return `core_http_${coreStatus}`;
+  return error.name;
+}
+
 export const Route = createFileRoute("/api/gerusa/chat")({
   server: {
     handlers: {
@@ -266,9 +283,13 @@ export const Route = createFileRoute("/api/gerusa/chat")({
                       message: { ...saved.message, role: "assistant", content: answer },
                     }),
                   );
-                } catch {
+                } catch (error) {
                   console.error(
-                    JSON.stringify({ type: "gerusa_stream_failed", request_id: requestId }),
+                    JSON.stringify({
+                      type: "gerusa_stream_failed",
+                      request_id: requestId,
+                      reason: streamFailureReason(error),
+                    }),
                   );
                   try {
                     controller.enqueue(ndjson({ type: "error", message: ERROR_MESSAGE }));
