@@ -311,7 +311,7 @@ export const Route = createFileRoute("/api/gerusa/action")({
           return errorResponse("provider_rejected", status === 429 ? 503 : 502, requestId);
         }
         const payload = (await response.json().catch(() => null)) as {
-          choices?: Array<{ message?: { content?: unknown } }>;
+          choices?: Array<{ message?: Record<string, unknown> }>;
         } | null;
         let content = payload?.choices?.[0]?.message?.content;
         if (Array.isArray(content)) {
@@ -323,8 +323,25 @@ export const Route = createFileRoute("/api/gerusa/action")({
             )
             .join("\n");
         }
-        if (typeof content !== "string")
+        if (typeof content !== "string") {
+          const message = payload?.choices?.[0]?.message;
+          console.warn(
+            JSON.stringify({
+              type: "gerusa_action_response_shape_rejected",
+              action,
+              requestId,
+              choiceCount: payload?.choices?.length ?? 0,
+              messageKeys: message ? Object.keys(message) : [],
+              contentType: Array.isArray(message?.content) ? "array" : typeof message?.content,
+              contentPartTypes: Array.isArray(message?.content)
+                ? message.content.map((part) =>
+                    part && typeof part === "object" && "type" in part ? part.type : typeof part,
+                  )
+                : [],
+            }),
+          );
           return errorResponse("invalid_provider_response", 502, requestId);
+        }
         let candidate: unknown;
         const trimmedContent = content
           .trim()
