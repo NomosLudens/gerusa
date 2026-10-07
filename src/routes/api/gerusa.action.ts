@@ -369,6 +369,7 @@ export const Route = createFileRoute("/api/gerusa/action")({
         }
         const payload = (await response.json().catch(() => null)) as {
           choices?: Array<{ message?: Record<string, unknown> }>;
+          error?: Record<string, unknown>;
         } | null;
         const message = payload?.choices?.[0]?.message;
         const toolCalls = Array.isArray(message?.tool_calls) ? message.tool_calls : [];
@@ -400,6 +401,17 @@ export const Route = createFileRoute("/api/gerusa/action")({
               action,
               requestId,
               payloadKeys: payload && typeof payload === "object" ? Object.keys(payload) : [],
+              providerError:
+                payload?.error && typeof payload.error === "object"
+                  ? {
+                      type: payload.error.type,
+                      code: payload.error.code,
+                      message:
+                        typeof payload.error.message === "string"
+                          ? payload.error.message.slice(0, 240)
+                          : undefined,
+                    }
+                  : null,
               choiceCount: payload?.choices?.length ?? 0,
               messageKeys: message ? Object.keys(message) : [],
               toolCallCount: toolCalls.length,
