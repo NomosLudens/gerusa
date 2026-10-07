@@ -159,12 +159,20 @@ export default {
     const country =
       ((request as Request & { cf?: { country?: string } }).cf?.country as string | undefined) ??
       null;
+    const isGerusaConversation =
+      /^\/conversa\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+        url.pathname,
+      );
+    const isGerusaApi =
+      url.pathname === "/api/gerusa/thread" || url.pathname === "/api/gerusa/chat";
 
     let response: Response;
     let errorMessage: string | undefined;
     try {
       if (
         url.pathname !== "/" &&
+        !isGerusaConversation &&
+        !isGerusaApi &&
         url.pathname !== "/gerusa.png" &&
         url.pathname !== "/gerusa-logo.png" &&
         !url.pathname.startsWith("/assets/")

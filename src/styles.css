@@ -3090,3 +3090,310 @@ body {
     letter-spacing: 0.08em;
   }
 }
+
+/* Gate 02: public Gerusa conversation, isolated from the inherited app surfaces. */
+.gerusa-chat-page {
+  display: flex;
+  width: 100%;
+  height: 100dvh;
+  min-height: 420px;
+  flex-direction: column;
+  overflow: hidden;
+  color: #f2e6d7;
+  background:
+    radial-gradient(ellipse at 82% 8%, #9b1b342e, transparent 42%),
+    radial-gradient(ellipse at 4% 88%, #700e2629, transparent 38%),
+    #160b0c;
+}
+
+.gerusa-chat-header {
+  display: grid;
+  min-height: 76px;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 1rem;
+  padding: max(0.65rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) 0.65rem
+    max(1.25rem, env(safe-area-inset-left));
+  border-bottom: 1px solid #d6a77828;
+  background: #160b0cea;
+}
+
+.gerusa-chat-back {
+  justify-self: start;
+  color: #dfcbbb;
+  font-size: 0.82rem;
+  text-decoration: none;
+}
+
+.gerusa-chat-back span {
+  margin-right: 0.35rem;
+  color: #e16a6b;
+  font-size: 1rem;
+}
+
+.gerusa-chat-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.gerusa-chat-identity > img {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #d6a77866;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 24%;
+  box-shadow: 0 0 20px #a7253a44;
+}
+
+.gerusa-chat-identity div {
+  display: grid;
+  gap: 0.1rem;
+}
+
+.gerusa-chat-identity strong {
+  color: #f6e8d9;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.gerusa-chat-identity span {
+  color: #cbb8a7;
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+}
+
+.gerusa-chat-mark {
+  width: 34px;
+  height: 34px;
+  justify-self: end;
+  object-fit: contain;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 9px #d41f3c70);
+}
+
+.gerusa-chat-main {
+  display: flex;
+  width: min(820px, 100%);
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  align-self: center;
+}
+
+.gerusa-chat-messages {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 1.15rem;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0;
+  padding: 1.4rem max(1.15rem, env(safe-area-inset-right)) 1rem
+    max(1.15rem, env(safe-area-inset-left));
+  list-style: none;
+  scrollbar-color: #702535 #160b0c;
+  scrollbar-width: thin;
+}
+
+.gerusa-chat-loading,
+.gerusa-chat-empty {
+  margin: auto;
+  color: #cbb8a7;
+  font-family: "Cormorant Garamond", Georgia, serif;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.gerusa-chat-empty {
+  display: grid;
+  max-width: 320px;
+  gap: 0.45rem;
+  line-height: 1.45;
+}
+
+.gerusa-chat-empty span {
+  color: #e5b577;
+  font-size: 1.55rem;
+  font-style: italic;
+}
+
+.gerusa-chat-message {
+  display: flex;
+  max-width: min(88%, 650px);
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.gerusa-chat-message p {
+  margin: 0;
+  padding: 0.8rem 1rem;
+  border: 1px solid #d6a77825;
+  border-radius: 2px 14px 14px 14px;
+  color: #f2e6d7;
+  background: #2a1116d9;
+  font-size: 0.95rem;
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.gerusa-chat-message > img {
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  border: 1px solid #d6a77855;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: 50% 24%;
+}
+
+.gerusa-chat-message-user {
+  align-self: flex-end;
+}
+
+.gerusa-chat-message-user p {
+  border-color: #ab33424d;
+  border-radius: 14px 2px 14px 14px;
+  background: linear-gradient(140deg, #571522, #351018);
+}
+
+.gerusa-chat-message-assistant {
+  align-self: flex-start;
+}
+
+.gerusa-chat-dots {
+  color: #e5b577;
+  letter-spacing: 0.2em;
+  animation: gerusa-chat-breathe 1s ease-in-out infinite alternate;
+}
+
+@keyframes gerusa-chat-breathe {
+  to {
+    opacity: 0.35;
+  }
+}
+
+.gerusa-chat-composer {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.6rem;
+  padding: 0.9rem max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom))
+    max(1rem, env(safe-area-inset-left));
+  border-top: 1px solid #d6a77828;
+  background: linear-gradient(#1c0c10f2, #160b0c);
+}
+
+.gerusa-chat-composer textarea {
+  width: 100%;
+  min-height: 48px;
+  max-height: 160px;
+  resize: vertical;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #8a374444;
+  border-radius: 2px;
+  color: #f2e6d7;
+  background: #211014;
+  font: inherit;
+  line-height: 1.4;
+}
+
+.gerusa-chat-composer textarea::placeholder {
+  color: #b49b8c;
+}
+
+.gerusa-chat-composer textarea:focus-visible {
+  border-color: #b84b55;
+  outline: 2px solid #a7253a66;
+}
+
+.gerusa-chat-composer button {
+  min-width: 82px;
+  min-height: 48px;
+  padding-inline: 1rem;
+  border: 1px solid #c24853;
+  border-radius: 2px;
+  color: #fff0e8;
+  background: linear-gradient(135deg, #a9233a, #781727);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.gerusa-chat-composer button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.gerusa-chat-hint {
+  grid-column: 1 / -1;
+  color: #a99183;
+  font-size: 0.65rem;
+}
+
+.gerusa-chat-error {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: #f0a4a0;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 600px) {
+  .gerusa-chat-header {
+    min-height: 66px;
+    gap: 0.5rem;
+    padding-right: max(0.8rem, env(safe-area-inset-right));
+    padding-left: max(0.8rem, env(safe-area-inset-left));
+  }
+
+  .gerusa-chat-back {
+    font-size: 0.75rem;
+  }
+
+  .gerusa-chat-identity > img {
+    width: 36px;
+    height: 36px;
+  }
+
+  .gerusa-chat-identity strong {
+    font-size: 1rem;
+  }
+
+  .gerusa-chat-identity span {
+    font-size: 0.57rem;
+  }
+
+  .gerusa-chat-mark {
+    width: 29px;
+    height: 29px;
+  }
+
+  .gerusa-chat-messages {
+    gap: 0.9rem;
+    padding-top: 1rem;
+  }
+
+  .gerusa-chat-message {
+    max-width: 94%;
+  }
+
+  .gerusa-chat-message p {
+    padding: 0.72rem 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  .gerusa-chat-composer {
+    gap: 0.45rem;
+    padding-top: 0.7rem;
+  }
+
+  .gerusa-chat-composer button {
+    min-width: 70px;
+    padding-inline: 0.75rem;
+  }
+}

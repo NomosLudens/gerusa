@@ -180,7 +180,17 @@ export function providerFailureMessage(error: unknown, requestId: string): strin
   return `${reason} Referência: ${requestId}`;
 }
 
-export function createOpenRouterProvider(options: { requestId?: string } = {}) {
+export function createOpenRouterProvider(
+  options: {
+    requestId?: string;
+    primaryModel?: string;
+    fallbackModel?: string;
+    timeoutMs?: number;
+    maxRetries?: number;
+    siteUrl?: string;
+    appName?: string;
+  } = {},
+) {
   const requestId = options.requestId ?? crypto.randomUUID();
   return createOpenAICompatible({
     name: "openrouter",
@@ -188,12 +198,19 @@ export function createOpenRouterProvider(options: { requestId?: string } = {}) {
     baseURL: "https://openrouter.ai/api/v1",
     headers: {
       "HTTP-Referer":
+        options.siteUrl ??
         process.env.OPENROUTER_SITE_URL ??
         process.env.APP_PUBLIC_URL ??
         "https://kallistis-kallistis.local",
-      "X-Title": process.env.OPENROUTER_APP_NAME ?? "Kallistis Totalidade",
+      "X-Title": options.appName ?? process.env.OPENROUTER_APP_NAME ?? "Kallistis Totalidade",
       "X-Request-ID": requestId,
     },
-    fetch: createChatProviderFetch(fetch, { requestId }),
+    fetch: createChatProviderFetch(fetch, {
+      requestId,
+      primaryModel: options.primaryModel,
+      fallbackModel: options.fallbackModel,
+      timeoutMs: options.timeoutMs,
+      maxRetries: options.maxRetries,
+    }),
   });
 }

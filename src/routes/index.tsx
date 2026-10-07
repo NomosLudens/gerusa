@@ -1,8 +1,33 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useNavigate } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/")({ component: GerusaHome });
 
 function GerusaHome() {
+  const navigate = useNavigate();
+  const [opening, setOpening] = useState(false);
+  const [error, setError] = useState("");
+
+  async function startStory() {
+    if (opening) return;
+    setOpening(true);
+    setError("");
+    try {
+      const response = await fetch("/api/gerusa/thread", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+      });
+      if (!response.ok) throw new Error("thread_create_failed");
+      const { threadId } = (await response.json()) as { threadId: string };
+      await navigate({ to: "/conversa/$threadId", params: { threadId } });
+    } catch {
+      setError("A conversa não abriu agora. Tente novamente.");
+      setOpening(false);
+    }
+  }
+
   return (
     <main className="gerusa-page">
       <div className="gerusa-glow" aria-hidden="true" />
@@ -44,11 +69,18 @@ function GerusaHome() {
             Escolhas deixam marcas. Detalhes pequenos costumam voltar. E os dados, naturalmente, têm
             seus próprios cúmplices.
           </p>
-          <button className="gerusa-cta" type="button" disabled aria-describedby="gerusa-note">
-            Iniciar uma história <span aria-hidden="true">↗</span>
+          <button
+            className="gerusa-cta"
+            type="button"
+            disabled={opening}
+            onClick={() => void startStory()}
+            aria-describedby="gerusa-note"
+          >
+            {opening ? "Abrindo conversa…" : "Iniciar uma história"}{" "}
+            <span aria-hidden="true">↗</span>
           </button>
-          <p className="gerusa-note" id="gerusa-note">
-            Conversas serão habilitadas no próximo gate.
+          <p className="gerusa-note" id="gerusa-note" role={error ? "alert" : undefined}>
+            {error || "Uma conversa, sem pressa."}
           </p>
           <p className="gerusa-signature">Por enquanto, podemos começar com uma boa pergunta.</p>
         </div>

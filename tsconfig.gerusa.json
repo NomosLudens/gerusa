@@ -7,6 +7,10 @@
     "src/server.ts",
     "src/routes/__root.tsx",
     "src/routes/index.tsx",
+    "src/routes/conversa.$threadId.tsx",
+    "src/routes/api/gerusa.thread.ts",
+    "src/routes/api/gerusa.chat.ts",
+    "src/server/gerusa/*.ts",
     "vite.config.ts"
   ],
   "exclude": ["node_modules", "dist"]

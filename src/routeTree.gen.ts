@@ -10,33 +10,72 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConversaThreadIdRouteImport } from './routes/conversa.$threadId'
+import { Route as ApiGerusaThreadRouteImport } from './routes/api/gerusa.thread'
+import { Route as ApiGerusaChatRouteImport } from './routes/api/gerusa.chat'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConversaThreadIdRoute = ConversaThreadIdRouteImport.update({
+  id: '/conversa/$threadId',
+  path: '/conversa/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGerusaThreadRoute = ApiGerusaThreadRouteImport.update({
+  id: '/api/gerusa/thread',
+  path: '/api/gerusa/thread',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGerusaChatRoute = ApiGerusaChatRouteImport.update({
+  id: '/api/gerusa/chat',
+  path: '/api/gerusa/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/conversa/$threadId': typeof ConversaThreadIdRoute
+  '/api/gerusa/chat': typeof ApiGerusaChatRoute
+  '/api/gerusa/thread': typeof ApiGerusaThreadRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/conversa/$threadId': typeof ConversaThreadIdRoute
+  '/api/gerusa/chat': typeof ApiGerusaChatRoute
+  '/api/gerusa/thread': typeof ApiGerusaThreadRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/conversa/$threadId': typeof ConversaThreadIdRoute
+  '/api/gerusa/chat': typeof ApiGerusaChatRoute
+  '/api/gerusa/thread': typeof ApiGerusaThreadRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/conversa/$threadId'
+    | '/api/gerusa/chat'
+    | '/api/gerusa/thread'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/conversa/$threadId' | '/api/gerusa/chat' | '/api/gerusa/thread'
+  id:
+    | '__root__'
+    | '/'
+    | '/conversa/$threadId'
+    | '/api/gerusa/chat'
+    | '/api/gerusa/thread'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ConversaThreadIdRoute: typeof ConversaThreadIdRoute
+  ApiGerusaChatRoute: typeof ApiGerusaChatRoute
+  ApiGerusaThreadRoute: typeof ApiGerusaThreadRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +87,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conversa/$threadId': {
+      id: '/conversa/$threadId'
+      path: '/conversa/$threadId'
+      fullPath: '/conversa/$threadId'
+      preLoaderRoute: typeof ConversaThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gerusa/thread': {
+      id: '/api/gerusa/thread'
+      path: '/api/gerusa/thread'
+      fullPath: '/api/gerusa/thread'
+      preLoaderRoute: typeof ApiGerusaThreadRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gerusa/chat': {
+      id: '/api/gerusa/chat'
+      path: '/api/gerusa/chat'
+      fullPath: '/api/gerusa/chat'
+      preLoaderRoute: typeof ApiGerusaChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ConversaThreadIdRoute: ConversaThreadIdRoute,
+  ApiGerusaChatRoute: ApiGerusaChatRoute,
+  ApiGerusaThreadRoute: ApiGerusaThreadRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
