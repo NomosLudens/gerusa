@@ -1,168 +1,78 @@
-import { getRuntimeDatabaseUrl } from "@/server/runtime/context";
-import { randomUUID } from "node:crypto";
 import { createFileRoute } from "@tanstack/react-router";
+import { gerusaCoreRequest, isSameOrigin } from "@/server/gerusa/store";
 import {
-  handleLocalAuthDelete,
-  handleLocalAuthGet,
-  handleLocalAuthPost,
-} from "@/server/local-core/http";
-import { createPostgresAuthRepository } from "@/server/local-core/postgres-repositories";
-import { createBunPostgresExecutor } from "@/server/local-core/postgres";
-import { isSameOriginRequest } from "@/server/local-core/csrf";
-import { getRuntimeEnv } from "@/server/runtime/context";
-import {
-  buildSupabaseSessionCookie,
-  clearSupabaseSessionCookie,
-  hasSupabaseAuthRuntime,
-  resolveSupabaseIdentity,
-} from "@/server/runtime/supabase-auth";
-import { requireUser } from "@/lib/require-user.server";
+  buildSessionCookie,
+  clearSessionCookie,
+  readSessionCookie,
+} from "@/server/local-core/cookies";
 
-const CANONICAL_PUBLIC_ORIGIN = "https://kallistis.app";
+const headers = { "Cache-Control": "no-store" };
 
-function expectedOrigin(): string {
-  const value = getRuntimeEnv().publicOrigin;
-  if (!value) return CANONICAL_PUBLIC_ORIGIN;
-  const origins = value
-    .split(",")
-    .map((origin) => origin.trim())
-    .filter(Boolean);
-  if (!origins.length) return CANONICAL_PUBLIC_ORIGIN;
-  try {
-    if (
-      origins.some((origin) => {
-        const url = new URL(origin);
-        return url.protocol !== "http:" && url.protocol !== "https:";
-      })
-    ) {
-      return CANONICAL_PUBLIC_ORIGIN;
-    }
-    return origins.join(",");
-  } catch {
-    return CANONICAL_PUBLIC_ORIGIN;
-  }
-}
-
-async function provisionedSupabaseUser(accessToken: string) {
-  const identity = await resolveSupabaseIdentity(accessToken);
-  if (!identity) return null;
-  const databaseUrl = getRuntimeDatabaseUrl();
-  if (!databaseUrl) return null;
-  const sql = createBunPostgresExecutor(databaseUrl);
-  try {
-    const rows = await sql.query<{ id: string }>(
-      "SELECT id::text AS id FROM public.users WHERE id=$1 AND status='active' LIMIT 1",
-      [identity.id],
-    );
-    return rows[0] ? { id: rows[0].id } : null;
-  } finally {
-    sql.close();
-  }
-}
-
-function configuredRuntime() {
-  const databaseUrl = getRuntimeDatabaseUrl();
-  const lookupKey = process.env.KALLISTIS_CREDENTIAL_LOOKUP_KEY;
-  if (!databaseUrl || !lookupKey) return null;
-  const sql = createBunPostgresExecutor(databaseUrl);
-  return {
-    repository: createPostgresAuthRepository(sql),
-    lookupKey,
-    sql,
-  };
-}
-
-async function withRuntime<T>(
-  handler: (runtime: NonNullable<ReturnType<typeof configuredRuntime>>) => Promise<T>,
-): Promise<T | Response> {
-  let runtime: ReturnType<typeof configuredRuntime> = null;
-  try {
-    runtime = configuredRuntime();
-    if (!runtime) {
-      return Response.json(
-        { error: "local_auth_not_configured" },
-        { status: 503, headers: { "Cache-Control": "no-store" } },
-      );
-    }
-    return await handler(runtime);
-  } catch {
-    return Response.json(
-      { error: "local_auth_unavailable" },
-      { status: 503, headers: { "Cache-Control": "no-store" } },
-    );
-  } finally {
-    runtime?.sql.close();
-  }
+async function readCredentials(request: Request) {
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).byteLength > 8_192) return null;
+  const body = JSON.parse(raw) as Record<string, unknown>;
+  if (Object.keys(body).some((key) => !["email", "password"].includes(key))) return null;
+  if (typeof body.email !== "string" || typeof body.password !== "string") return null;
+  return { email: body.email, password: body.password };
 }
 
 export const Route = createFileRoute("/api/auth/session")({
   server: {
     handlers: {
       GET: async ({ request }) => {
-        if (hasSupabaseAuthRuntime()) {
-          const auth = await requireUser(request);
-          return "error" in auth
-            ? auth.error
-            : Response.json(
-                { user: { id: auth.userId } },
-                { headers: { "Cache-Control": "no-store" } },
-              );
+        const token = readSessionCookie(request.headers.get("cookie"));
+        if (!token) return Response.json({ error: "unauthorized" }, { status: 401, headers });
+        try {
+          const result = await gerusaCoreRequest<{ user: { id: string } }>(
+            "/auth/session",
+            {},
+            token,
+          );
+          return Response.json({ user: result.user }, { headers });
+        } catch {
+          return Response.json({ error: "unauthorized" }, { status: 401, headers });
         }
-        return withRuntime((runtime) =>
-          handleLocalAuthGet(request, {
-            repository: runtime.repository,
-            lookupKey: runtime.lookupKey,
-            expectedOrigin: expectedOrigin(),
-          }),
-        );
       },
       POST: async ({ request }) => {
-        if (hasSupabaseAuthRuntime()) {
-          if (!isSameOriginRequest(request, expectedOrigin()))
-            return Response.json({ error: "csrf_rejected" }, { status: 403 });
-          const body = (await request.json().catch(() => null)) as { accessToken?: unknown } | null;
-          const accessToken = typeof body?.accessToken === "string" ? body.accessToken.trim() : "";
-          if (!accessToken)
-            return Response.json({ error: "supabase_access_token_required" }, { status: 400 });
-          const user = await provisionedSupabaseUser(accessToken);
-          if (!user)
-            return Response.json({ error: "kallistis_identity_not_provisioned" }, { status: 403 });
+        if (!isSameOrigin(request))
+          return Response.json({ error: "csrf_rejected" }, { status: 403, headers });
+        let credentials: { email: string; password: string } | null;
+        try {
+          credentials = await readCredentials(request);
+        } catch {
+          credentials = null;
+        }
+        if (!credentials)
+          return Response.json({ error: "invalid_credentials" }, { status: 400, headers });
+        try {
+          const result = await gerusaCoreRequest<{ token: string; user: { id: string } }>(
+            "/auth/login",
+            { method: "POST", body: JSON.stringify(credentials) },
+          );
           return Response.json(
-            { user: { id: user.id } },
+            { user: result.user },
             {
-              status: 201,
               headers: {
-                "set-cookie": buildSupabaseSessionCookie(accessToken),
-                "Cache-Control": "no-store",
+                ...headers,
+                "Set-Cookie": buildSessionCookie(result.token, 30 * 24 * 60 * 60),
               },
             },
           );
+        } catch {
+          return Response.json({ error: "invalid_credentials" }, { status: 401, headers });
         }
-        return withRuntime((runtime) =>
-          handleLocalAuthPost(request, {
-            repository: runtime.repository,
-            lookupKey: runtime.lookupKey,
-            expectedOrigin: expectedOrigin(),
-            nextSessionId: randomUUID,
-          }),
-        );
       },
       DELETE: async ({ request }) => {
-        if (hasSupabaseAuthRuntime()) {
-          if (!isSameOriginRequest(request, expectedOrigin()))
-            return Response.json({ error: "csrf_rejected" }, { status: 403 });
-          return new Response(null, {
-            status: 204,
-            headers: { "set-cookie": clearSupabaseSessionCookie(), "Cache-Control": "no-store" },
-          });
-        }
-        return withRuntime((runtime) =>
-          handleLocalAuthDelete(request, {
-            repository: runtime.repository,
-            lookupKey: runtime.lookupKey,
-            expectedOrigin: expectedOrigin(),
-          }),
-        );
+        if (!isSameOrigin(request))
+          return Response.json({ error: "csrf_rejected" }, { status: 403, headers });
+        const token = readSessionCookie(request.headers.get("cookie"));
+        if (token)
+          await gerusaCoreRequest("/auth/logout", { method: "POST" }, token).catch(() => {});
+        return new Response(null, {
+          status: 204,
+          headers: { ...headers, "Set-Cookie": clearSessionCookie() },
+        });
       },
     },
   },

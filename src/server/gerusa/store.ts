@@ -1,6 +1,10 @@
 type CoreResponse<T> = T & { error?: string };
 
-export async function gerusaCoreRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function gerusaCoreRequest<T>(
+  path: string,
+  init: RequestInit = {},
+  sessionToken?: string | null,
+): Promise<T> {
   const configuredUrl = process.env.GERUSA_CORE_URL?.trim();
   const secret = process.env.GERUSA_CORE_SECRET;
   if (!configuredUrl || !secret) throw new Error("gerusa_core_not_configured");
@@ -23,6 +27,7 @@ export async function gerusaCoreRequest<T>(path: string, init: RequestInit = {})
 
   const headers = new Headers(init.headers);
   headers.set("Authorization", `Bearer ${secret}`);
+  if (sessionToken) headers.set("X-Gerusa-Session", sessionToken);
   if (init.body && !headers.has("Content-Type")) headers.set("Content-Type", "application/json");
 
   const response = await fetch(new URL(path, baseUrl), {

@@ -55,6 +55,7 @@ export function canAccessApp(user: AuthzUser | AuthzState, app: AppRegistryItem)
   if (user.isAdmin) return true;
   if (app.status === "planned") return false;
   if (app.adminOnly) return false;
+  if (app.id === "mesa-do-mestre" && !user.isMaster) return false;
   // Personagens é a porta canônica da jornada; as ferramentas internas continuam
   // protegidas por suas próprias rotas/autorizações.
   if (user.allowedAppIds && !user.allowedAppIds.includes(app.id) && app.id !== "personagens")
@@ -83,7 +84,28 @@ export function getAllowedApps(user: AuthzUser | AuthzState): AppRegistryItem[] 
 }
 
 export function getSidebarApps(user: AuthzUser | AuthzState): AppRegistryItem[] {
-  return getSidebarRegistryApps().filter((app) => canAccessApp(user, app));
+  const allowed = new Set(["personagens", "kallistis-chat", "mesa-do-mestre", "perfil"]);
+  return getSidebarRegistryApps()
+    .filter((app) => allowed.has(app.id) && canAccessApp(user, app))
+    .map((app) => ({
+      ...app,
+      label:
+        app.id === "kallistis-chat"
+          ? "Conversa com Gerusa"
+          : app.id === "mesa-do-mestre"
+            ? "Mesa da professora"
+            : app.id === "personagens"
+              ? "Meu personagem"
+              : "Meu perfil",
+      sidebarLabel:
+        app.id === "kallistis-chat"
+          ? "Gerusa"
+          : app.id === "mesa-do-mestre"
+            ? "Professora"
+            : app.id === "personagens"
+              ? "Personagem"
+              : "Perfil",
+    }));
 }
 
 export function getHomeApps(user: AuthzUser | AuthzState): AppRegistryItem[] {

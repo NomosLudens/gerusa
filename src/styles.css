@@ -57,9 +57,9 @@
   --radius: 0.75rem;
 
   /* Facet tokens */
-  --kallistis: #7a4bc2; /* laranja neon / presença viva / centro */
-  --klio: #7a1f2b; /* vinho acadêmico / estudo */
-  --khora: #a56a43; /* cobre-terra / corpo */
+  --kallistis: #a32342;
+  --klio: #65152a;
+  --khora: #b7774f;
   --kharis: #1d3354; /* azul profundo / cuidado */
   --kairos: #6c8ead; /* azul névoa / tempo */
   --kuanyin: #be185d; /* magenta / comércio */
@@ -69,7 +69,7 @@
   --obsidian: #08080e;
   --burgundy: var(--klio);
   --wine: var(--klio);
-  --gold: var(--kallistis);
+  --gold: #c28a5e;
   --amber: var(--khora);
   --ivory: #f3ebdd;
   --ivory-dim: color-mix(in oklab, var(--ivory) 72%, var(--kairos));
@@ -717,15 +717,15 @@
   overflow: hidden;
   padding: 72px 20px 32px;
   background:
-    linear-gradient(180deg, rgba(7, 8, 12, 0.22), rgba(7, 8, 12, 0.96)),
-    url("/brand-assets/kallistis-canon-background.png?v=20260830") center / cover fixed;
+    linear-gradient(180deg, rgba(16, 5, 9, 0.36), rgba(16, 5, 9, 0.96)),
+    url("/gerusa.png") center 30% / cover fixed;
 }
 .auth-page::before {
   position: absolute;
   inset: 0;
   content: "";
   pointer-events: none;
-  background: radial-gradient(circle at 50% 28%, rgba(140, 95, 255, 0.16), transparent 35%);
+  background: radial-gradient(circle at 50% 28%, rgba(185, 28, 63, 0.2), transparent 38%);
 }
 .auth-page__back {
   position: absolute;
@@ -745,12 +745,12 @@
   position: relative;
   width: min(100%, 420px);
   padding: 38px;
-  border: 1px solid rgba(236, 234, 240, 0.16);
-  border-radius: 4px;
-  background: rgba(17, 18, 24, 0.82);
+  border: 1px solid rgba(143, 43, 65, 0.42);
+  border-radius: 16px;
+  background: rgba(25, 8, 14, 0.9);
   box-shadow:
     0 24px 80px rgba(0, 0, 0, 0.42),
-    0 0 40px rgba(108, 67, 168, 0.1);
+    0 0 40px rgba(150, 22, 54, 0.18);
   backdrop-filter: blur(18px);
 }
 .auth-card__brand {
@@ -758,12 +758,13 @@
 }
 .auth-card__crystal {
   display: block;
-  width: 128px;
-  height: 148px;
+  width: 96px;
+  height: 96px;
+  border-radius: 24px;
   margin: 0 auto;
   object-fit: contain;
   object-position: center;
-  filter: grayscale(1) drop-shadow(0 0 24px rgba(140, 95, 255, 0.22));
+  filter: drop-shadow(0 0 24px rgba(185, 28, 63, 0.32));
 }
 .auth-card__wordmark {
   display: block;
@@ -781,7 +782,7 @@
   width: 64px;
   height: 1px;
   margin: 28px auto;
-  background: linear-gradient(90deg, transparent, #8c5fff, transparent);
+  background: linear-gradient(90deg, transparent, #a32342, #c28a5e, transparent);
 }
 .auth-card__form {
   display: grid;
@@ -795,13 +796,13 @@
   color: #eceaf0;
 }
 .auth-card__input:focus-visible {
-  border-color: #8c5fff;
-  box-shadow: 0 0 0 3px rgba(140, 95, 255, 0.16);
+  border-color: #b33652;
+  box-shadow: 0 0 0 3px rgba(163, 35, 66, 0.2);
 }
 .auth-card__submit {
   height: 50px;
   color: #fff;
-  background: linear-gradient(135deg, #7a4bc2, #5f359e);
+  background: linear-gradient(135deg, #8f1e3a, #5b1327);
 }
 .auth-card__hint {
   margin: 24px 0 0;
@@ -2749,8 +2750,7 @@ body {
   color: #f2e6d7;
   background:
     radial-gradient(ellipse at 77% 42%, rgba(172, 22, 43, 0.28), transparent 43%),
-    radial-gradient(ellipse at 2% 92%, rgba(139, 18, 43, 0.2), transparent 35%),
-    #160b0c;
+    radial-gradient(ellipse at 2% 92%, rgba(139, 18, 43, 0.2), transparent 35%), #160b0c;
 }
 
 .gerusa-page::before {
@@ -2845,7 +2845,9 @@ body {
   border: 1px solid #d2a16a45;
   border-radius: 45% 45% 3px 3px;
   background: #291413;
-  box-shadow: 0 28px 90px #0008, 0 0 55px #8a3d201f;
+  box-shadow:
+    0 28px 90px #0008,
+    0 0 55px #8a3d201f;
 }
 
 .gerusa-portrait::after {
@@ -2966,7 +2968,9 @@ body {
   color: #fff0e8;
   background: linear-gradient(135deg, #a9233a, #781727);
   box-shadow: 0 8px 28px #aa172e38;
-  font: 600 0.72rem/1 "Inter", sans-serif;
+  font:
+    600 0.72rem/1 "Inter",
+    sans-serif;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -3102,8 +3106,7 @@ body {
   color: #f2e6d7;
   background:
     radial-gradient(ellipse at 82% 8%, #9b1b342e, transparent 42%),
-    radial-gradient(ellipse at 4% 88%, #700e2629, transparent 38%),
-    #160b0c;
+    radial-gradient(ellipse at 4% 88%, #700e2629, transparent 38%), #160b0c;
 }
 
 .gerusa-chat-header {

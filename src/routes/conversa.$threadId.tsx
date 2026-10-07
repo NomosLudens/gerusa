@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { FormEvent, KeyboardEvent, useEffect, useRef, useState } from "react";
+import { authenticatedBeforeLoad } from "@/lib/authenticated-before-load";
 
 type GerusaMessage = {
   id: string;
@@ -13,7 +14,11 @@ type StreamEvent =
   | { type: "done"; message: GerusaMessage }
   | { type: "error"; message: string };
 
-export const Route = createFileRoute("/conversa/$threadId")({ component: GerusaConversation });
+export const Route = createFileRoute("/conversa/$threadId")({
+  ssr: false,
+  beforeLoad: authenticatedBeforeLoad,
+  component: GerusaConversation,
+});
 
 function GerusaConversation() {
   const { threadId } = Route.useParams();

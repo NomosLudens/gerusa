@@ -74,7 +74,7 @@ export const APP_NAV_GROUPS: Record<
   principal: {
     label: "Principal",
     order: 10,
-    description: "Conversa, presença e encontros da KALLISTIS.",
+    description: "Conversa com Gerusa e seus grupos.",
   },
   organizacao: {
     label: "Organização",
@@ -84,10 +84,10 @@ export const APP_NAV_GROUPS: Record<
   jogar: {
     label: "Jogar",
     order: 15,
-    description: "Ferramentas canônicas para criar, explorar e jogar KALLISTIS.",
+    description: "Personagens e aventuras das suas campanhas.",
   },
   kallistis: {
-    label: "Kallistis",
+    label: "Gerusa",
     order: 10,
     description: "Presença, agenda e superfícies pessoais do shell.",
   },

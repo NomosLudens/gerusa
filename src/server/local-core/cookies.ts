@@ -1,4 +1,4 @@
-export const SESSION_COOKIE_NAME = "__Host-kallistis_session";
+export const SESSION_COOKIE_NAME = "__Host-gerusa_session";
 
 function cookieDate(date: Date): string {
   return date.toUTCString();

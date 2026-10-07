@@ -1,5 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { gerusaCoreRequest, isSameOrigin, THREAD_ID_PATTERN } from "@/server/gerusa/store";
+import { requireUser } from "@/lib/require-user.server";
+import { readSessionCookie } from "@/server/local-core/cookies";
 
 const jsonHeaders = { "Cache-Control": "no-store" };
 
@@ -10,6 +12,10 @@ export const Route = createFileRoute("/api/gerusa/thread")({
         if (!isSameOrigin(request)) {
           return Response.json({ error: "csrf_rejected" }, { status: 403, headers: jsonHeaders });
         }
+
+        const auth = await requireUser(request);
+        if ("error" in auth) return auth.error;
+        const token = readSessionCookie(request.headers.get("cookie"));
 
         const raw = await request.text();
         if (raw.length > 1024) {
@@ -27,10 +33,14 @@ export const Route = createFileRoute("/api/gerusa/thread")({
         }
 
         try {
-          const result = await gerusaCoreRequest<{ thread: { id: string } }>("/threads", {
-            method: "POST",
-            body: "{}",
-          });
+          const result = await gerusaCoreRequest<{ thread: { id: string } }>(
+            "/threads",
+            {
+              method: "POST",
+              body: "{}",
+            },
+            token,
+          );
           return Response.json({ threadId: result.thread.id }, { headers: jsonHeaders });
         } catch {
           return Response.json(
@@ -40,6 +50,9 @@ export const Route = createFileRoute("/api/gerusa/thread")({
         }
       },
       GET: async ({ request }) => {
+        const auth = await requireUser(request);
+        if ("error" in auth) return auth.error;
+        const token = readSessionCookie(request.headers.get("cookie"));
         const threadId = new URL(request.url).searchParams.get("threadId") ?? "";
         if (!THREAD_ID_PATTERN.test(threadId)) {
           return Response.json({ error: "invalid_thread" }, { status: 400, headers: jsonHeaders });
@@ -53,7 +66,7 @@ export const Route = createFileRoute("/api/gerusa/thread")({
               content: string;
               createdAt: string;
             }>;
-          }>(`/threads/${threadId}/messages`);
+          }>(`/threads/${threadId}/messages`, {}, token);
           return Response.json(
             { thread: { id: threadId }, messages: result.messages },
             { headers: jsonHeaders },

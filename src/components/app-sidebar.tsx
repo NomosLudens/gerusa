@@ -22,7 +22,7 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import { kallistisCrystal, kharisApple, kuanyinApple } from "@/lib/brand-assets";
+import { kharisApple, kuanyinApple } from "@/lib/brand-assets";
 import {
   Sidebar,
   SidebarContent,
@@ -104,14 +104,13 @@ function buildGroups(apps: AppRegistryItem[]): SidebarGroupDef[] {
 }
 
 function getFacetApple(facet: string | undefined) {
-  if (facet === "kallistis") return kallistisCrystal.url;
+  if (facet === "kallistis") return "/gerusa-logo.png";
   if (facet === "kharis") return kharisApple.url;
   if (facet === "kuanyin") return kuanyinApple.url;
   return null;
 }
 
 export function AppSidebar() {
-  console.info("kallistis_e2e:app_sidebar_render_started");
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
   const router = useRouter();
@@ -327,10 +326,10 @@ export function AppSidebar() {
               <SidebarMenuButton
                 onClick={handleInstall}
                 className="flex items-center gap-2"
-                aria-label="Instalar KALLISTIS"
+                aria-label="Instalar Gerusa"
               >
                 <Download className="h-4 w-4" />
-                <span className="group-data-[collapsible=icon]:hidden">Instalar KALLISTIS</span>
+                <span className="group-data-[collapsible=icon]:hidden">Instalar Gerusa</span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           )}

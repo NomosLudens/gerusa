@@ -1,48 +1,17 @@
-import { kallistisWordmark } from "@/lib/brand-assets";
-import { kallistisCrystal } from "@/lib/brand-assets";
-import { createFileRoute, Outlet, redirect, useRouterState } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { getLocalSession } from "@/lib/local-auth-client";
-import { getAppByPath } from "@/lib/app-registry";
-import { isPlayerAccessAppId } from "@/lib/player-access";
-import { canAccessPath, getAuthz, useAuthz } from "@/lib/use-authz";
-import { OstPlayer } from "@/components/OstPlayer";
+import { useAuthz } from "@/lib/use-authz";
 import { RouteErrorBoundary, RouteNotFoundBoundary } from "@/components/loading-states";
-import { ScenePulseReceiver } from "@/components/ScenePulseReceiver";
 
-export async function authenticatedBeforeLoad({ location }: { location: { pathname: string } }) {
-  console.info("kallistis_e2e:authenticated_beforeload_started");
-  const session = await getLocalSession();
-  if (!session?.user) throw redirect({ to: "/auth" });
-  const playerOnboardingResponse = await fetch("/api/auth/google-player-onboarding", {
-    credentials: "same-origin",
-    cache: "no-store",
-  });
-  if (!playerOnboardingResponse.ok) throw redirect({ to: "/auth" });
-  const playerOnboarding = (await playerOnboardingResponse.json().catch(() => null)) as {
-    required?: boolean;
-  } | null;
-  if (playerOnboarding?.required) throw redirect({ to: "/auth" });
-  const app = getAppByPath(location.pathname);
-  const isMasterRoute = app?.id === "mesa-do-mestre";
-  if (app && (app.adminOnly || isPlayerAccessAppId(app.id) || isMasterRoute)) {
-    const authz = await getAuthz();
-    const canAccess = isMasterRoute ? authz.isMaster : canAccessPath(authz, location.pathname);
-    if (!canAccess) throw new AccessDeniedError();
-  }
-}
-
-class AccessDeniedError extends Error {
-  constructor() {
-    super("Você não tem permissão para acessar esta aplicação.");
-    this.name = "AccessDeniedError";
-  }
-}
+import { authenticatedBeforeLoad } from "@/lib/authenticated-before-load";
 
 function AuthenticatedRouteErrorBoundary({ error, reset }: { error: unknown; reset: () => void }) {
-  if (error instanceof AccessDeniedError) {
+  if (
+    error instanceof Error &&
+    error.message === "Você não tem permissão para acessar esta aplicação."
+  ) {
     return <RouteNotFoundBoundary message={error.message} />;
   }
   return <RouteErrorBoundary error={error} reset={reset} />;
@@ -71,8 +40,8 @@ function HeaderBar() {
         title="Menu"
         className="flex h-14 min-w-0 flex-1 items-center justify-center gap-3 rounded-none px-3 transition-colors hover:bg-white/[0.03]"
       >
-        <img src={kallistisCrystal.url} alt="" className="h-8 w-8 shrink-0 grayscale apple-glow" />
-        <img src={kallistisWordmark.url} alt="KALLISTIS" className="h-4 w-auto" />
+        <img src="/gerusa-logo.png" alt="" className="h-8 w-8 shrink-0 rounded-full" />
+        <span className="serif text-lg text-[#f5e9df]">Gerusa Poulain</span>
       </button>
     </header>
   );
@@ -93,27 +62,23 @@ function CompactMenuButton() {
         title="Menu"
         className="pointer-events-auto flex h-11 w-11 items-center justify-center rounded-full border border-[color:var(--border)] bg-background/80 shadow-md backdrop-blur transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[color:var(--kallistis)] focus-visible:outline-none hover:bg-[color:var(--ivory)]/[0.05] active:scale-95"
       >
-        <img src={kallistisCrystal.url} alt="" className="h-6 w-6 shrink-0 apple-glow" />
+        <img src="/gerusa-logo.png" alt="" className="h-6 w-6 shrink-0 rounded-full" />
       </button>
     </div>
   );
 }
 
 export function AuthedLayout() {
-  console.info("kallistis_e2e:authed_layout_render_started");
   const isMobile = useIsMobile();
   const authz = useAuthz();
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
   const isChat = pathname.startsWith("/chat");
 
-  console.info("kallistis_e2e:authed_layout_render_finished");
   return (
     <SidebarProvider defaultOpen={isMobile}>
       <div className="relative flex h-[100dvh] min-h-[100dvh] w-full bg-[#08080e] text-[#eceaf0]">
         <AppSidebar />
-        {!authz.loading && !authz.isMaster ? <ScenePulseReceiver /> : null}
-        {authz.isMaster ? <OstPlayer /> : null}
         <div className="flex-1 flex min-w-0 flex-col relative">
           {!isChat ? <HeaderBar /> : <CompactMenuButton />}
           <main

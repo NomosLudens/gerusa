@@ -8,6 +8,8 @@ import {
 } from "@/lib/openrouter.server";
 import { getGerusaPersona } from "@/server/gerusa/persona.server";
 import { gerusaCoreRequest, isSameOrigin, THREAD_ID_PATTERN } from "@/server/gerusa/store";
+import { requireUser } from "@/lib/require-user.server";
+import { readSessionCookie } from "@/server/local-core/cookies";
 
 const FREE_MODEL_ROUTER = "openrouter/free";
 const MAX_MESSAGE_LENGTH = 4000;
@@ -83,6 +85,9 @@ export const Route = createFileRoute("/api/gerusa/chat")({
         }
         const parsed = messageSchema.safeParse(body);
         if (!parsed.success) return errorResponse("invalid_request", 400, requestId);
+        const auth = await requireUser(request);
+        if ("error" in auth) return auth.error;
+        const sessionToken = readSessionCookie(request.headers.get("cookie"));
 
         let apiKey: string;
         try {
@@ -96,13 +101,17 @@ export const Route = createFileRoute("/api/gerusa/chat")({
         const persona = getGerusaPersona();
 
         try {
-          await gerusaCoreRequest(`/threads/${parsed.data.threadId}/messages`, {
-            method: "POST",
-            body: JSON.stringify({ role: "user", content: parsed.data.content }),
-          });
+          await gerusaCoreRequest(
+            `/threads/${parsed.data.threadId}/messages`,
+            {
+              method: "POST",
+              body: JSON.stringify({ role: "user", content: parsed.data.content }),
+            },
+            sessionToken,
+          );
           const history = await gerusaCoreRequest<{
             messages: Array<{ role: "user" | "assistant"; content: string }>;
-          }>(`/threads/${parsed.data.threadId}/messages`);
+          }>(`/threads/${parsed.data.threadId}/messages`, {}, sessionToken);
           const recent = history.messages.slice(-RECENT_MESSAGE_LIMIT);
 
           const system = `${persona.trim()}\n\n## Regras desta conversa\n- Responda no idioma usado pela pessoa.\n- Seja observadora, elegante, gentil e curiosa; use humor seco e sarcasmo leve, sem crueldade.\n- Prefira respostas concisas e específicas, com uma boa pergunta quando fizer sentido.\n- Não fale como assistente virtual e não invente memórias fora do histórico fornecido.\n- Não diga que iniciou ações ou recursos que o produto não oferece.`;
@@ -243,10 +252,14 @@ export const Route = createFileRoute("/api/gerusa/chat")({
 
                   const saved = await gerusaCoreRequest<{
                     message: { id: string; createdAt: string };
-                  }>(`/threads/${parsed.data.threadId}/messages`, {
-                    method: "POST",
-                    body: JSON.stringify({ role: "assistant", content: answer }),
-                  });
+                  }>(
+                    `/threads/${parsed.data.threadId}/messages`,
+                    {
+                      method: "POST",
+                      body: JSON.stringify({ role: "assistant", content: answer }),
+                    },
+                    sessionToken,
+                  );
                   controller.enqueue(
                     ndjson({
                       type: "done",

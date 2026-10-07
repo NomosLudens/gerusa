@@ -8,7 +8,14 @@ export type TreatmentType =
   | "use_name"
   | "not_informed"
   | "other";
-export type Mesa = { id: string; slug: string; name: string };
+export type Mesa = {
+  id: string;
+  slug: string;
+  name: string;
+  member_role?: "mestre" | "jogador";
+  membership_status?: "active" | "invited" | "left";
+  campaigns?: Array<{ id: string; name: string }>;
+};
 export type MesaMembership = Mesa & {
   member_role: "mestre" | "jogador";
   membership_status: "active" | "invited" | "left";

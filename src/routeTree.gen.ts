@@ -9,19 +9,67 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ConversaIndexRouteImport } from './routes/conversa.index'
 import { Route as ConversaThreadIdRouteImport } from './routes/conversa.$threadId'
+import { Route as ApiProfileRouteImport } from './routes/api/profile'
+import { Route as AuthenticatedPerfilRouteImport } from './routes/_authenticated/perfil'
+import { Route as AuthenticatedMestreRouteImport } from './routes/_authenticated/mestre'
+import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
+import { Route as ApiMasterCharactersRouteImport } from './routes/api/master/characters'
 import { Route as ApiGerusaThreadRouteImport } from './routes/api/gerusa.thread'
 import { Route as ApiGerusaChatRouteImport } from './routes/api/gerusa.chat'
+import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ConversaIndexRoute = ConversaIndexRouteImport.update({
+  id: '/conversa/',
+  path: '/conversa/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ConversaThreadIdRoute = ConversaThreadIdRouteImport.update({
   id: '/conversa/$threadId',
   path: '/conversa/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiProfileRoute = ApiProfileRouteImport.update({
+  id: '/api/profile',
+  path: '/api/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedPerfilRoute = AuthenticatedPerfilRouteImport.update({
+  id: '/perfil',
+  path: '/perfil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMestreRoute = AuthenticatedMestreRouteImport.update({
+  id: '/mestre',
+  path: '/mestre',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedHomeRoute = AuthenticatedHomeRouteImport.update({
+  id: '/home',
+  path: '/home',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiMasterCharactersRoute = ApiMasterCharactersRouteImport.update({
+  id: '/api/master/characters',
+  path: '/api/master/characters',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiGerusaThreadRoute = ApiGerusaThreadRouteImport.update({
@@ -34,52 +82,131 @@ const ApiGerusaChatRoute = ApiGerusaChatRouteImport.update({
   path: '/api/gerusa/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
+  id: '/api/auth/session',
+  path: '/api/auth/session',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/mestre': typeof AuthenticatedMestreRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/api/profile': typeof ApiProfileRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
+  '/conversa/': typeof ConversaIndexRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
   '/api/gerusa/thread': typeof ApiGerusaThreadRoute
+  '/api/master/characters': typeof ApiMasterCharactersRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/home': typeof AuthenticatedHomeRoute
+  '/mestre': typeof AuthenticatedMestreRoute
+  '/perfil': typeof AuthenticatedPerfilRoute
+  '/api/profile': typeof ApiProfileRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
+  '/conversa': typeof ConversaIndexRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
   '/api/gerusa/thread': typeof ApiGerusaThreadRoute
+  '/api/master/characters': typeof ApiMasterCharactersRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/home': typeof AuthenticatedHomeRoute
+  '/_authenticated/mestre': typeof AuthenticatedMestreRoute
+  '/_authenticated/perfil': typeof AuthenticatedPerfilRoute
+  '/api/profile': typeof ApiProfileRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
+  '/conversa/': typeof ConversaIndexRoute
+  '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
   '/api/gerusa/thread': typeof ApiGerusaThreadRoute
+  '/api/master/characters': typeof ApiMasterCharactersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auth'
+    | '/home'
+    | '/mestre'
+    | '/perfil'
+    | '/api/profile'
     | '/conversa/$threadId'
+    | '/conversa/'
+    | '/api/auth/session'
     | '/api/gerusa/chat'
     | '/api/gerusa/thread'
+    | '/api/master/characters'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/conversa/$threadId' | '/api/gerusa/chat' | '/api/gerusa/thread'
+  to:
+    | '/'
+    | '/auth'
+    | '/home'
+    | '/mestre'
+    | '/perfil'
+    | '/api/profile'
+    | '/conversa/$threadId'
+    | '/conversa'
+    | '/api/auth/session'
+    | '/api/gerusa/chat'
+    | '/api/gerusa/thread'
+    | '/api/master/characters'
   id:
     | '__root__'
     | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/home'
+    | '/_authenticated/mestre'
+    | '/_authenticated/perfil'
+    | '/api/profile'
     | '/conversa/$threadId'
+    | '/conversa/'
+    | '/api/auth/session'
     | '/api/gerusa/chat'
     | '/api/gerusa/thread'
+    | '/api/master/characters'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ApiProfileRoute: typeof ApiProfileRoute
   ConversaThreadIdRoute: typeof ConversaThreadIdRoute
+  ConversaIndexRoute: typeof ConversaIndexRoute
+  ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiGerusaChatRoute: typeof ApiGerusaChatRoute
   ApiGerusaThreadRoute: typeof ApiGerusaThreadRoute
+  ApiMasterCharactersRoute: typeof ApiMasterCharactersRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -87,11 +214,53 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/conversa/': {
+      id: '/conversa/'
+      path: '/conversa'
+      fullPath: '/conversa/'
+      preLoaderRoute: typeof ConversaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/conversa/$threadId': {
       id: '/conversa/$threadId'
       path: '/conversa/$threadId'
       fullPath: '/conversa/$threadId'
       preLoaderRoute: typeof ConversaThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/profile': {
+      id: '/api/profile'
+      path: '/api/profile'
+      fullPath: '/api/profile'
+      preLoaderRoute: typeof ApiProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/perfil': {
+      id: '/_authenticated/perfil'
+      path: '/perfil'
+      fullPath: '/perfil'
+      preLoaderRoute: typeof AuthenticatedPerfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/mestre': {
+      id: '/_authenticated/mestre'
+      path: '/mestre'
+      fullPath: '/mestre'
+      preLoaderRoute: typeof AuthenticatedMestreRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/home': {
+      id: '/_authenticated/home'
+      path: '/home'
+      fullPath: '/home'
+      preLoaderRoute: typeof AuthenticatedHomeRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/master/characters': {
+      id: '/api/master/characters'
+      path: '/api/master/characters'
+      fullPath: '/api/master/characters'
+      preLoaderRoute: typeof ApiMasterCharactersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/gerusa/thread': {
@@ -108,14 +277,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGerusaChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/session': {
+      id: '/api/auth/session'
+      path: '/api/auth/session'
+      fullPath: '/api/auth/session'
+      preLoaderRoute: typeof ApiAuthSessionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedHomeRoute: typeof AuthenticatedHomeRoute
+  AuthenticatedMestreRoute: typeof AuthenticatedMestreRoute
+  AuthenticatedPerfilRoute: typeof AuthenticatedPerfilRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedHomeRoute: AuthenticatedHomeRoute,
+  AuthenticatedMestreRoute: AuthenticatedMestreRoute,
+  AuthenticatedPerfilRoute: AuthenticatedPerfilRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ApiProfileRoute: ApiProfileRoute,
   ConversaThreadIdRoute: ConversaThreadIdRoute,
+  ConversaIndexRoute: ConversaIndexRoute,
+  ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiGerusaChatRoute: ApiGerusaChatRoute,
   ApiGerusaThreadRoute: ApiGerusaThreadRoute,
+  ApiMasterCharactersRoute: ApiMasterCharactersRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

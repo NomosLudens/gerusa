@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { getLocalSession } from "@/lib/local-auth-client";
 
 export const Route = createFileRoute("/")({ component: GerusaHome });
 
@@ -14,14 +15,14 @@ function GerusaHome() {
     setOpening(true);
     setError("");
     try {
-      const response = await fetch("/api/gerusa/thread", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: "{}",
-      });
-      if (!response.ok) throw new Error("thread_create_failed");
-      const { threadId } = (await response.json()) as { threadId: string };
-      await navigate({ to: "/conversa/$threadId", params: { threadId } });
+      const session = await getLocalSession();
+      if (!session?.user) {
+        await navigate({ to: "/auth" });
+        return;
+      }
+      const profile = await fetch("/api/profile", { cache: "no-store" });
+      const identity = (await profile.json().catch(() => ({}))) as { is_master?: boolean };
+      await navigate({ to: identity.is_master ? "/mestre" : "/home" });
     } catch {
       setError("A conversa não abriu agora. Tente novamente.");
       setOpening(false);
