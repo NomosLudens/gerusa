@@ -1,0 +1,17 @@
+[Unit]
+Description=Gerusa persistence Core
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/gerusa/services/gerusa-core
+EnvironmentFile=%h/.config/gerusa/gerusa.env
+ExecStart=/usr/local/bin/node server.mjs
+Restart=on-failure
+RestartSec=3
+UMask=0077
+NoNewPrivileges=true
+
+[Install]
+WantedBy=default.target
