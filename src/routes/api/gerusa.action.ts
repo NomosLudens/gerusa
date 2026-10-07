@@ -315,7 +315,17 @@ export const Route = createFileRoute("/api/gerusa/action")({
           return errorResponse("invalid_provider_json", 502, requestId);
         }
         const result = schemas[action].safeParse(candidate);
-        if (!result.success) return errorResponse("invalid_provider_contract", 502, requestId);
+        if (!result.success) {
+          console.warn(
+            JSON.stringify({
+              type: "gerusa_action_contract_rejected",
+              action,
+              requestId,
+              issues: result.error.issues.map(({ code, path }) => ({ code, path })),
+            }),
+          );
+          return errorResponse("invalid_provider_contract", 502, requestId);
+        }
         return Response.json(
           {
             action,
