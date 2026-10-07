@@ -1,442 +1,756 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { RefreshCw } from "lucide-react";
-import { deriveCharacterDisplayState } from "@/lib/character-display-state";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-type Mesa = { id: string; slug: string; name: string };
-type Snapshot = Record<string, unknown>;
-type MasterCharacter = {
+type Lesson = {
+  id: string;
+  title: string;
+  studentId: string;
+  studentName: string;
+  mesaId: string;
+  campaignId: string | null;
+  adventureId: string | null;
+  assignmentId: string | null;
+  scheduledAt: string | null;
+  status: "draft" | "planned" | "completed" | "cancelled";
+  objective: string;
+  grammar: string;
+  vocabulary: string;
+  durationMinutes: number | null;
+  outline: Array<{ title: string; activity: string; prompt: string }>;
+  notes: string;
+};
+type Character = {
   id: string;
   ownerUserId: string;
+  mesaId: string;
+  campaignId: string | null;
   name: string;
-  playerName: string;
-  ownerDisplayName?: string;
-  status: string;
-  snapshot: Snapshot;
-  mesas: Mesa[];
-  version: number;
+  sheet: Record<string, string>;
   updatedAt: string;
 };
-type ExportPreview = {
-  schema: string;
-  schema_version: number;
-  exported_at: string;
-  export_mode: "manual_runtime_snapshot";
-  source_state: string;
-  canonical: boolean;
-  mesa: { id: string; name: string } | null;
-  player: { kallistis_user_id: string | null; display_name: string | null; email: string | null };
-  character: {
-    kallistis_character_id: string;
-    name: string;
-    published_version: number | null;
-    snapshot: Snapshot;
-  };
+type Payload = {
+  mesa?: { campaigns?: Array<{ id: string; name: string }> };
+  lessons?: Lesson[];
+  characters?: Character[];
+  adventures?: Array<{ id: string; title: string }>;
+  assignments?: Array<{ id: string; title: string }>;
+  error?: string;
+};
+type Draft = Omit<Lesson, "id" | "studentId" | "studentName" | "mesaId">;
+
+const emptyDraft = (): Draft => ({
+  title: "Aula de RPG",
+  campaignId: null,
+  adventureId: null,
+  assignmentId: null,
+  scheduledAt: "",
+  status: "planned",
+  objective: "",
+  grammar: "",
+  vocabulary: "",
+  durationMinutes: 45,
+  outline: [],
+  notes: "",
+});
+const field =
+  "min-h-11 w-full rounded-lg border border-[#743044] bg-[#10070b] px-3 py-2 text-sm text-[#f5e9df] placeholder:text-[#e7c9b7]/40";
+const button =
+  "min-h-10 rounded-lg border border-[#8a3045]/70 px-3 text-sm text-[#f5e9df] hover:bg-[#742233]/25 disabled:opacity-50";
+const labels: Record<Lesson["status"], string> = {
+  draft: "rascunho",
+  planned: "planejada",
+  completed: "realizada",
+  cancelled: "cancelada",
 };
 
-const record = (value: unknown): Snapshot =>
-  value && typeof value === "object" && !Array.isArray(value) ? (value as Snapshot) : {};
-const text = (value: unknown): string => (typeof value === "string" ? value.trim() : "");
-const list = (value: unknown): unknown[] => (Array.isArray(value) ? value : []);
-const label = (value: unknown, empty = "Não informado"): string => text(value) || empty;
-
-function activeTrail(snapshot: Snapshot): Snapshot {
-  const trails = list(snapshot.trilhas);
-  const index = Number.isInteger(snapshot.trilhaAtiva) ? Number(snapshot.trilhaAtiva) : 0;
-  return record(trails[index]);
+function localDate(value: string | null) {
+  if (!value) return "Sem data";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "Sem data"
+    : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(date);
 }
 
-function characterMesaLabel(character: MasterCharacter) {
-  return character.mesas.length
-    ? character.mesas.map((mesa) => mesa.name).join(", ")
-    : "Sem mesa atribuída";
+function toLocalInput(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
 }
+
+function fromLocalInput(value: string | null) {
+  return value ? new Date(value).toISOString() : null;
+}
+
 export function MasterSheetsPanel({
-  selectedMesa: controlledMesa,
-  onSelectedMesaChange,
-  hideMesaSelector = false,
+  selectedMesa,
+  selectedStudent,
+  onOpenSession,
 }: {
   selectedMesa?: string;
-  onSelectedMesaChange?: (mesaId: string) => void;
-  hideMesaSelector?: boolean;
+  selectedStudent?: string;
+  onOpenSession: (lessonId: string) => void;
 }) {
-  const [mesas, setMesas] = useState<Mesa[]>([]);
-  const [characters, setCharacters] = useState<MasterCharacter[]>([]);
-  const [canEditCharacters, setCanEditCharacters] = useState(false);
-  const [selectedMesa, setSelectedMesa] = useState("");
-  const [selectedCharacter, setSelectedCharacter] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const refreshInFlight = useRef(false);
-  const initialized = useRef(false);
-  const initialControlledMesa = useRef(controlledMesa);
-  const onSelectedMesaChangeRef = useRef(onSelectedMesaChange);
-  onSelectedMesaChangeRef.current = onSelectedMesaChange;
+  const [payload, setPayload] = useState<Payload>({});
+  const [draft, setDraft] = useState<Draft>(emptyDraft());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [character, setCharacter] = useState<Character | null>(null);
+  const [characterName, setCharacterName] = useState("");
+  const [sheet, setSheet] = useState<Record<string, string>>({});
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const [tab, setTab] = useState<"plan" | "character">("plan");
+  const campaigns = payload.mesa?.campaigns ?? [];
+  const lessons = useMemo(() => payload.lessons ?? [], [payload.lessons]);
+  const characters = payload.characters ?? [];
+  const adventures = payload.adventures ?? [];
+  const assignments = payload.assignments ?? [];
 
-  const refreshCharacters = useCallback(async () => {
-    if (refreshInFlight.current) return;
-    refreshInFlight.current = true;
-    setRefreshing(true);
+  const refresh = useCallback(async () => {
+    if (!selectedMesa || !selectedStudent) {
+      setPayload({});
+      return;
+    }
+    const query = new URLSearchParams({
+      view: "teacher",
+      mesaId: selectedMesa,
+      studentId: selectedStudent,
+    });
     try {
-      const response = await fetch("/api/master/characters", {
+      const response = await fetch(`/api/gerusa/pedagogy?${query}`, {
         credentials: "same-origin",
         cache: "no-store",
       });
-      const payload = (await response.json().catch(() => ({}))) as {
-        mesas?: Mesa[];
-        characters?: MasterCharacter[];
-        canEditCharacters?: boolean;
-        error?: string;
-      };
-      if (!response.ok) throw new Error(payload.error || "master_sheets_failed");
-      setMesas(payload.mesas ?? []);
-      setCharacters(payload.characters ?? []);
-      setCanEditCharacters(payload.canEditCharacters === true);
-      if (!initialized.current) {
-        const query = new URLSearchParams(window.location.search);
-        const queryCharacterId = query.get("characterId");
-        const queryMesaId = query.get("mesaId");
-        const queryCharacter = payload.characters?.find(
-          (character) => character.id === queryCharacterId,
-        );
-        setSelectedCharacter(queryCharacter?.id ?? null);
-        if (!initialControlledMesa.current) {
-          const nextMesa = queryMesaId || payload.mesas?.[0]?.id || "all";
-          setSelectedMesa(nextMesa);
-          onSelectedMesaChangeRef.current?.(nextMesa);
-        }
-        initialized.current = true;
-      }
-      setError(null);
-    } catch (cause: unknown) {
-      setError(cause instanceof Error ? cause.message : "master_sheets_failed");
-    } finally {
-      refreshInFlight.current = false;
-      setLoading(false);
-      setRefreshing(false);
+      const data = (await response.json().catch(() => ({}))) as Payload;
+      if (!response.ok) throw new Error(data.error || "Não foi possível carregar o planejamento.");
+      setPayload(data);
+      const nextCharacter = data.characters?.[0] ?? null;
+      setCharacter(nextCharacter);
+      setCharacterName(nextCharacter?.name ?? "");
+      setSheet(nextCharacter?.sheet ?? {});
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao carregar dados.");
     }
-  }, []);
+  }, [selectedMesa, selectedStudent]);
 
   useEffect(() => {
-    void refreshCharacters();
-    const interval = window.setInterval(() => {
-      if (document.visibilityState === "visible") void refreshCharacters();
-    }, 20_000);
-    return () => window.clearInterval(interval);
-  }, [refreshCharacters]);
+    void refresh();
+  }, [refresh]);
 
-  const effectiveMesa = controlledMesa ?? selectedMesa;
-  const visibleCharacters = useMemo(() => {
-    if (effectiveMesa === "all") return characters;
-    if (effectiveMesa === "unassigned")
-      return characters.filter((character) => !character.mesas.length);
-    if (!effectiveMesa) return characters;
-    return characters.filter((character) =>
-      character.mesas.some((mesa) => mesa.id === effectiveMesa),
-    );
-  }, [characters, effectiveMesa]);
-  const selected =
-    visibleCharacters.find((character) => character.id === selectedCharacter) ?? null;
+  const visibleLessons = useMemo(
+    () =>
+      lessons.filter((lesson) => {
+        const time = lesson.scheduledAt ? new Date(lesson.scheduledAt).getTime() : 0;
+        if (fromDate && time < new Date(`${fromDate}T00:00:00`).getTime()) return false;
+        if (toDate && time > new Date(`${toDate}T23:59:59`).getTime()) return false;
+        return true;
+      }),
+    [fromDate, lessons, toDate],
+  );
+
+  const saveLesson = async (value: Draft, id: string | null = null) => {
+    if (!selectedMesa || !selectedStudent) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/gerusa/pedagogy", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_lesson",
+          id,
+          mesaId: selectedMesa,
+          studentId: selectedStudent,
+          ...value,
+          scheduledAt: fromLocalInput(value.scheduledAt),
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Não foi possível salvar a aula.");
+      setDraft(emptyDraft());
+      setEditingId(null);
+      setNotice("Aula salva no planejamento.");
+      await refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao salvar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const editLesson = (lesson: Lesson) => {
+    setEditingId(lesson.id);
+    setDraft({
+      title: lesson.title,
+      campaignId: lesson.campaignId,
+      adventureId: lesson.adventureId,
+      assignmentId: lesson.assignmentId,
+      scheduledAt: toLocalInput(lesson.scheduledAt),
+      status: lesson.status,
+      objective: lesson.objective,
+      grammar: lesson.grammar,
+      vocabulary: lesson.vocabulary,
+      durationMinutes: lesson.durationMinutes,
+      outline: lesson.outline ?? [],
+      notes: lesson.notes,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const generatePlan = async (action: "plan_lesson" | "next_lesson" = "plan_lesson") => {
+    if (!selectedMesa || !selectedStudent) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/gerusa/action", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          mesaId: selectedMesa,
+          studentId: selectedStudent,
+          fields: {
+            objective: draft.objective,
+            grammar: draft.grammar,
+            vocabulary: draft.vocabulary,
+            durationMinutes: draft.durationMinutes,
+          },
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        proposal?: {
+          objective: string;
+          grammar: string;
+          vocabulary: string;
+          durationMinutes: number;
+          outline: Draft["outline"];
+          adventureSuggestion: string;
+          taskSuggestion: string;
+        };
+        error?: string;
+      };
+      if (!response.ok || !data.proposal)
+        throw new Error(data.error || "Gerusa não conseguiu planejar agora.");
+      setDraft((current) => ({
+        ...current,
+        ...data.proposal,
+        notes: [
+          current.notes,
+          `Sugestão de aventura: ${data.proposal?.adventureSuggestion}`,
+          `Sugestão de tarefa: ${data.proposal?.taskSuggestion}`,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      }));
+      setNotice("Proposta da Gerusa carregada. Revise os campos antes de salvar.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao planejar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveCharacter = async () => {
+    if (!selectedMesa || !selectedStudent || !characterName.trim()) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      const response = await fetch("/api/gerusa/pedagogy", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "save_character",
+          mesaId: selectedMesa,
+          studentId: selectedStudent,
+          campaignId: campaigns[0]?.id ?? null,
+          name: characterName,
+          sheet,
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Não foi possível salvar a ficha.");
+      setNotice("Personagem salvo no PostgreSQL Gerusa.");
+      await refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao salvar ficha.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const deleteLesson = async (lesson: Lesson) => {
+    if (!window.confirm(`Excluir a aula “${lesson.title}”?`)) return;
+    setBusy(true);
+    setError("");
+    try {
+      const response = await fetch("/api/gerusa/pedagogy", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "delete_lesson",
+          lessonId: lesson.id,
+          mesaId: selectedMesa,
+          studentId: selectedStudent,
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Esta aula não pode ser excluída.");
+      await refresh();
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao excluir.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const duplicateLesson = async (lesson: Lesson) => {
+    const copy: Draft = {
+      title: `${lesson.title} (cópia)`,
+      campaignId: lesson.campaignId,
+      adventureId: lesson.adventureId,
+      assignmentId: null,
+      scheduledAt: "",
+      status: "draft",
+      objective: lesson.objective,
+      grammar: lesson.grammar,
+      vocabulary: lesson.vocabulary,
+      durationMinutes: lesson.durationMinutes,
+      outline: lesson.outline ?? [],
+      notes: lesson.notes,
+    };
+    await saveLesson(copy);
+  };
 
   return (
     <section
       id="master-sheets-panel"
-      className="mx-auto mb-6 max-w-6xl rounded-xl border border-white/10 bg-black/20 p-5 text-white"
+      className="mx-auto mb-6 max-w-6xl rounded-2xl border border-[#742233]/50 bg-[#180b11] p-4 text-[#f5e9df] sm:p-6"
     >
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-4 border-b border-[#742233]/40 pb-4">
         <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-white/50">Central do Mestre</p>
-          <h2 className="text-xl font-semibold">Fichas reais</h2>
-          <p className="mt-1 max-w-2xl text-sm text-white/60">
-            Acompanhe o estado e a última atualização das fichas. Atualização automática a cada 20
-            segundos.
-          </p>
-          {canEditCharacters ? (
-            <p className="mt-1 text-xs text-white/45">
-              TAL pode abrir e editar a ficha real sem alterar o proprietário.
-            </p>
-          ) : null}
+          <p className="text-xs uppercase tracking-[0.2em] text-[#d5a56c]">Central da professora</p>
+          <h2 className="serif mt-1 text-2xl">Planejamento e fichas</h2>
         </div>
-        <button
-          type="button"
-          onClick={() => void refreshCharacters()}
-          disabled={refreshing}
-          className="inline-flex h-10 items-center gap-2 rounded-lg border border-white/20 px-3 text-sm text-white/75 transition-colors hover:border-white/40 hover:text-white disabled:opacity-50"
-        >
-          <RefreshCw className={refreshing ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
-          Atualizar agora
-        </button>
-        <div className={hideMesaSelector ? "hidden" : "min-w-56"}>
-          <label
-            className="text-[10px] uppercase tracking-[0.2em] text-white/45"
-            htmlFor="master-sheet-mesa"
-          >
-            Mesa
-          </label>
-          <select
-            id="master-sheet-mesa"
-            className="mt-2 w-full rounded border border-white/15 bg-black/30 px-3 py-2 text-sm"
-            value={controlledMesa ?? selectedMesa}
-            onChange={(event) => {
-              setSelectedMesa(event.target.value);
-              onSelectedMesaChange?.(event.target.value);
-              setSelectedCharacter(null);
-              const mesaQuery =
-                event.target.value && event.target.value !== "all"
-                  ? "?mesaId=" + encodeURIComponent(event.target.value)
-                  : "";
-              window.history.replaceState(null, "", "/mestre" + mesaQuery);
-            }}
-            disabled={loading || !mesas.length}
-          >
-            <option value="all">Todas as Mesas</option>
-            {mesas.map((mesa) => (
-              <option key={mesa.id} value={mesa.id}>
-                {mesa.name}
-              </option>
-            ))}
-            {characters.some((character) => !character.mesas.length) ? (
-              <option value="unassigned">Sem mesa atribuída</option>
-            ) : null}
-          </select>
-        </div>
-      </div>
-
-      {loading ? <p className="mt-5 text-sm text-white/60">Consultando fichas reais…</p> : null}
-      {error ? (
-        <p className="mt-5 rounded border border-red-400/30 p-3 text-sm text-red-200">
-          Erro: {error}
-        </p>
-      ) : null}
-      {!loading && !error && !visibleCharacters.length ? (
-        <p className="mt-5 rounded border border-white/10 p-4 text-sm text-white/60">
-          Nenhuma ficha criada nesta mesa.
-        </p>
-      ) : null}
-
-      {selected ? (
-        <div className="mt-5">
+        <div className="flex gap-2" role="tablist" aria-label="Planejamento ou personagem">
           <button
             type="button"
-            className="mb-4 inline-flex rounded border border-white/20 px-3 py-2 text-xs uppercase tracking-[0.14em] text-white/75 hover:border-[color:var(--gold)]/60 hover:text-white"
-            onClick={() => {
-              setSelectedCharacter(null);
-              const mesaQuery =
-                effectiveMesa && effectiveMesa !== "all"
-                  ? "?mesaId=" + encodeURIComponent(effectiveMesa)
-                  : "";
-              window.history.replaceState(null, "", "/mestre" + mesaQuery);
+            role="tab"
+            aria-selected={tab === "plan"}
+            className={button}
+            onClick={() => setTab("plan")}
+          >
+            Planejamento
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={tab === "character"}
+            className={button}
+            onClick={() => setTab("character")}
+          >
+            Personagem
+          </button>
+        </div>
+      </header>
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-400/30 p-3 text-sm text-red-200"
+        >
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p
+          role="status"
+          className="mt-4 rounded-lg border border-[#8a3045]/40 p-3 text-sm text-[#f0c59a]"
+        >
+          {notice}
+        </p>
+      ) : null}
+
+      {tab === "plan" ? (
+        <div className="mt-5 space-y-5">
+          <form
+            className="grid gap-3 rounded-xl border border-[#742233]/40 bg-[#10070b]/70 p-4 sm:grid-cols-2"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void saveLesson(draft, editingId);
             }}
           >
-            ← Voltar para Personagens
-          </button>
-          <MasterCharacterSheet character={selected} />
-        </div>
-      ) : visibleCharacters.length ? (
-        <div className="mt-5">
-          <div className="space-y-3">
-            {visibleCharacters.map((character) => {
-              const snapshot = record(character.snapshot);
-              const trail = activeTrail(snapshot);
-              const player = label(
-                character.playerName || character.ownerDisplayName,
-                "Jogador não identificado",
-              );
-              return (
+            <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-3">
+              <h3 className="serif text-xl">
+                {editingId ? "Editar aula" : "Preparar próxima aula"}
+              </h3>
+              <div className="flex flex-wrap gap-2">
                 <button
-                  key={character.id}
                   type="button"
-                  className="w-full rounded-lg border border-white/10 bg-black/15 p-4 text-left transition-colors hover:border-white/25"
+                  className={button}
+                  disabled={busy}
+                  onClick={() => void generatePlan()}
+                >
+                  Gerusa, planeje a aula
+                </button>
+                <button
+                  type="button"
+                  className={button}
+                  disabled={busy}
+                  onClick={() => void generatePlan("next_lesson")}
+                >
+                  Sugerir próxima aula com histórico
+                </button>
+              </div>
+            </div>
+            <label className="text-sm">
+              Data e horário
+              <input
+                aria-label="Data e horário da aula"
+                type="datetime-local"
+                className={field}
+                value={draft.scheduledAt ?? ""}
+                onChange={(e) => setDraft({ ...draft, scheduledAt: e.target.value })}
+              />
+            </label>
+            <label className="text-sm">
+              Título
+              <input
+                className={field}
+                value={draft.title}
+                onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+                maxLength={160}
+              />
+            </label>
+            <label className="text-sm">
+              Campanha
+              <select
+                className={field}
+                value={draft.campaignId ?? ""}
+                onChange={(e) => setDraft({ ...draft, campaignId: e.target.value || null })}
+              >
+                <option value="">Sem campanha</option>
+                {campaigns.map((item) => (
+                  <option value={item.id} key={item.id}>
+                    {item.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Status
+              <select
+                className={field}
+                value={draft.status}
+                onChange={(e) => setDraft({ ...draft, status: e.target.value as Lesson["status"] })}
+              >
+                {Object.entries(labels).map(([value, label]) => (
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm sm:col-span-2">
+              Objetivo
+              <input
+                className={field}
+                value={draft.objective}
+                onChange={(e) => setDraft({ ...draft, objective: e.target.value })}
+              />
+            </label>
+            <label className="text-sm">
+              Gramática
+              <input
+                className={field}
+                value={draft.grammar}
+                onChange={(e) => setDraft({ ...draft, grammar: e.target.value })}
+              />
+            </label>
+            <label className="text-sm">
+              Vocabulário
+              <textarea
+                className={field}
+                rows={2}
+                value={draft.vocabulary}
+                onChange={(e) => setDraft({ ...draft, vocabulary: e.target.value })}
+              />
+            </label>
+            <label className="text-sm">
+              Duração (minutos)
+              <input
+                type="number"
+                min={5}
+                max={240}
+                className={field}
+                value={draft.durationMinutes ?? 45}
+                onChange={(e) => setDraft({ ...draft, durationMinutes: Number(e.target.value) })}
+              />
+            </label>
+            <label className="text-sm">
+              Aventura
+              <select
+                className={field}
+                value={draft.adventureId ?? ""}
+                onChange={(e) => setDraft({ ...draft, adventureId: e.target.value || null })}
+              >
+                <option value="">Nenhuma</option>
+                {adventures.map((item) => (
+                  <option value={item.id} key={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm">
+              Tarefa
+              <select
+                className={field}
+                value={draft.assignmentId ?? ""}
+                onChange={(e) => setDraft({ ...draft, assignmentId: e.target.value || null })}
+              >
+                <option value="">Nenhuma</option>
+                {assignments.map((item) => (
+                  <option value={item.id} key={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="text-sm sm:col-span-2">
+              Estrutura da aula
+              <textarea
+                className={field}
+                rows={3}
+                value={draft.outline
+                  .map((item) => `${item.title} — ${item.activity} — ${item.prompt}`)
+                  .join("\n")}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    outline: e.target.value
+                      .split("\n")
+                      .filter(Boolean)
+                      .map((line) => {
+                        const [title, activity, prompt] = line
+                          .split("—")
+                          .map((part) => part.trim());
+                        return {
+                          title: title || line,
+                          activity: activity || "",
+                          prompt: prompt || "",
+                        };
+                      }),
+                  })
+                }
+                placeholder="Uma atividade por linha: abertura — conversa — Tell me about your character"
+              />
+            </label>
+            <label className="text-sm sm:col-span-2">
+              Observações
+              <textarea
+                className={field}
+                rows={2}
+                value={draft.notes}
+                onChange={(e) => setDraft({ ...draft, notes: e.target.value })}
+              />
+            </label>
+            <div className="sm:col-span-2 flex flex-wrap gap-2">
+              <button type="submit" className={button} disabled={busy}>
+                {busy ? "Salvando…" : "Salvar aula"}
+              </button>
+              {editingId ? (
+                <button
+                  type="button"
+                  className={button}
                   onClick={() => {
-                    setSelectedCharacter(character.id);
-                    const mesaQuery =
-                      effectiveMesa && effectiveMesa !== "all"
-                        ? "mesaId=" + encodeURIComponent(effectiveMesa) + "&"
-                        : "";
-                    window.history.replaceState(
-                      null,
-                      "",
-                      "/mestre?" + mesaQuery + "characterId=" + encodeURIComponent(character.id),
-                    );
-                    window.scrollTo({ top: 0, behavior: "smooth" });
+                    setEditingId(null);
+                    setDraft(emptyDraft());
                   }}
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="font-semibold">{label(character.name, "Sem nome")}</h3>
-                      <p className="mt-1 text-sm text-white/65">Jogador: {player}</p>
-                    </div>
-                    <span className="rounded-full border border-white/15 px-2 py-1 text-[10px] uppercase tracking-wider text-white/55">
-                      {
-                        deriveCharacterDisplayState({
-                          status: character.status,
-                          completo: record(character.snapshot).completo === true,
-                        }).masterLabel
-                      }
-                    </span>
-                  </div>
-                  <p className="mt-3 text-xs text-white/55">
-                    {[
-                      text(snapshot.povo),
-                      text(trail.oficio),
-                      trail.marco ? "Marco " + trail.marco : "",
-                      characterMesaLabel(character),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
-                  </p>
-                  <p className="mt-2 text-xs text-white/45">
-                    Última atualização: {formatCharacterUpdatedAt(character.updatedAt)}
-                  </p>
+                  Cancelar edição
                 </button>
-              );
-            })}
+              ) : null}
+            </div>
+          </form>
+
+          <div className="flex flex-wrap items-end gap-3">
+            <h3 className="serif mr-auto text-xl">Aulas de {lessons[0]?.studentName || "aluno"}</h3>
+            <label className="text-xs text-[#e7c9b7]/70">
+              De
+              <input
+                type="date"
+                className={field}
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+              />
+            </label>
+            <label className="text-xs text-[#e7c9b7]/70">
+              Até
+              <input
+                type="date"
+                className={field}
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+              />
+            </label>
+          </div>
+          <div className="overflow-x-auto rounded-xl border border-[#742233]/40">
+            <table className="min-w-[1050px] w-full text-left text-sm">
+              <thead className="bg-[#220d15] text-xs uppercase tracking-wide text-[#d5a56c]">
+                <tr>
+                  {[
+                    "Data / horário",
+                    "Aluno / mesa",
+                    "Sessão / objetivo",
+                    "Gramática",
+                    "Vocabulário",
+                    "Aventura",
+                    "Tarefa",
+                    "Status",
+                    "Observações",
+                    "Ações",
+                  ].map((item) => (
+                    <th key={item} className="px-3 py-3">
+                      {item}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {visibleLessons.map((lesson) => (
+                  <tr key={lesson.id} className="border-t border-[#742233]/30 align-top">
+                    <td className="px-3 py-3">{localDate(lesson.scheduledAt)}</td>
+                    <td className="px-3 py-3">{lesson.studentName}</td>
+                    <td className="px-3 py-3">
+                      <strong>{lesson.title}</strong>
+                      <p className="mt-1 max-w-48 text-[#e7c9b7]/70">{lesson.objective}</p>
+                    </td>
+                    <td className="px-3 py-3">{lesson.grammar || "—"}</td>
+                    <td className="px-3 py-3">{lesson.vocabulary || "—"}</td>
+                    <td className="px-3 py-3">
+                      {adventures.find((item) => item.id === lesson.adventureId)?.title || "—"}
+                    </td>
+                    <td className="px-3 py-3">
+                      {assignments.find((item) => item.id === lesson.assignmentId)?.title || "—"}
+                    </td>
+                    <td className="px-3 py-3">{labels[lesson.status]}</td>
+                    <td className="px-3 py-3">{lesson.notes || "—"}</td>
+                    <td className="px-3 py-3">
+                      <div className="flex flex-col items-start gap-2">
+                        <button className={button} type="button" onClick={() => editLesson(lesson)}>
+                          Editar
+                        </button>
+                        <button
+                          className={button}
+                          type="button"
+                          onClick={() => void duplicateLesson(lesson)}
+                          disabled={busy}
+                        >
+                          Duplicar
+                        </button>
+                        {lesson.status === "planned" || lesson.status === "draft" ? (
+                          <button
+                            className={button}
+                            type="button"
+                            onClick={() => {
+                              editLesson(lesson);
+                              onOpenSession(lesson.id);
+                            }}
+                          >
+                            Abrir sessão
+                          </button>
+                        ) : null}
+                        <button
+                          className={button}
+                          type="button"
+                          onClick={() => void deleteLesson(lesson)}
+                          disabled={busy}
+                        >
+                          Excluir
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {!visibleLessons.length ? (
+                  <tr>
+                    <td colSpan={10} className="px-4 py-8 text-center text-[#e7c9b7]/65">
+                      Ainda não há aulas planejadas neste contexto.
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
           </div>
         </div>
-      ) : null}
-    </section>
-  );
-}
-
-function formatCharacterUpdatedAt(value: string) {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime())
-    ? "horário indisponível"
-    : new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(date);
-}
-
-function MasterCharacterSheet({ character }: { character: MasterCharacter }) {
-  const [exportPreview, setExportPreview] = useState<ExportPreview | null>(null);
-  const [exportLoading, setExportLoading] = useState(false);
-  const [exportError, setExportError] = useState<string | null>(null);
-
-  async function prepareExport() {
-    setExportLoading(true);
-    setExportError(null);
-    try {
-      const query = new URLSearchParams({ export: "gravewright", characterId: character.id });
-      const response = await fetch(`/api/master/characters?${query.toString()}`, {
-        credentials: "same-origin",
-        cache: "no-store",
-      });
-      const payload = (await response.json().catch(() => null)) as
-        | (ExportPreview & { error?: string })
-        | null;
-      if (!response.ok || !payload?.schema)
-        throw new Error(payload?.error || "character_export_failed");
-      setExportPreview(payload);
-    } catch (cause) {
-      setExportError(cause instanceof Error ? cause.message : "character_export_failed");
-    } finally {
-      setExportLoading(false);
-    }
-  }
-
-  function downloadExport() {
-    if (!exportPreview) return;
-    const json = JSON.stringify(exportPreview, null, 2) + "\n";
-    const url = URL.createObjectURL(new Blob([json], { type: "application/json;charset=utf-8" }));
-    const anchor = document.createElement("a");
-    anchor.href = url;
-    anchor.download = `kallistis-${(exportPreview.character.name || "personagem").replace(/[^a-zA-Z0-9_-]+/g, "-").toLowerCase()}-${exportPreview.character.kallistis_character_id}.json`;
-    anchor.click();
-    URL.revokeObjectURL(url);
-  }
-
-  return (
-    <article className="rounded-lg border border-[color:var(--gold)]/20 bg-black/15 p-5">
-      <p className="text-xs uppercase tracking-[0.24em] text-[color:var(--gold)]/70">
-        Ficha canônica · Character Forge
-      </p>
-      <h3 className="mt-2 text-2xl font-semibold">{label(character.name, "Sem nome")}</h3>
-      <p className="mt-1 text-sm text-white/65">
-        Jogador: {label(character.playerName || character.ownerDisplayName, "Não identificado")} ·{" "}
-        {characterMesaLabel(character)}
-      </p>
-      <p className="mt-2 text-xs text-white/50">
-        Status:{" "}
-        {
-          deriveCharacterDisplayState({
-            status: character.status,
-            completo: record(character.snapshot).completo === true,
-          }).masterLabel
-        }{" "}
-        · versão persistida {character.version}
-      </p>
-      <p className="mt-4 rounded border border-white/10 bg-black/20 p-3 text-sm text-white/60">
-        A ficha completa é mantida em uma única superfície canônica. Abra o Character Forge para
-        consultar ou editar conforme sua permissão.
-      </p>
-      <div className="mt-4 flex flex-wrap gap-2">
-        <a
-          className="inline-flex rounded border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/15 px-4 py-2 text-sm text-[color:var(--ivory)] hover:border-[color:var(--gold)]"
-          href={`/microapp?app=character-forge&mode=tal&characterId=${encodeURIComponent(character.id)}`}
-        >
-          Editar como Mestre
-        </a>
-        <a
-          className="inline-flex rounded border border-white/20 px-4 py-2 text-sm text-white/80 hover:border-white/45 hover:text-white"
-          href={`/personagem/${encodeURIComponent(character.id)}/ficha`}
-        >
-          Ver ficha
-        </a>
-        <button
-          type="button"
-          onClick={() => void prepareExport()}
-          disabled={exportLoading}
-          className="inline-flex rounded border border-[color:var(--gold)]/40 px-4 py-2 text-sm text-[color:var(--gold)] disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {exportLoading ? "Preparando exportação…" : "Exportar ficha para Gravewright"}
-        </button>
-      </div>
-      {exportError ? (
-        <p role="alert" className="mt-3 rounded border border-red-400/30 p-3 text-sm text-red-200">
-          Não foi possível preparar a exportação: {exportError}
-        </p>
-      ) : null}
-      {exportPreview ? (
-        <div className="mt-4 rounded border border-[color:var(--gold)]/25 bg-black/20 p-4">
-          <p className="text-xs uppercase tracking-[0.18em] text-[color:var(--gold)]">
-            Preview da exportação
-          </p>
-          <dl className="mt-3 grid gap-2 text-sm text-white/75 sm:grid-cols-2">
-            <div>
-              <dt className="text-xs text-white/45">Mesa</dt>
-              <dd>{exportPreview.mesa?.name || "Não atribuída"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-white/45">Jogador</dt>
-              <dd>{exportPreview.player.display_name || "Não identificado"}</dd>
-            </div>
-            <div>
-              <dt className="text-xs text-white/45">ID KALLISTIS</dt>
-              <dd className="break-all font-mono text-xs">
-                {exportPreview.character.kallistis_character_id}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-white/45">Schema</dt>
-              <dd>
-                {exportPreview.schema} · v{exportPreview.schema_version}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs text-white/45">Estado</dt>
-              <dd>
-                {exportPreview.source_state} ·{" "}
-                {exportPreview.canonical ? "canônica" : "não canônica"}
-              </dd>
-            </div>
-          </dl>
-          <button
-            type="button"
-            onClick={downloadExport}
-            className="mt-4 inline-flex rounded border border-[color:var(--gold)]/45 bg-[color:var(--gold)]/15 px-4 py-2 text-sm text-[color:var(--ivory)]"
-          >
-            Baixar ficha para Gravewright
-          </button>
+      ) : (
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          <div className="space-y-3">
+            <h3 className="serif text-xl">Ficha do personagem</h3>
+            <label className="text-sm">
+              Nome
+              <input
+                className={field}
+                value={characterName}
+                onChange={(e) => setCharacterName(e.target.value)}
+              />
+            </label>
+            {[
+              ["appearance", "Aparência"],
+              ["personality", "Personalidade"],
+              ["backstory", "História"],
+              ["goal", "Objetivo"],
+              ["fear", "Medo"],
+              ["relations", "Relações"],
+              ["importantObjects", "Objetos importantes"],
+              ["notes", "Notas"],
+            ].map(([key, label]) => (
+              <label key={key} className="block text-sm">
+                {label}
+                <textarea
+                  className={field}
+                  rows={2}
+                  value={sheet[key] ?? ""}
+                  onChange={(e) => setSheet({ ...sheet, [key]: e.target.value })}
+                />
+              </label>
+            ))}
+            <button
+              type="button"
+              className={button}
+              onClick={() => void saveCharacter()}
+              disabled={busy || !characterName.trim()}
+            >
+              Salvar ficha
+            </button>
+          </div>
+          <aside className="rounded-xl border border-[#742233]/35 bg-[#10070b]/50 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-[#d5a56c]">Continuidade</p>
+            <h3 className="serif mt-1 text-xl">Personagem persistente</h3>
+            <p className="mt-2 text-sm text-[#e7c9b7]/70">
+              A ficha pertence ao aluno e à mesa selecionados. O mesmo personagem acompanha as aulas
+              seguintes.
+            </p>
+            {character ? (
+              <p className="mt-4 text-sm">Última atualização: {localDate(character.updatedAt)}</p>
+            ) : (
+              <p className="mt-4 text-sm text-[#e7c9b7]/65">
+                Ainda não há personagem salvo para este aluno.
+              </p>
+            )}
+          </aside>
         </div>
-      ) : null}
-    </article>
+      )}
+    </section>
   );
 }

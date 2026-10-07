@@ -8,6 +8,7 @@ import {
 } from "node:crypto";
 import { createServer } from "node:http";
 import { Pool } from "pg";
+import { getPedagogyAiContext, getPedagogyView, mutatePedagogy } from "./pedagogy.mjs";
 
 const host = "127.0.0.1";
 const port = Number(process.env.GERUSA_CORE_PORT || 4530);
@@ -16,7 +17,7 @@ const databaseUrl = process.env.GERUSA_DATABASE_URL;
 const credentialLookupKey = process.env.GERUSA_CREDENTIAL_LOOKUP_KEY;
 const threadIdPattern =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const maxBodyBytes = 16_384;
+const maxBodyBytes = 65_536;
 
 if (!secret || secret.length < 32) throw new Error("GERUSA_CORE_SECRET is missing or too short");
 if (!credentialLookupKey || credentialLookupKey.length < 32)
@@ -318,6 +319,20 @@ const server = createServer(async (request, response) => {
           [tokenDigest(token)],
         );
       return sendJson(response, 200, { ok: true });
+    }
+
+    if (url.pathname.startsWith("/pedagogy")) {
+      const user = await authenticatedUser(request);
+      if (!user) return sendJson(response, 401, { error: "unauthorized" });
+      if (request.method === "GET" && url.pathname === "/pedagogy")
+        return sendJson(response, 200, await getPedagogyView(pool, user, url.searchParams));
+      if (request.method === "GET" && url.pathname === "/pedagogy/ai-context")
+        return sendJson(response, 200, {
+          context: await getPedagogyAiContext(pool, user, url.searchParams),
+        });
+      if (request.method === "POST" && url.pathname === "/pedagogy")
+        return sendJson(response, 200, await mutatePedagogy(pool, user, await readJson(request)));
+      return sendJson(response, 404, { error: "not_found" });
     }
 
     if (url.pathname === "/profile" && request.method === "GET") {

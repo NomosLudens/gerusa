@@ -19,7 +19,9 @@ import { Route as AuthenticatedMestreRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
 import { Route as ApiMasterCharactersRouteImport } from './routes/api/master/characters'
 import { Route as ApiGerusaThreadRouteImport } from './routes/api/gerusa.thread'
+import { Route as ApiGerusaPedagogyRouteImport } from './routes/api/gerusa.pedagogy'
 import { Route as ApiGerusaChatRouteImport } from './routes/api/gerusa.chat'
+import { Route as ApiGerusaActionRouteImport } from './routes/api/gerusa.action'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
 
 const AuthRoute = AuthRouteImport.update({
@@ -71,9 +73,19 @@ const ApiGerusaThreadRoute = ApiGerusaThreadRouteImport.update({
   path: '/api/gerusa/thread',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiGerusaPedagogyRoute = ApiGerusaPedagogyRouteImport.update({
+  id: '/api/gerusa/pedagogy',
+  path: '/api/gerusa/pedagogy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiGerusaChatRoute = ApiGerusaChatRouteImport.update({
   id: '/api/gerusa/chat',
   path: '/api/gerusa/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiGerusaActionRoute = ApiGerusaActionRouteImport.update({
+  id: '/api/gerusa/action',
+  path: '/api/gerusa/action',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
@@ -91,7 +103,9 @@ export interface FileRoutesByFullPath {
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa/': typeof ConversaIndexRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
+  '/api/gerusa/pedagogy': typeof ApiGerusaPedagogyRoute
   '/api/gerusa/thread': typeof ApiGerusaThreadRoute
   '/api/master/characters': typeof ApiMasterCharactersRoute
 }
@@ -104,7 +118,9 @@ export interface FileRoutesByTo {
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa': typeof ConversaIndexRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
+  '/api/gerusa/pedagogy': typeof ApiGerusaPedagogyRoute
   '/api/gerusa/thread': typeof ApiGerusaThreadRoute
   '/api/master/characters': typeof ApiMasterCharactersRoute
 }
@@ -119,7 +135,9 @@ export interface FileRoutesById {
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa/': typeof ConversaIndexRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
+  '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
+  '/api/gerusa/pedagogy': typeof ApiGerusaPedagogyRoute
   '/api/gerusa/thread': typeof ApiGerusaThreadRoute
   '/api/master/characters': typeof ApiMasterCharactersRoute
 }
@@ -134,7 +152,9 @@ export interface FileRouteTypes {
     | '/conversa/$threadId'
     | '/conversa/'
     | '/api/auth/session'
+    | '/api/gerusa/action'
     | '/api/gerusa/chat'
+    | '/api/gerusa/pedagogy'
     | '/api/gerusa/thread'
     | '/api/master/characters'
   fileRoutesByTo: FileRoutesByTo
@@ -147,7 +167,9 @@ export interface FileRouteTypes {
     | '/conversa/$threadId'
     | '/conversa'
     | '/api/auth/session'
+    | '/api/gerusa/action'
     | '/api/gerusa/chat'
+    | '/api/gerusa/pedagogy'
     | '/api/gerusa/thread'
     | '/api/master/characters'
   id:
@@ -161,7 +183,9 @@ export interface FileRouteTypes {
     | '/conversa/$threadId'
     | '/conversa/'
     | '/api/auth/session'
+    | '/api/gerusa/action'
     | '/api/gerusa/chat'
+    | '/api/gerusa/pedagogy'
     | '/api/gerusa/thread'
     | '/api/master/characters'
   fileRoutesById: FileRoutesById
@@ -174,7 +198,9 @@ export interface RootRouteChildren {
   ConversaThreadIdRoute: typeof ConversaThreadIdRoute
   ConversaIndexRoute: typeof ConversaIndexRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
+  ApiGerusaActionRoute: typeof ApiGerusaActionRoute
   ApiGerusaChatRoute: typeof ApiGerusaChatRoute
+  ApiGerusaPedagogyRoute: typeof ApiGerusaPedagogyRoute
   ApiGerusaThreadRoute: typeof ApiGerusaThreadRoute
   ApiMasterCharactersRoute: typeof ApiMasterCharactersRoute
 }
@@ -251,11 +277,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiGerusaThreadRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/gerusa/pedagogy': {
+      id: '/api/gerusa/pedagogy'
+      path: '/api/gerusa/pedagogy'
+      fullPath: '/api/gerusa/pedagogy'
+      preLoaderRoute: typeof ApiGerusaPedagogyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/gerusa/chat': {
       id: '/api/gerusa/chat'
       path: '/api/gerusa/chat'
       fullPath: '/api/gerusa/chat'
       preLoaderRoute: typeof ApiGerusaChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/gerusa/action': {
+      id: '/api/gerusa/action'
+      path: '/api/gerusa/action'
+      fullPath: '/api/gerusa/action'
+      preLoaderRoute: typeof ApiGerusaActionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/auth/session': {
@@ -289,7 +329,9 @@ const rootRouteChildren: RootRouteChildren = {
   ConversaThreadIdRoute: ConversaThreadIdRoute,
   ConversaIndexRoute: ConversaIndexRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
+  ApiGerusaActionRoute: ApiGerusaActionRoute,
   ApiGerusaChatRoute: ApiGerusaChatRoute,
+  ApiGerusaPedagogyRoute: ApiGerusaPedagogyRoute,
   ApiGerusaThreadRoute: ApiGerusaThreadRoute,
   ApiMasterCharactersRoute: ApiMasterCharactersRoute,
 }

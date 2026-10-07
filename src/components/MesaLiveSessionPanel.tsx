@@ -1,854 +1,776 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { Check, ChevronDown, Clock3, Flag, Plus, Radio, Square } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
 
-const eventTypes = ["NPC", "LOCAL", "OBJETO", "PISTA", "EVENTO", "DIARIO", "IMAGEM"] as const;
-type EventType = (typeof eventTypes)[number];
-type Mesa = { id: string; slug: string; name: string };
-type Event = {
+type Lesson = {
   id: string;
-  sessionId: string;
-  title: string | null;
-  eventType: EventType;
-  publicContent: string;
-  privateNotes: string | null;
-  promotedEntryId: string | null;
-  revealedAt: string | null;
-  mediaAssetId: string | null;
-  createdAt: string;
+  title: string;
+  studentId: string;
+  studentName: string;
+  mesaId: string;
+  status: string;
+  scheduledAt: string | null;
+  objective: string;
+  grammar: string;
+  vocabulary: string;
+  outline: Array<{ title: string; activity: string; prompt: string }>;
+  adventureId: string | null;
 };
 type Session = {
   id: string;
-  mesaId: string;
-  title: string;
+  lessonId: string;
+  studentId: string;
   status: "live" | "closed";
+  currentSceneIndex: number;
+  quickNotes: string;
+  summary: Record<string, unknown>;
   startedAt: string;
   endedAt: string | null;
-  summary: string | null;
-  events: Event[];
+  updatedAt: string;
+};
+type RecordItem = {
+  id: string;
+  lessonId: string;
+  liveSessionId: string | null;
+  recordType: string;
+  skill: string;
+  progressStatus: string | null;
+  observation: string;
+  evidence: string;
+  confirmed: boolean;
+  createdAt: string;
 };
 type Payload = {
-  mesa?: Mesa;
-  liveSession?: Session | null;
-  recentSessions?: Session[];
-  canPromote?: boolean;
+  lessons?: Lesson[];
+  sessions?: Session[];
+  records?: RecordItem[];
+  adventures?: Array<{
+    id: string;
+    title: string;
+    scenes: unknown[];
+    grammarTarget: string;
+    vocabulary: unknown[];
+    npcs: unknown[];
+  }>;
   error?: string;
 };
-type ReviewDraft = {
-  eventType: EventType;
-  title: string;
-  publicContent: string;
-  privateNotes: string;
-  reveal: boolean;
+type Summary = {
+  narrativeSummary: string;
+  pedagogicalSummary: string;
+  grammar: string;
+  vocabulary: string;
+  strengths: string;
+  difficulties: string;
+  suggestedTask: string;
+  nextStep: string;
 };
+type Proposal = { action: string; value: unknown };
 
-const fieldClass =
-  "mt-1 min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 py-2 text-sm text-[#F3EBDD]";
-const buttonClass =
-  "min-h-11 rounded-lg border border-[color:var(--gold)]/50 px-3 text-xs uppercase tracking-[0.12em] text-[color:var(--gold)] disabled:cursor-not-allowed disabled:opacity-50";
-
-function formatDate(value: string | null) {
-  if (!value) return "agora";
-  return new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
+const field =
+  "min-h-11 w-full rounded-lg border border-[#743044] bg-[#10070b] px-3 py-2 text-sm text-[#f5e9df] placeholder:text-[#e7c9b7]/40";
+const button =
+  "min-h-10 rounded-lg border border-[#8a3045]/70 px-3 text-sm text-[#f5e9df] hover:bg-[#742233]/25 disabled:opacity-50";
+const recordTypes = [
+  ["success", "Acerto / ponto forte"],
+  ["difficulty", "Dificuldade"],
+  ["new_vocabulary", "Vocabulário novo"],
+  ["recurring_error", "Erro recorrente"],
+  ["observation", "Observação"],
+  ["narrative", "Acontecimento narrativo"],
+  ["task_suggestion", "Tarefa sugerida"],
+] as const;
+const blankSummary = (): Summary => ({
+  narrativeSummary: "",
+  pedagogicalSummary: "",
+  grammar: "",
+  vocabulary: "",
+  strengths: "",
+  difficulties: "",
+  suggestedTask: "",
+  nextStep: "",
+});
+const asText = (value: unknown) => (typeof value === "string" ? value : "");
+const dateLabel = (value: string) =>
+  new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
     new Date(value),
   );
-}
-
-function formatElapsed(startedAt: string, now: number) {
-  const totalSeconds = Math.max(0, Math.floor((now - new Date(startedAt).getTime()) / 1000));
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  return hours ? `${hours}h ${String(minutes).padStart(2, "0")}min` : `${minutes}min`;
-}
-
-function mediaUrl(assetId: string | null) {
-  return assetId ? "/api/gallery/file?path=" + encodeURIComponent(assetId) : null;
-}
-
-async function readResponse(response: Response) {
-  const payload = (await response.json().catch(() => ({}))) as Payload & {
-    event?: Event;
-    liveSession?: Session;
-    session?: Session;
-    entry?: { id: string };
+function summaryFields(value: Record<string, unknown> | undefined): Summary {
+  const source = value ?? {};
+  const asLines = (item: unknown) =>
+    Array.isArray(item) ? item.map(String).join("\n") : typeof item === "string" ? item : "";
+  return {
+    narrativeSummary: asLines(source.narrativeSummary),
+    pedagogicalSummary: asLines(source.pedagogicalSummary),
+    grammar: asLines(source.grammar),
+    vocabulary: asLines(source.vocabulary),
+    strengths: asLines(source.strengths),
+    difficulties: asLines(source.difficulties),
+    suggestedTask: asLines(source.suggestedTask),
+    nextStep: asLines(source.nextStep),
   };
-  if (!response.ok) throw new Error(payload.error || "mesa_live_session_failed");
-  return payload;
 }
 
-export function MesaLiveSessionPanel({ mesaId }: { mesaId?: string }) {
+export function MesaLiveSessionPanel({
+  mesaId,
+  studentId,
+  focusLessonId,
+}: {
+  mesaId?: string;
+  studentId?: string;
+  focusLessonId?: string;
+}) {
   const [payload, setPayload] = useState<Payload>({});
-  const [loading, setLoading] = useState(false);
+  const [selectedLessonId, setSelectedLessonId] = useState(focusLessonId ?? "");
+  const [quickType, setQuickType] = useState<(typeof recordTypes)[number][0]>("observation");
+  const [quickObservation, setQuickObservation] = useState("");
+  const [quickEvidence, setQuickEvidence] = useState("");
+  const [quickSkill, setQuickSkill] = useState("");
+  const [progressStatus, setProgressStatus] = useState("developing");
+  const [summary, setSummary] = useState<Summary>(blankSummary());
+  const [summaryEdited, setSummaryEdited] = useState(false);
+  const [proposal, setProposal] = useState<Proposal | null>(null);
+  const [proposalJson, setProposalJson] = useState("");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const [eventType, setEventType] = useState<EventType>("EVENTO");
-  const [eventTitle, setEventTitle] = useState("");
-  const [publicContent, setPublicContent] = useState("");
-  const [privateNotes, setPrivateNotes] = useState("");
-  const [eventMediaAssetId, setEventMediaAssetId] = useState<string | null>(null);
-  const [summary, setSummary] = useState("");
-  const [reviewOpen, setReviewOpen] = useState(false);
-  const [startOpen, setStartOpen] = useState(false);
-  const [startTitle, setStartTitle] = useState("");
-  const [drafts, setDrafts] = useState<Record<string, ReviewDraft>>({});
-  const [now, setNow] = useState(() => Date.now());
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
-  const liveSession = payload.liveSession ?? null;
-  const recentSessions = payload.recentSessions ?? [];
+  const lessons = useMemo(() => payload.lessons ?? [], [payload.lessons]);
+  const sessions = useMemo(() => payload.sessions ?? [], [payload.sessions]);
+  const records = payload.records ?? [];
+  const adventures = payload.adventures ?? [];
+  const liveSession = sessions.find((session) => session.status === "live") ?? null;
+  const selectedLesson =
+    lessons.find((lesson) => lesson.id === (liveSession?.lessonId ?? selectedLessonId)) ?? null;
+  const adventure = adventures.find((item) => item.id === selectedLesson?.adventureId) ?? null;
+  const scenes = adventure?.scenes ?? selectedLesson?.outline ?? [];
+  const sceneIndex = liveSession?.currentSceneIndex ?? 0;
+  const currentScene = (scenes[sceneIndex] ?? null) as Record<string, unknown> | null;
+  const recentSessions = useMemo(
+    () => sessions.filter((session) => session.status === "closed").slice(0, 10),
+    [sessions],
+  );
 
   useEffect(() => {
-    if (!mesaId || mesaId === "all") {
+    if (focusLessonId) setSelectedLessonId(focusLessonId);
+  }, [focusLessonId]);
+
+  const refresh = useCallback(async () => {
+    if (!mesaId || !studentId) {
       setPayload({});
-      setReviewOpen(false);
-      setStartOpen(false);
       return;
     }
-    let cancelled = false;
-    setLoading(true);
-    setMessage("");
-    setReviewOpen(false);
-    setStartOpen(false);
-    setDrafts({});
-    void fetch("/api/master/live-session?mesaId=" + encodeURIComponent(mesaId), {
-      credentials: "same-origin",
-      cache: "no-store",
-    })
-      .then(readResponse)
-      .then((next) => {
-        if (!cancelled) setPayload(next);
-      })
-      .catch((error: unknown) => {
-        if (!cancelled)
-          setMessage(error instanceof Error ? error.message : "Falha ao carregar Sessão Viva.");
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+    try {
+      const query = new URLSearchParams({ view: "teacher", mesaId, studentId });
+      const response = await fetch(`/api/gerusa/pedagogy?${query}`, {
+        credentials: "same-origin",
+        cache: "no-store",
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [mesaId]);
+      const data = (await response.json().catch(() => ({}))) as Payload;
+      if (!response.ok) throw new Error(data.error || "Não foi possível carregar a aula.");
+      setPayload(data);
+      setError("");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao carregar a aula.");
+    }
+  }, [mesaId, studentId]);
 
   useEffect(() => {
-    setSummary(liveSession?.summary ?? "");
-  }, [liveSession?.id, liveSession?.summary]);
+    void refresh();
+  }, [refresh]);
+  useEffect(() => {
+    if (liveSession && !summaryEdited) setSummary(summaryFields(liveSession.summary));
+  }, [liveSession, summaryEdited]);
 
   useEffect(() => {
-    if (!liveSession || liveSession.status !== "live") return;
-    const timer = window.setInterval(() => setNow(Date.now()), 30000);
-    return () => window.clearInterval(timer);
-  }, [liveSession]);
+    if (!liveSession && !selectedLessonId) {
+      setSelectedLessonId(
+        lessons.find((lesson) => lesson.status === "planned")?.id ?? lessons[0]?.id ?? "",
+      );
+    }
+  }, [lessons, liveSession, selectedLessonId]);
 
-  function draftFor(event: Event): ReviewDraft {
-    return (
-      drafts[event.id] ?? {
-        eventType: event.eventType,
-        title: event.title ?? "",
-        publicContent: event.publicContent,
-        privateNotes: event.privateNotes ?? "",
-        reveal: true,
-      }
-    );
-  }
-  function updateDraft(event: Event, update: Partial<ReviewDraft>) {
-    setDrafts((current) => ({ ...current, [event.id]: { ...draftFor(event), ...update } }));
-  }
-  async function request(body: Record<string, unknown>) {
-    return readResponse(
-      await fetch("/api/master/live-session", {
+  const post = async (body: Record<string, unknown>) => {
+    const response = await fetch("/api/gerusa/pedagogy", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mesaId, studentId, ...body }),
+    });
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) throw new Error(data.error || "Ação não concluída.");
+    return data;
+  };
+
+  const start = async () => {
+    if (!selectedLessonId) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await post({ action: "start_session", lessonId: selectedLessonId });
+      await refresh();
+      setNotice("Aula iniciada e registrada no PostgreSQL Gerusa.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível iniciar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveQuickNote = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!liveSession || !selectedLesson || !quickObservation.trim()) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await post({
+        action: "record_observation",
+        lessonId: selectedLesson.id,
+        sessionId: liveSession.id,
+        recordType: quickType,
+        observation: quickObservation,
+        evidence: quickEvidence,
+        skill: quickSkill,
+      });
+      setQuickObservation("");
+      setQuickEvidence("");
+      await refresh();
+      setNotice("Registro pedagógico salvo.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível registrar.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const saveProgress = async () => {
+    if (!liveSession || !selectedLesson || !quickObservation.trim()) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await post({
+        action: "save_progress",
+        lessonId: selectedLesson.id,
+        sessionId: liveSession.id,
+        skill: quickSkill,
+        progressStatus,
+        observation: quickObservation,
+        evidence: quickEvidence,
+        confirmed: true,
+      });
+      setQuickObservation("");
+      setQuickEvidence("");
+      await refresh();
+      setNotice("Progresso confirmado e salvo.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível salvar progresso.");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runAction = async (action: string) => {
+    if (!selectedLesson || !mesaId || !studentId) return;
+    setBusy(true);
+    setError("");
+    setNotice("");
+    setProposal(null);
+    try {
+      const response = await fetch("/api/gerusa/action", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mesaId, ...body }),
-      }),
-    );
-  }
-  async function reload() {
-    if (!mesaId || mesaId === "all") return;
-    setPayload(
-      await readResponse(
-        await fetch("/api/master/live-session?mesaId=" + encodeURIComponent(mesaId), {
-          credentials: "same-origin",
-          cache: "no-store",
+        body: JSON.stringify({
+          action,
+          mesaId,
+          studentId,
+          lessonId: selectedLesson.id,
+          fields: { scene: currentScene, notes: liveSession?.quickNotes ?? "" },
         }),
-      ),
-    );
-  }
-
-  function openStart() {
-    setStartTitle("");
-    setStartOpen(true);
-    setMessage("");
-  }
-  async function start() {
-    const title = startTitle.trim();
-    if (!title) return;
-    setBusy(true);
-    setMessage("");
-    try {
-      await request({ action: "start", title: title.trim() });
-      await reload();
-      setStartOpen(false);
-      setMessage("Sessão iniciada e persistida no PostgreSQL.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Não foi possível iniciar a sessão.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function recordEvent(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!liveSession || !publicContent.trim()) return;
-    setBusy(true);
-    setMessage("");
-    try {
-      await request({
-        action: "add_event",
-        sessionId: liveSession.id,
-        eventType,
-        title: eventTitle,
-        publicContent,
-        privateNotes,
-        mediaAssetId: eventMediaAssetId,
       });
-      setEventTitle("");
-      setPublicContent("");
-      setPrivateNotes("");
-      setEventMediaAssetId(null);
-      await reload();
-      setMessage("Acontecimento registrado.");
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Não foi possível registrar o acontecimento.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function uploadEventMedia(file: File) {
-    if (!mesaId || mesaId === "all") {
-      setMessage("Escolha uma Mesa antes do upload.");
-      return;
-    }
-    setBusy(true);
-    setMessage("");
-    try {
-      const form = new FormData();
-      form.set("mesaId", mesaId);
-      form.set("file", file);
-      const response = await fetch("/api/campaign-continuity", {
-        method: "POST",
-        credentials: "same-origin",
-        body: form,
-      });
-      const uploaded = (await response.json().catch(() => ({}))) as {
-        mediaAssetId?: string;
+      const data = (await response.json().catch(() => ({}))) as {
+        proposal?: unknown;
         error?: string;
       };
-      if (!response.ok || !uploaded.mediaAssetId)
-        throw new Error(uploaded.error || "upload_without_reference");
-      setEventMediaAssetId(uploaded.mediaAssetId);
-      setMessage("Imagem recebida; ela será associada ao próximo acontecimento registrado.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Não foi possível subir a imagem.");
+      if (!response.ok || !data.proposal)
+        throw new Error(data.error || "Gerusa não conseguiu gerar a proposta.");
+      setProposal({ action, value: data.proposal });
+      setProposalJson(JSON.stringify(data.proposal, null, 2));
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao consultar Gerusa.");
     } finally {
       setBusy(false);
     }
-  }
+  };
 
-  async function reveal(event: Event) {
-    if (!mesaId || !liveSession || event.revealedAt) return;
-    setBusy(true);
-    setMessage("");
+  const saveProposal = async () => {
+    if (!proposal || !liveSession || !selectedLesson) return;
+    let value: unknown;
     try {
-      await request({ action: "reveal", sessionId: liveSession.id, eventId: event.id });
-      await reload();
-      setMessage("Acontecimento revelado aos jogadores desta Mesa.");
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Não foi possível revelar o acontecimento.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function saveSummary(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!liveSession) return;
-    setBusy(true);
-    setMessage("");
-    try {
-      await request({
-        action: "update_summary",
-        sessionId: liveSession.id,
-        summary: summary.trim(),
-      });
-      await reload();
-      setMessage("Resumo salvo no painel da sessão.");
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Não foi possível salvar o resumo da sessão.",
-      );
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function promote(event: Event) {
-    if (!mesaId || !liveSession || !payload.canPromote || event.promotedEntryId) return;
-    const draft = draftFor(event);
-    if (!draft.title.trim() || !draft.publicContent.trim()) {
-      setMessage("A promoção exige título e conteúdo.");
+      value = JSON.parse(proposalJson);
+    } catch {
+      setError("Revise a estrutura JSON antes de salvar.");
       return;
     }
     setBusy(true);
-    setMessage("");
+    setError("");
+    setNotice("");
     try {
-      const created = await readResponse(
-        await fetch("/api/campaign-continuity", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: "create",
-            type: draft.eventType,
-            title: draft.title.trim(),
-            canonicalStatus: "PLAYED_CONFIRMED",
-            editorialStatus: "READY",
-            publicContent: draft.publicContent,
-            privateNotes: draft.privateNotes,
-            mediaAssetId: null,
-          }),
-        }),
-      );
-      if (!created.entry?.id) throw new Error("continuity_entry_not_created");
-      await readResponse(
-        await fetch("/api/campaign-continuity", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            action: draft.reveal ? "publish" : "hide",
-            entryId: created.entry.id,
-            mesaIds: [mesaId],
-          }),
-        }),
-      );
-      await request({
-        action: "mark_promoted",
+      const text =
+        typeof value === "object" && value !== null && "title" in value
+          ? String((value as { title: unknown }).title)
+          : proposal.action.replaceAll("_", " ");
+      await post({
+        action: "record_observation",
+        lessonId: selectedLesson.id,
         sessionId: liveSession.id,
-        eventId: event.id,
-        entryId: created.entry.id,
+        recordType: "narrative",
+        observation: `${text}: proposta Gerusa aprovada pela professora.`,
+        evidence: JSON.stringify(value),
       });
-      await reload();
-      setMessage(
-        draft.reveal
-          ? "Enviado para continuidade e revelado nesta Mesa."
-          : "Enviado para continuidade, mantido oculto nesta Mesa.",
-      );
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Não foi possível promover o acontecimento.",
-      );
+      await post({
+        action: "update_session",
+        sessionId: liveSession.id,
+        quickNotes: liveSession.quickNotes,
+        currentSceneIndex: sceneIndex + 1,
+      });
+      setProposal(null);
+      await refresh();
+      setNotice("Proposta editada e registrada nesta aula.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível registrar a proposta.");
     } finally {
       setBusy(false);
     }
-  }
+  };
 
-  async function close() {
+  const updateQuickNotes = async (value: string) => {
+    if (!liveSession) return;
+    try {
+      await post({
+        action: "update_session",
+        sessionId: liveSession.id,
+        quickNotes: value,
+        currentSceneIndex: sceneIndex,
+      });
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível salvar a nota.");
+    }
+  };
+
+  const generateSummary = async () => {
+    await runAction("lesson_summary");
+  };
+
+  const saveSummary = async (closeSession = false) => {
     if (!liveSession) return;
     setBusy(true);
-    setMessage("");
+    setError("");
+    setNotice("");
+    const storedSummary = {
+      ...summary,
+      grammar: summary.grammar.split("\n").filter(Boolean),
+      vocabulary: summary.vocabulary.split("\n").filter(Boolean),
+      strengths: summary.strengths.split("\n").filter(Boolean),
+      difficulties: summary.difficulties.split("\n").filter(Boolean),
+    };
     try {
-      await request({ action: "close", sessionId: liveSession.id, summary });
-      setSummary("");
-      setReviewOpen(false);
-      await reload();
-      setMessage("Sessão encerrada; revisão preservada no histórico.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Não foi possível encerrar a sessão.");
+      await post({
+        action: closeSession ? "close_session" : "save_summary",
+        sessionId: liveSession.id,
+        summary: storedSummary,
+      });
+      setSummaryEdited(false);
+      await refresh();
+      setNotice(closeSession ? "Aula encerrada; resumo e continuidade salvos." : "Resumo salvo.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Não foi possível salvar o resumo.");
     } finally {
       setBusy(false);
     }
-  }
+  };
+
+  useEffect(() => {
+    if (proposal?.action === "lesson_summary") {
+      try {
+        setSummary(summaryFields(JSON.parse(proposalJson) as Record<string, unknown>));
+        setSummaryEdited(true);
+        setProposal(null);
+      } catch {
+        /* The proposal stays available for editing if it is not valid JSON. */
+      }
+    }
+  }, [proposal, proposalJson]);
 
   return (
     <section
-      className="mb-6 rounded-xl border border-[color:var(--gold)]/30 bg-[#0C0B12]/95 p-5 text-[#F3EBDD]"
-      aria-label="Sessão Viva"
+      className="mx-auto mb-6 max-w-6xl rounded-2xl border border-[#742233]/50 bg-[#180b11] p-4 text-[#f5e9df] sm:p-6"
+      aria-label="Aula ao vivo"
     >
-      <header className="flex flex-wrap items-start justify-between gap-3 border-b border-white/10 pb-4">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-[color:var(--gold)]">
-            Mesa Hub
-          </p>
-          <h2 className="mt-1 text-xl font-semibold">Sessão Viva</h2>
-          <p className="mt-1 text-xs text-[#F3EBDD]/55">
-            {payload.mesa?.name ?? "Selecione uma Mesa para operar a sessão."}
-          </p>
-        </div>
-        {liveSession?.status === "live" ? (
-          <span className="inline-flex items-center gap-2 rounded-full border border-emerald-300/35 px-3 py-2 text-[10px] uppercase tracking-[0.14em] text-emerald-200">
-            <Radio className="h-3 w-3" /> Em andamento
-          </span>
-        ) : null}
+      <header className="border-b border-[#742233]/40 pb-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#d5a56c]">
+          Mesa live session · aula RPG
+        </p>
+        <h2 className="serif mt-1 text-2xl">Aula ao vivo</h2>
       </header>
-      {!mesaId || mesaId === "all" ? (
-        <p className="mt-4 text-sm text-[#F3EBDD]/55">
-          Escolha uma Mesa no seletor acima para iniciar ou consultar uma Sessão Viva.
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-400/30 p-3 text-sm text-red-200"
+        >
+          {error}
         </p>
       ) : null}
-      {loading ? (
-        <p className="mt-4 text-sm text-[#F3EBDD]/55">Consultando a sessão persistida…</p>
+      {notice ? (
+        <p
+          role="status"
+          className="mt-4 rounded-lg border border-[#8a3045]/40 p-3 text-sm text-[#f0c59a]"
+        >
+          {notice}
+        </p>
       ) : null}
-      {mesaId && mesaId !== "all" && !loading && !liveSession ? (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-black/15 p-4">
-          <div>
-            <p className="text-sm font-medium">Nenhuma sessão em andamento.</p>
-            <p className="mt-1 text-xs text-[#F3EBDD]/50">
-              O ledger começa quando o Mestre iniciar uma sessão real.
-            </p>
-          </div>
-          <button type="button" className={buttonClass} disabled={busy} onClick={openStart}>
-            <Plus className="mr-2 inline h-4 w-4" />
-            Iniciar sessão
-          </button>
-          {startOpen ? (
-            <div
-              role="dialog"
-              aria-label="Iniciar sessão"
-              className="basis-full rounded-lg border border-[color:var(--gold)]/35 bg-black/25 p-4"
+      {!liveSession ? (
+        <div className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+          <label className="text-sm">
+            Aula planejada
+            <select
+              aria-label="Aula planejada"
+              className={field}
+              value={selectedLessonId}
+              onChange={(event) => setSelectedLessonId(event.target.value)}
             >
-              <label className="block text-xs text-[#F3EBDD]/65">
-                Título / identificação
-                <input
-                  autoFocus
-                  value={startTitle}
-                  onChange={(event) => setStartTitle(event.target.value)}
-                  className={fieldClass}
-                  placeholder="Ex.: Sessão 02 — Casa do Chapéu"
-                  maxLength={160}
-                />
-              </label>
-              <div className="mt-3 flex flex-wrap justify-end gap-2">
-                <button
-                  type="button"
-                  className="min-h-11 rounded-lg border border-white/15 px-3 text-xs uppercase tracking-[0.12em] text-[#F3EBDD]/65"
-                  disabled={busy}
-                  onClick={() => setStartOpen(false)}
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="button"
-                  className={buttonClass}
-                  disabled={busy || !startTitle.trim()}
-                  onClick={() => void start()}
-                >
-                  Iniciar sessão
-                </button>
-              </div>
-            </div>
-          ) : null}
+              <option value="">Selecione uma aula</option>
+              {lessons
+                .filter((lesson) => ["draft", "planned"].includes(lesson.status))
+                .map((lesson) => (
+                  <option key={lesson.id} value={lesson.id}>
+                    {lesson.title} · {lesson.studentName} ·{" "}
+                    {lesson.scheduledAt ? dateLabel(lesson.scheduledAt) : "sem data"}
+                  </option>
+                ))}
+            </select>
+          </label>
+          <button
+            type="button"
+            className={button}
+            disabled={busy || !selectedLessonId}
+            onClick={() => void start()}
+          >
+            Iniciar aula
+          </button>
         </div>
       ) : null}
-      {liveSession?.status === "live" ? (
-        <div className="mt-4 space-y-4">
-          <div className="rounded-lg border border-emerald-300/20 bg-emerald-950/10 p-4">
+      {liveSession && selectedLesson ? (
+        <div className="mt-5 space-y-4">
+          <section className="rounded-xl border border-[#8a3045]/45 bg-[#10070b]/70 p-4">
             <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-emerald-200/75">
-                  ● Sessão em andamento
+                <p className="text-xs uppercase tracking-[0.16em] text-[#d5a56c]">
+                  Aula em andamento · {dateLabel(liveSession.startedAt)}
                 </p>
-                <h3 className="mt-1 text-lg">{liveSession.title}</h3>
-                <p className="mt-1 text-xs text-[#F3EBDD]/50">
-                  Começou em {formatDate(liveSession.startedAt)} ·{" "}
-                  {formatElapsed(liveSession.startedAt, now)}
+                <h3 className="serif mt-1 text-xl">
+                  {selectedLesson.studentName} · {selectedLesson.title}
+                </h3>
+                <p className="mt-1 text-sm text-[#e7c9b7]/70">{selectedLesson.objective}</p>
+                <p className="mt-2 text-sm">
+                  Gramática: {selectedLesson.grammar || "—"} · Vocabulário:{" "}
+                  {selectedLesson.vocabulary || "—"}
                 </p>
               </div>
               <button
                 type="button"
-                className="min-h-11 rounded-lg border border-red-300/35 px-3 text-xs uppercase tracking-[0.12em] text-red-200"
+                className={button}
                 disabled={busy}
-                onClick={() => setReviewOpen((value) => !value)}
+                onClick={() => void generateSummary()}
               >
-                <Square className="mr-2 inline h-3 w-3" />
-                {reviewOpen ? "Voltar à sessão" : "Encerrar sessão"}
+                Gerusa, resumir aula
               </button>
             </div>
-          </div>
-          <form
-            onSubmit={(event) => void saveSummary(event)}
-            className="rounded-lg border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/5 p-4"
-          >
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-[0.16em] text-[color:var(--gold)]">
-                  Registro vivo
-                </p>
-                <h3 className="mt-1 text-sm font-medium">Resumo da sessão</h3>
-                <p className="mt-1 text-xs text-[#F3EBDD]/55">
-                  Escreva ao longo da mesa; este texto ficará no painel da sessão encerrada.
-                </p>
-              </div>
-              <span className="text-[10px] uppercase tracking-[0.12em] text-[#F3EBDD]/45">
-                {summary.trim() ? "Salvo no PostgreSQL" : "Ainda vazio"}
-              </span>
-            </div>
-            <label className="mt-3 block text-xs text-[#F3EBDD]/65">
-              Resumo em andamento
-              <textarea
-                aria-label="Resumo em andamento"
-                value={summary}
-                onChange={(event) => setSummary(event.target.value)}
-                className={fieldClass + " min-h-28"}
-                maxLength={30000}
-                placeholder="Registre aqui os fios principais da sessão enquanto ela acontece."
-              />
-            </label>
-            <button type="submit" className={buttonClass + " mt-3"} disabled={busy}>
-              Salvar resumo
-            </button>
-          </form>
-          <form
-            onSubmit={(event) => void recordEvent(event)}
-            className="rounded-lg border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/5 p-4"
-          >
-            <div className="flex items-center gap-2">
-              <Flag className="h-4 w-4 text-[color:var(--gold)]" />
-              <h3 className="text-sm font-medium">Registrar acontecimento</h3>
-            </div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="text-xs text-[#F3EBDD]/65">
-                Tipo
-                <select
-                  value={eventType}
-                  onChange={(event) => setEventType(event.target.value as EventType)}
-                  className={fieldClass}
-                >
-                  {eventTypes.map((type) => (
-                    <option key={type}>{type}</option>
-                  ))}
-                </select>
-              </label>
-              <label className="text-xs text-[#F3EBDD]/65">
-                Título opcional
-                <input
-                  value={eventTitle}
-                  onChange={(event) => setEventTitle(event.target.value)}
-                  className={fieldClass}
-                  maxLength={160}
-                  placeholder="Ex.: A porta se abriu"
-                />
-              </label>
-            </div>
-            <label className="mt-3 block text-xs text-[#F3EBDD]/65">
-              O que aconteceu?
-              <textarea
-                required
-                value={publicContent}
-                onChange={(event) => setPublicContent(event.target.value)}
-                className={fieldClass + " min-h-24"}
-                maxLength={30000}
-                placeholder="Registre o fato observado pela Mesa."
-              />
-            </label>
-            <label className="mt-3 block text-xs text-[#F3EBDD]/65">
-              Nota privada opcional
-              <textarea
-                value={privateNotes}
-                onChange={(event) => setPrivateNotes(event.target.value)}
-                className={fieldClass + " min-h-20 border-red-300/20 bg-red-950/10"}
-                maxLength={30000}
-                placeholder="Fica no registro do Mestre."
-              />
-            </label>
-            <div className="mt-3 flex flex-wrap items-center gap-3">
-              <label className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-white/10 px-3 text-xs">
-                <span>Subir imagem real (opcional)</span>
-                <input
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp"
-                  className="sr-only"
+          </section>
+          <section className="grid gap-3 lg:grid-cols-[1.1fr_.9fr]">
+            <div className="rounded-xl border border-[#742233]/40 p-4">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="serif text-xl">Cena atual</h3>
+                <button
+                  type="button"
+                  className={button}
                   disabled={busy}
-                  onChange={(input) => {
-                    const file = input.target.files?.[0];
-                    if (file) void uploadEventMedia(file);
-                    input.currentTarget.value = "";
-                  }}
-                />
-              </label>
-              {eventMediaAssetId ? (
-                <span className="text-xs text-[#F3EBDD]/55">
-                  Imagem pronta para este acontecimento.
-                </span>
-              ) : null}
-            </div>
-            <button
-              type="submit"
-              className={buttonClass + " mt-3"}
-              disabled={busy || !publicContent.trim()}
-            >
-              <Check className="mr-2 inline h-4 w-4" />
-              Registrar
-            </button>
-          </form>
-          <div className="rounded-lg border border-white/10 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <h3 className="text-sm font-medium">Acontecimentos desta sessão</h3>
-              <span className="text-xs text-[#F3EBDD]/45">
-                {liveSession.events.length} registrado{liveSession.events.length === 1 ? "" : "s"}
-              </span>
-            </div>
-            {liveSession.events.length ? (
-              <div className="mt-3 space-y-2">
-                {liveSession.events.map((event) => (
-                  <article key={event.id} className="rounded border border-white/10 p-3">
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-[10px] uppercase tracking-[0.14em] text-[color:var(--gold)]">
-                        {event.eventType}
-                        {event.title ? " · " + event.title : ""}
-                      </span>
-                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-[#F3EBDD]/40">
-                        <span>{formatDate(event.createdAt)}</span>
-                        {event.revealedAt ? (
-                          <span className="text-emerald-200">
-                            Revelado às {formatDate(event.revealedAt)}
-                          </span>
-                        ) : (
-                          <button
-                            type="button"
-                            className="min-h-9 rounded border border-[color:var(--gold)]/55 px-2 text-[color:var(--gold)]"
-                            disabled={busy}
-                            onClick={() => void reveal(event)}
-                          >
-                            Revelar agora
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-[#F3EBDD]/75">
-                      {event.publicContent}
-                    </p>
-                    {mediaUrl(event.mediaAssetId) ? (
-                      <img
-                        src={mediaUrl(event.mediaAssetId)!}
-                        alt={event.title || "Imagem do acontecimento"}
-                        className="mt-3 max-h-40 rounded-lg object-contain"
-                      />
-                    ) : null}
-                  </article>
-                ))}
+                  onClick={() => void runAction("scene")}
+                >
+                  Gerar continuação
+                </button>
               </div>
-            ) : (
-              <p className="mt-3 text-xs text-[#F3EBDD]/45">
-                Nenhum acontecimento registrado ainda.
-              </p>
-            )}
-          </div>
-          {reviewOpen ? (
-            <div className="rounded-lg border border-red-300/25 bg-red-950/10 p-4">
-              <div className="flex items-start gap-2">
-                <Clock3 className="mt-0.5 h-4 w-4 text-red-200" />
-                <div>
-                  <h3 className="text-sm font-medium">Revisão final</h3>
-                  <p className="mt-1 text-xs text-[#F3EBDD]/60">
-                    Revise antes de encerrar. Registrar não altera a continuidade automaticamente.
+              {currentScene ? (
+                <div className="mt-3 rounded-lg bg-[#10070b] p-3">
+                  <strong>{asText(currentScene.title) || `Cena ${sceneIndex + 1}`}</strong>
+                  <p className="mt-2 whitespace-pre-wrap text-sm text-[#e7c9b7]/80">
+                    {asText(currentScene.activity) ||
+                      asText(currentScene.description) ||
+                      asText(currentScene.prompt) ||
+                      "Cena planejada"}
+                  </p>
+                  <p className="mt-2 text-sm text-[#f0c59a]">
+                    Pergunta: {asText(currentScene.prompt) || "—"}
                   </p>
                 </div>
+              ) : (
+                <p className="mt-3 text-sm text-[#e7c9b7]/65">
+                  A aula ainda não tem cenas planejadas. Gerusa pode preparar a próxima.
+                </p>
+              )}
+              <div className="mt-4 flex flex-wrap gap-2">
+                {[
+                  ["challenge", "Criar desafio"],
+                  ["npc", "Improvisar NPC"],
+                  ["dialogue", "Gerar diálogo"],
+                  ["quiz", "Gerar quiz"],
+                  ["grammar_explanation", "Explicar gramática"],
+                  ["simplify_text", "Simplificar inglês"],
+                  ["increase_difficulty", "Aumentar dificuldade"],
+                ].map(([action, label]) => (
+                  <button
+                    key={action}
+                    type="button"
+                    className={button}
+                    disabled={busy}
+                    onClick={() => void runAction(action)}
+                  >
+                    {label}
+                  </button>
+                ))}
               </div>
-              <div className="mt-4 space-y-4">
-                {liveSession.events.map((event) => {
-                  const draft = draftFor(event);
-                  return (
-                    <article
-                      key={event.id}
-                      className="rounded-lg border border-white/10 bg-black/20 p-3"
-                    >
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <span className="text-[10px] uppercase tracking-[0.14em] text-[#F3EBDD]/45">
-                          {event.eventType}
-                        </span>
-                        {event.promotedEntryId ? (
-                          <span className="text-xs text-emerald-200">
-                            Enviado para continuidade
-                          </span>
-                        ) : null}
-                      </div>
-                      {event.promotedEntryId ? (
-                        <p className="mt-2 text-sm text-[#F3EBDD]/65">
-                          {event.title || "Acontecimento registrado"} foi promovido e não pode ser
-                          promovido novamente.
-                        </p>
-                      ) : (
-                        <>
-                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                            <label className="text-xs text-[#F3EBDD]/65">
-                              Tipo
-                              <select
-                                value={draft.eventType}
-                                onChange={(input) =>
-                                  updateDraft(event, { eventType: input.target.value as EventType })
-                                }
-                                className={fieldClass}
-                              >
-                                {eventTypes.map((type) => (
-                                  <option key={type}>{type}</option>
-                                ))}
-                              </select>
-                            </label>
-                            <label className="text-xs text-[#F3EBDD]/65">
-                              Título
-                              <input
-                                value={draft.title}
-                                onChange={(input) =>
-                                  updateDraft(event, { title: input.target.value })
-                                }
-                                className={fieldClass}
-                                maxLength={160}
-                              />
-                            </label>
-                          </div>
-                          <label className="mt-3 block text-xs text-[#F3EBDD]/65">
-                            Conteúdo público
-                            <textarea
-                              value={draft.publicContent}
-                              onChange={(input) =>
-                                updateDraft(event, { publicContent: input.target.value })
-                              }
-                              className={fieldClass + " min-h-24"}
-                              maxLength={30000}
-                            />
-                          </label>
-                          <label className="mt-3 block text-xs text-[#F3EBDD]/65">
-                            Notas privadas
-                            <textarea
-                              value={draft.privateNotes}
-                              onChange={(input) =>
-                                updateDraft(event, { privateNotes: input.target.value })
-                              }
-                              className={fieldClass + " min-h-20 border-red-300/20 bg-red-950/10"}
-                              maxLength={30000}
-                            />
-                          </label>
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <label className="inline-flex min-h-11 items-center gap-2 text-xs">
-                              <input
-                                type="checkbox"
-                                checked={draft.reveal}
-                                onChange={(input) =>
-                                  updateDraft(event, { reveal: input.target.checked })
-                                }
-                              />
-                              Revelar para {payload.mesa?.name ?? "esta Mesa"}
-                            </label>
-                            {payload.canPromote ? (
-                              <button
-                                type="button"
-                                className={buttonClass}
-                                disabled={busy}
-                                onClick={() => void promote(event)}
-                              >
-                                Promover para continuidade
-                              </button>
-                            ) : (
-                              <span className="text-xs text-amber-200/80">
-                                Pendente de confirmação na continuidade
-                              </span>
-                            )}
-                          </div>
-                        </>
-                      )}
-                    </article>
-                  );
-                })}
+            </div>
+            <form
+              className="rounded-xl border border-[#742233]/40 p-4"
+              onSubmit={(event) => void saveQuickNote(event)}
+            >
+              <h3 className="serif text-xl">Registro rápido</h3>
+              <div className="mt-3 grid gap-3">
+                <label className="text-sm">
+                  Tipo
+                  <select
+                    className={field}
+                    value={quickType}
+                    onChange={(e) => setQuickType(e.target.value as typeof quickType)}
+                  >
+                    {recordTypes.map(([value, label]) => (
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="text-sm">
+                  O que observou?
+                  <textarea
+                    className={field}
+                    rows={3}
+                    value={quickObservation}
+                    onChange={(e) => setQuickObservation(e.target.value)}
+                    required
+                  />
+                </label>
+                <label className="text-sm">
+                  Evidência / vocabulário
+                  <textarea
+                    className={field}
+                    rows={2}
+                    value={quickEvidence}
+                    onChange={(e) => setQuickEvidence(e.target.value)}
+                  />
+                </label>
+                <label className="text-sm">
+                  Habilidade ou gramática
+                  <input
+                    className={field}
+                    value={quickSkill}
+                    onChange={(e) => setQuickSkill(e.target.value)}
+                    placeholder="Speaking, Past Simple…"
+                  />
+                </label>
+                <button
+                  type="submit"
+                  className={button}
+                  disabled={busy || !quickObservation.trim()}
+                >
+                  Salvar observação
+                </button>
               </div>
-              <label className="mt-4 block text-xs text-[#F3EBDD]/65">
-                Resumo da sessão
-                <textarea
-                  value={summary}
-                  onChange={(event) => setSummary(event.target.value)}
-                  className={fieldClass + " min-h-20"}
-                  maxLength={30000}
-                  placeholder="Opcional; escrito pelo Mestre."
-                />
-              </label>
+            </form>
+          </section>
+          <label className="block text-sm">
+            Notas rápidas da professora
+            <textarea
+              className={field}
+              rows={2}
+              defaultValue={liveSession.quickNotes}
+              key={liveSession.id}
+              onBlur={(event) => void updateQuickNotes(event.target.value)}
+            />
+          </label>
+          <section className="rounded-xl border border-[#742233]/40 p-4">
+            <h3 className="serif text-xl">Progresso confirmado</h3>
+            <p className="mt-1 text-xs text-[#e7c9b7]/65">
+              A professora confirma a atualização; a evidência fica vinculada à aula.
+            </p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <input
+                className={field}
+                value={quickSkill}
+                onChange={(e) => setQuickSkill(e.target.value)}
+                placeholder="Speaking, Reading…"
+              />
+              <select
+                className={field}
+                value={progressStatus}
+                onChange={(e) => setProgressStatus(e.target.value)}
+              >
+                <option value="emerging">Emergente</option>
+                <option value="developing">Em desenvolvimento</option>
+                <option value="secure">Consolidado</option>
+                <option value="not_observed">Não observado</option>
+              </select>
               <button
                 type="button"
-                className="mt-3 min-h-11 rounded-lg bg-red-200 px-4 text-xs font-semibold uppercase tracking-[0.12em] text-red-950"
-                disabled={busy}
-                onClick={() => void close()}
+                className={button}
+                disabled={busy || !quickObservation.trim()}
+                onClick={() => void saveProgress()}
               >
-                Encerrar e guardar revisão
+                Confirmar progresso da observação acima
               </button>
             </div>
+          </section>
+          {proposal ? (
+            <section className="rounded-xl border border-[#d5a56c]/35 bg-[#220d15] p-4">
+              <h3 className="serif text-xl">Proposta estruturada da Gerusa</h3>
+              <p className="mt-1 text-xs text-[#e7c9b7]/65">
+                Edite o JSON da proposta antes de registrá-la na aula.
+              </p>
+              <textarea
+                aria-label="Proposta editável da Gerusa"
+                className={field + " mt-3 font-mono text-xs"}
+                rows={12}
+                value={proposalJson}
+                onChange={(e) => setProposalJson(e.target.value)}
+              />
+              <div className="mt-3 flex gap-2">
+                <button
+                  className={button}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void saveProposal()}
+                >
+                  Adicionar à aula
+                </button>
+                <button className={button} type="button" onClick={() => setProposal(null)}>
+                  Descartar proposta
+                </button>
+              </div>
+            </section>
           ) : null}
+          <section className="rounded-xl border border-[#742233]/40 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="serif text-xl">Resumo pós-aula</h3>
+              <button
+                className={button}
+                type="button"
+                disabled={busy}
+                onClick={() => void runAction("lesson_summary")}
+              >
+                Gerar resumo estruturado
+              </button>
+            </div>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              {[
+                ["narrativeSummary", "Resumo narrativo"],
+                ["pedagogicalSummary", "Resumo pedagógico"],
+                ["grammar", "Gramática trabalhada"],
+                ["vocabulary", "Vocabulário"],
+                ["strengths", "Pontos fortes"],
+                ["difficulties", "Dificuldades"],
+                ["suggestedTask", "Tarefa sugerida"],
+                ["nextStep", "Próximo passo"],
+              ].map(([key, label]) => (
+                <label key={key} className="text-sm">
+                  {label}
+                  <textarea
+                    className={field}
+                    rows={key.includes("Summary") ? 3 : 2}
+                    value={summary[key as keyof Summary]}
+                    onChange={(e) => {
+                      setSummary({ ...summary, [key]: e.target.value });
+                      setSummaryEdited(true);
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                className={button}
+                type="button"
+                disabled={busy}
+                onClick={() => void saveSummary(false)}
+              >
+                Salvar resumo
+              </button>
+              <button
+                className={button}
+                type="button"
+                disabled={busy}
+                onClick={() => {
+                  if (window.confirm("Encerrar esta aula e guardar o resumo?"))
+                    void saveSummary(true);
+                }}
+              >
+                Encerrar aula
+              </button>
+            </div>
+          </section>
+          <section className="rounded-xl border border-[#742233]/40 p-4">
+            <h3 className="serif text-xl">Registros desta aula</h3>
+            <ul className="mt-3 space-y-2">
+              {records
+                .filter((item) => item.lessonId === selectedLesson.id)
+                .map((item) => (
+                  <li key={item.id} className="rounded-lg bg-[#10070b] p-3">
+                    <div className="flex flex-wrap justify-between gap-2">
+                      <strong className="text-sm">
+                        {recordTypes.find(([type]) => type === item.recordType)?.[1] ??
+                          item.recordType}
+                      </strong>
+                      <time className="text-xs text-[#e7c9b7]/60">{dateLabel(item.createdAt)}</time>
+                    </div>
+                    <p className="mt-1 whitespace-pre-wrap text-sm">{item.observation}</p>
+                    {item.evidence ? (
+                      <p className="mt-1 text-xs text-[#e7c9b7]/70">Evidência: {item.evidence}</p>
+                    ) : null}
+                  </li>
+                ))}
+              {!records.some((item) => item.lessonId === selectedLesson.id) ? (
+                <li className="text-sm text-[#e7c9b7]/65">Nenhum registro nesta aula ainda.</li>
+              ) : null}
+            </ul>
+          </section>
         </div>
       ) : null}
       {recentSessions.length ? (
-        <section className="mt-5 border-t border-white/10 pt-4">
-          <h3 className="text-sm font-medium">Sessões recentes</h3>
+        <section className="mt-6 border-t border-[#742233]/40 pt-4">
+          <h3 className="serif text-xl">Aulas anteriores</h3>
           <div className="mt-3 space-y-2">
             {recentSessions.map((session) => (
-              <details
-                key={session.id}
-                className="rounded-lg border border-white/10 bg-black/15 p-3"
-              >
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm">
-                  <span>{session.title}</span>
-                  <span className="text-xs text-[#F3EBDD]/45">{formatDate(session.endedAt)}</span>
-                  <ChevronDown className="h-4 w-4 shrink-0 text-[#F3EBDD]/45" />
+              <details key={session.id} className="rounded-lg border border-[#742233]/35 p-3">
+                <summary className="cursor-pointer">
+                  {lessons.find((lesson) => lesson.id === session.lessonId)?.title ?? "Aula"} ·{" "}
+                  {dateLabel(session.endedAt ?? session.startedAt)}
                 </summary>
-                {session.summary ? (
-                  <div className="mt-3 rounded-lg border border-[color:var(--gold)]/25 bg-[color:var(--gold)]/5 p-3">
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--gold)]">
-                      Resumo da sessão
-                    </p>
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-[#F3EBDD]/80">
-                      {session.summary}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="mt-3 text-xs text-[#F3EBDD]/55">Sem resumo escrito.</p>
-                )}
-                <p className="mt-2 text-xs text-[#F3EBDD]/55">
-                  {session.events.length} acontecimento
-                  {session.events.length === 1 ? "" : "s"}
-                </p>
-                <div className="mt-3 space-y-2">
-                  {session.events.map((event) => (
-                    <div key={event.id} className="rounded border border-white/10 p-2">
-                      <p className="text-[10px] uppercase tracking-[0.12em] text-[color:var(--gold)]">
-                        {event.eventType}
-                        {event.title ? " · " + event.title : ""}
-                      </p>
-                      <p className="mt-1 whitespace-pre-wrap text-xs text-[#F3EBDD]/70">
-                        {event.publicContent}
-                      </p>
-                      {event.privateNotes ? (
-                        <div className="mt-2 rounded border border-red-300/15 bg-red-950/10 p-2">
-                          <p className="text-[10px] uppercase tracking-[0.12em] text-red-200/75">
-                            Notas privadas do Mestre
-                          </p>
-                          <p className="mt-1 whitespace-pre-wrap text-xs text-[#F3EBDD]/70">
-                            {event.privateNotes}
-                          </p>
-                        </div>
-                      ) : null}
-                    </div>
-                  ))}
-                </div>
+                <pre className="mt-3 whitespace-pre-wrap text-xs text-[#e7c9b7]/75">
+                  {JSON.stringify(session.summary, null, 2)}
+                </pre>
               </details>
             ))}
           </div>
         </section>
-      ) : null}
-      {message ? (
-        <p role="status" className="mt-4 text-xs text-[#F3EBDD]/65">
-          {message}
-        </p>
       ) : null}
     </section>
   );

@@ -163,8 +163,7 @@ export default {
       /^\/conversa\/[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
         url.pathname,
       );
-    const isGerusaApi =
-      url.pathname === "/api/gerusa/thread" || url.pathname === "/api/gerusa/chat";
+    const isGerusaApi = url.pathname.startsWith("/api/gerusa/");
     const isGerusaIdentityPage = ["/auth", "/home", "/mestre", "/conversa", "/conversa/"].includes(
       url.pathname,
     );

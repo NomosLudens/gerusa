@@ -1,403 +1,629 @@
-import { useEffect, useMemo, useState } from "react";
-type Mesa = { id: string; slug: string; name: string };
-type Entry = {
+import { useCallback, useEffect, useState } from "react";
+
+type Adventure = {
   id: string;
-  type: string;
+  studentId: string;
+  campaignId: string | null;
   title: string;
-  canonicalStatus: string;
-  editorialStatus: string;
-  publicContent: string;
-  privateNotes: string;
-  mediaAssetId: string | null;
-  mediaUrl: string | null;
-  publicationMesaIds: string[];
+  premise: string;
+  pedagogicalObjective: string;
+  grammarTarget: string;
+  vocabulary: string[];
+  estimatedMinutes: number | null;
+  tone: string;
+  difficulty: string;
+  scenes: unknown[];
+  npcs: unknown[];
+  choices: string[];
+  challenges: string[];
+  englishQuestions: string[];
+  supports: string[];
+  conclusion: string;
+  hook: string;
+  suggestedTask: string;
+  status: string;
 };
-type Payload = { mesas?: Mesa[]; entries?: Entry[]; error?: string };
-const emptyDraft = {
-  type: "NPC",
+type Payload = {
+  mesa?: { campaigns?: Array<{ id: string; name: string }> };
+  adventures?: Adventure[];
+  lessons?: Array<{ id: string; title: string; adventureId: string | null; status: string }>;
+  sessions?: Array<{
+    id: string;
+    lessonId: string;
+    summary: Record<string, unknown>;
+    endedAt: string | null;
+  }>;
+  records?: Array<{ id: string; observation: string; createdAt: string }>;
+  assignments?: Array<{
+    id: string;
+    title: string;
+    status: string;
+    studentName: string;
+    createdAt: string;
+  }>;
+  characters?: Array<{ id: string; name: string; ownerUserId: string; updatedAt: string }>;
+  error?: string;
+};
+const blank: Omit<Adventure, "id" | "studentId" | "status"> = {
+  campaignId: null,
   title: "",
-  canonicalStatus: "PLANNED",
-  editorialStatus: "READY",
-  publicContent: "",
-  privateNotes: "",
-  mediaAssetId: null as string | null,
+  premise: "",
+  pedagogicalObjective: "",
+  grammarTarget: "",
+  vocabulary: [],
+  estimatedMinutes: 45,
+  tone: "",
+  difficulty: "",
+  scenes: [],
+  npcs: [],
+  choices: [],
+  challenges: [],
+  englishQuestions: [],
+  supports: [],
+  conclusion: "",
+  hook: "",
+  suggestedTask: "",
 };
-async function readPayload(response: Response) {
-  const payload = (await response.json().catch(() => ({}))) as Payload;
-  if (!response.ok)
-    throw new Error(
-      payload.error === "public_content_required"
-        ? "Preencha o conteúdo público antes de revelar a entrada."
-        : (payload.error ?? "campaign_continuity_failed"),
-    );
-  return payload;
+const field =
+  "min-h-11 w-full rounded-lg border border-[#743044] bg-[#10070b] px-3 py-2 text-sm text-[#f5e9df] placeholder:text-[#e7c9b7]/40";
+const button =
+  "min-h-10 rounded-lg border border-[#8a3045]/70 px-3 text-sm hover:bg-[#742233]/25 disabled:opacity-50";
+const arrayFields = [
+  "vocabulary",
+  "choices",
+  "challenges",
+  "englishQuestions",
+  "supports",
+] as const;
+function lines(value: unknown) {
+  return Array.isArray(value)
+    ? value.map((item) => (typeof item === "string" ? item : JSON.stringify(item))).join("\n")
+    : "";
 }
-export function CampaignContinuityManager({ selectedMesa }: { selectedMesa?: string }) {
+function dateLabel(value: string | null) {
+  return value
+    ? new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(
+        new Date(value),
+      )
+    : "—";
+}
+
+export function CampaignContinuityManager({
+  selectedMesa,
+  selectedStudent,
+  libraryMode = false,
+}: {
+  selectedMesa?: string;
+  selectedStudent?: string;
+  libraryMode?: boolean;
+}) {
   const [payload, setPayload] = useState<Payload>({});
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [draft, setDraft] = useState(emptyDraft);
-  const [targetIds, setTargetIds] = useState<string[]>([]);
+  const [draft, setDraft] = useState({ ...blank });
+  const [scenesJson, setScenesJson] = useState("[]");
+  const [npcsJson, setNpcsJson] = useState("[]");
   const [busy, setBusy] = useState(false);
-  const [message, setMessage] = useState("");
-  const load = async () => {
-    try {
-      setPayload(
-        await readPayload(
-          await fetch("/api/campaign-continuity?view=master", {
-            credentials: "same-origin",
-            cache: "no-store",
-          }),
-        ),
-      );
-    } catch (error) {
-      setMessage(
-        error instanceof Error ? error.message : "Não foi possível carregar a continuidade.",
-      );
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const adventures = payload.adventures ?? [];
+  const selected = adventures.find((item) => item.id === selectedId) ?? null;
+  const refresh = useCallback(async () => {
+    if (!selectedMesa || !selectedStudent) {
+      setPayload({});
+      return;
     }
-  };
-  useEffect(() => {
-    void load();
-  }, []);
-  useEffect(() => {
-    if (selectedMesa && selectedMesa !== "all" && !targetIds.length) setTargetIds([selectedMesa]);
-  }, [selectedMesa, targetIds.length]);
-  const entries = payload.entries ?? [];
-  const mesas = payload.mesas ?? [];
-  const selected = useMemo(
-    () => entries.find((entry) => entry.id === selectedId) ?? null,
-    [entries, selectedId],
-  );
-  function choose(entry: Entry) {
-    setSelectedId(entry.id);
-    setDraft({
-      type: entry.type,
-      title: entry.title,
-      canonicalStatus: entry.canonicalStatus,
-      editorialStatus: entry.editorialStatus,
-      publicContent: entry.publicContent,
-      privateNotes: entry.privateNotes,
-      mediaAssetId: entry.mediaAssetId,
+    const query = new URLSearchParams({
+      view: "teacher",
+      mesaId: selectedMesa,
+      studentId: selectedStudent,
     });
-    setTargetIds(entry.publicationMesaIds);
-    setMessage("");
-  }
-  function newEntry() {
+    const response = await fetch(`/api/gerusa/pedagogy?${query}`, {
+      credentials: "same-origin",
+      cache: "no-store",
+    });
+    const data = (await response.json().catch(() => ({}))) as Payload;
+    if (!response.ok) throw new Error(data.error || "Não foi possível carregar as aventuras.");
+    setPayload(data);
+  }, [selectedMesa, selectedStudent]);
+  useEffect(() => {
+    void refresh().catch((cause) =>
+      setError(cause instanceof Error ? cause.message : "Falha ao carregar."),
+    );
+  }, [refresh]);
+  useEffect(() => {
     setSelectedId(null);
-    setDraft(emptyDraft);
-    setTargetIds(selectedMesa && selectedMesa !== "all" ? [selectedMesa] : []);
-    setMessage("");
-  }
-  async function save() {
+    setDraft({ ...blank });
+    setScenesJson("[]");
+    setNpcsJson("[]");
+  }, [selectedMesa, selectedStudent]);
+
+  const choose = (adventure: Adventure) => {
+    setSelectedId(adventure.id);
+    const { id: _id, studentId: _studentId, status: _status, ...values } = adventure;
+    setDraft({ ...blank, ...values });
+    setScenesJson(JSON.stringify(adventure.scenes, null, 2));
+    setNpcsJson(JSON.stringify(adventure.npcs, null, 2));
+    setError("");
+  };
+  const save = async (value = draft, id = selectedId) => {
+    if (!selectedMesa || !selectedStudent) return;
     setBusy(true);
-    setMessage("");
+    setError("");
+    setNotice("");
     try {
-      const response = await fetch("/api/campaign-continuity", {
+      const scenes = JSON.parse(scenesJson) as unknown[];
+      const npcs = JSON.parse(npcsJson) as unknown[];
+      if (!Array.isArray(scenes) || !Array.isArray(npcs))
+        throw new Error("Cenas e NPCs precisam ser listas JSON.");
+      const response = await fetch("/api/gerusa/pedagogy", {
         method: "POST",
         credentials: "same-origin",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: selectedId ? "update" : "create",
-          entryId: selectedId,
-          ...draft,
+          action: "save_adventure",
+          mesaId: selectedMesa,
+          studentId: selectedStudent,
+          ...value,
+          scenes,
+          npcs,
+          id,
         }),
       });
-      const next = (await readPayload(response)) as Payload & { entry?: Entry };
-      if (next.entry) {
-        setSelectedId(next.entry.id);
-        choose(next.entry);
-      }
-      await load();
-      setMessage("Estado persistido no PostgreSQL.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Falha ao salvar.");
+      const data = (await response.json().catch(() => ({}))) as {
+        adventureId?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.adventureId)
+        throw new Error(data.error || "Não foi possível salvar a aventura.");
+      setSelectedId(data.adventureId);
+      await refresh();
+      setNotice("Aventura salva no PostgreSQL Gerusa.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao salvar.");
     } finally {
       setBusy(false);
     }
-  }
-  async function upload(file: File) {
-    if (!selectedMesa || selectedMesa === "all") {
-      setMessage("Escolha uma Mesa antes do upload.");
-      return;
-    }
+  };
+  const generate = async () => {
+    if (!selectedMesa || !selectedStudent) return;
     setBusy(true);
-    setMessage("");
+    setError("");
+    setNotice("");
     try {
-      const form = new FormData();
-      form.set("mesaId", selectedMesa);
-      form.set("file", file);
-      const next = (await readPayload(
-        await fetch("/api/campaign-continuity", {
-          method: "POST",
-          credentials: "same-origin",
-          body: form,
+      const response = await fetch("/api/gerusa/action", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "adventure",
+          mesaId: selectedMesa,
+          studentId: selectedStudent,
+          fields: {
+            campaignId: draft.campaignId,
+            theme: draft.title,
+            premise: draft.premise,
+            objective: draft.pedagogicalObjective,
+            grammar: draft.grammarTarget,
+            vocabulary: draft.vocabulary,
+            durationMinutes: draft.estimatedMinutes,
+            tone: draft.tone,
+            difficulty: draft.difficulty,
+          },
         }),
-      )) as Payload & { mediaAssetId?: string };
-      if (!next.mediaAssetId) throw new Error("upload_without_reference");
-      setDraft((value) => ({ ...value, mediaAssetId: next.mediaAssetId! }));
-      setMessage("Imagem recebida; salve a entrada para associá-la.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Falha no upload.");
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        proposal?: Omit<Adventure, "id" | "studentId" | "status">;
+        error?: string;
+      };
+      if (!response.ok || !data.proposal)
+        throw new Error(data.error || "Gerusa não gerou a aventura.");
+      setSelectedId(null);
+      setDraft({ ...blank, ...data.proposal, campaignId: draft.campaignId });
+      setScenesJson(JSON.stringify(data.proposal.scenes, null, 2));
+      setNpcsJson(JSON.stringify(data.proposal.npcs, null, 2));
+      setNotice("Aventura estruturada. Revise e salve após editar.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha na geração.");
     } finally {
       setBusy(false);
     }
-  }
-  async function publish(action: "publish" | "hide") {
-    if (!selectedId || !targetIds.length) {
-      setMessage("Selecione a entrada e pelo menos uma Mesa.");
-      return;
-    }
-    if (action === "publish" && !draft.publicContent.trim()) {
-      setMessage("Preencha o conteúdo público antes de revelar a entrada.");
-      return;
-    }
+  };
+  const archive = async (adventure: Adventure) => {
+    if (!window.confirm(`Arquivar “${adventure.title}”?`)) return;
     setBusy(true);
-    setMessage("");
+    setError("");
     try {
-      await readPayload(
-        await fetch("/api/campaign-continuity", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, entryId: selectedId, mesaIds: targetIds }),
+      const response = await fetch("/api/gerusa/pedagogy", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: adventure.status === "archived" ? "reopen_adventure" : "archive_adventure",
+          mesaId: selectedMesa,
+          studentId: selectedStudent,
+          adventureId: adventure.id,
         }),
-      );
-      await load();
-      setMessage(
-        action === "publish"
-          ? "Revelação publicada na Mesa escolhida."
-          : "Revelação ocultada sem apagar o conteúdo.",
-      );
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Falha na publicação.");
+      });
+      const data = (await response.json().catch(() => ({}))) as { error?: string };
+      if (!response.ok) throw new Error(data.error || "Não foi possível alterar o arquivo.");
+      await refresh();
+      setNotice(adventure.status === "archived" ? "Aventura reaberta." : "Aventura arquivada.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha ao arquivar.");
     } finally {
       setBusy(false);
     }
-  }
-  async function archive() {
-    if (!selectedId || !window.confirm("Arquivar esta entrada operacional?")) return;
-    setBusy(true);
-    try {
-      await readPayload(
-        await fetch("/api/campaign-continuity", {
-          method: "POST",
-          credentials: "same-origin",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "archive", entryId: selectedId }),
-        }),
-      );
-      newEntry();
-      await load();
-      setMessage("Entrada arquivada.");
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : "Falha ao arquivar.");
-    } finally {
-      setBusy(false);
-    }
-  }
-  const change = (key: keyof typeof draft, value: string) =>
-    setDraft((current) => ({ ...current, [key]: value }));
+  };
+  const duplicate = (adventure: Adventure) => {
+    choose(adventure);
+    setSelectedId(null);
+    setDraft((current) => ({ ...current, title: `${adventure.title} (cópia)` }));
+  };
+  const updateArray = (key: (typeof arrayFields)[number], value: string) =>
+    setDraft((current) => ({
+      ...current,
+      [key]: value
+        .split("\n")
+        .map((item) => item.trim())
+        .filter(Boolean),
+    }));
+
   return (
     <section
-      className="mb-6 rounded-xl border border-white/10 bg-[#0C0B12]/90 p-5 text-[#F3EBDD]"
-      aria-label="Continuidade viva das campanhas"
+      className="mb-6 rounded-2xl border border-[#742233]/50 bg-[#180b11] p-4 text-[#f5e9df] sm:p-6"
+      aria-label="Aventuras e continuidade pedagógica"
     >
-      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-white/10 pb-4">
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-[#742233]/40 pb-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.28em] text-[color:var(--gold)]">
-            Dossiê vivo
+          <p className="text-xs uppercase tracking-[0.2em] text-[#d5a56c]">
+            Continuidade narrativa e pedagógica
           </p>
-          <h2 className="mt-1 text-xl font-semibold">Continuidade das campanhas</h2>
-          <p className="mt-1 text-xs text-[#F3EBDD]/55">
-            Uma entrada, publicação seletiva por Mesa e notas do Mestre fora do payload do jogador.
+          <h2 className="serif mt-1 text-2xl">
+            {libraryMode ? "Biblioteca de aventuras e aulas" : "Aventuras"}
+          </h2>
+          <p className="mt-1 text-sm text-[#e7c9b7]/70">
+            Contexto de {selected?.title ? selected.title : "aluno e campanha selecionados"}.
           </p>
         </div>
         <button
           type="button"
-          onClick={newEntry}
-          className="min-h-11 rounded-lg border border-[color:var(--gold)]/50 px-3 text-xs uppercase tracking-[0.12em] text-[color:var(--gold)]"
+          className={button}
+          onClick={() => {
+            setSelectedId(null);
+            setDraft({ ...blank });
+            setNotice("");
+          }}
         >
-          Nova entrada
+          Nova aventura
         </button>
       </header>
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(13rem,0.7fr)_minmax(0,1.3fr)]">
-        <div className="space-y-2">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-[#F3EBDD]/45">
-            Entradas persistidas
-          </p>
-          {entries.length ? (
-            entries.map((entry) => (
-              <button
-                key={entry.id}
-                type="button"
-                onClick={() => choose(entry)}
-                className={`min-h-11 w-full rounded-lg border px-3 py-2 text-left ${selectedId === entry.id ? "border-[color:var(--gold)]/70 bg-[color:var(--gold)]/10" : "border-white/10 bg-white/[0.02]"}`}
-              >
-                <span className="block truncate text-sm">{entry.title}</span>
-                <span className="mt-1 block text-[10px] uppercase tracking-[0.14em] text-[#F3EBDD]/45">
-                  {entry.type} · {entry.editorialStatus} · {entry.publicationMesaIds.length} Mesa(s)
-                </span>
-              </button>
-            ))
-          ) : (
-            <p className="rounded-lg border border-white/10 p-3 text-xs text-[#F3EBDD]/50">
-              Nenhuma entrada criada.
-            </p>
-          )}
-        </div>
-        <div className="space-y-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-xs text-[#F3EBDD]/65">
-              Tipo
-              <select
-                value={draft.type}
-                onChange={(event) => change("type", event.target.value)}
-                className="mt-1 min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 text-sm text-[#F3EBDD]"
-              >
-                <option>NPC</option>
-                <option>LOCAL</option>
-                <option>OBJETO</option>
-                <option>PISTA</option>
-                <option>EVENTO</option>
-                <option>DIARIO</option>
-                <option>IMAGEM</option>
-              </select>
-            </label>
-            <label className="text-xs text-[#F3EBDD]/65">
-              Status canônico
-              <select
-                value={draft.canonicalStatus}
-                onChange={(event) => change("canonicalStatus", event.target.value)}
-                className="mt-1 min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 text-sm text-[#F3EBDD]"
-              >
-                <option>PLANNED</option>
-                <option>OPEN</option>
-                <option>PLAYED_CONFIRMED</option>
-                <option>RECOVERED_SESSION_NOTE</option>
-                <option>CAMPAIGN_CANON</option>
-                <option>CAMPAIGN_LOCK</option>
-              </select>
-            </label>
-          </div>
-          <label className="block text-xs text-[#F3EBDD]/65">
-            Nome / título
-            <input
-              value={draft.title}
-              onChange={(event) => change("title", event.target.value)}
-              className="mt-1 min-h-11 w-full rounded-lg border border-white/10 bg-black/25 px-3 text-sm text-[#F3EBDD]"
-              placeholder="Ex.: Berta"
-            />
-          </label>
-          <label className="block text-xs text-[#F3EBDD]/65">
-            Conteúdo público
-            <textarea
-              value={draft.publicContent}
-              onChange={(event) => change("publicContent", event.target.value)}
-              className="mt-1 min-h-24 w-full rounded-lg border border-white/10 bg-black/25 p-3 text-sm text-[#F3EBDD]"
-              placeholder="O que jogadores podem ler quando a entrada for revelada."
-            />
-          </label>
-          <label className="block text-xs text-[#F3EBDD]/65">
-            Notas privadas do Mestre
-            <textarea
-              value={draft.privateNotes}
-              onChange={(event) => change("privateNotes", event.target.value)}
-              className="mt-1 min-h-20 w-full rounded-lg border border-red-300/20 bg-red-950/10 p-3 text-sm text-[#F3EBDD]"
-              placeholder="Nunca é incluído no payload do jogador."
-            />
-          </label>
-          <div className="flex flex-wrap items-center gap-2">
-            <label className="inline-flex min-h-11 cursor-pointer items-center rounded-lg border border-white/10 px-3 text-xs">
-              <span>Subir imagem real</span>
-              <input
-                type="file"
-                accept="image/png,image/jpeg,image/webp"
-                className="sr-only"
-                onChange={(event) => {
-                  const file = event.target.files?.[0];
-                  if (file) void upload(file);
-                  event.currentTarget.value = "";
-                }}
-              />
-            </label>
-            {draft.mediaAssetId ? (
-              <span className="text-xs text-[#F3EBDD]/55">
-                Referência de mídia: {draft.mediaAssetId.split("/").pop()}
-              </span>
-            ) : null}
-          </div>
-          <div className="rounded-lg border border-white/10 p-3">
-            <p className="text-[10px] uppercase tracking-[0.16em] text-[#F3EBDD]/45">
-              Publicar por Mesa
-            </p>
-            <div className="mt-2 grid gap-2 sm:grid-cols-2">
-              {mesas.map((mesa) => (
-                <label key={mesa.id} className="inline-flex min-h-11 items-center gap-2 text-xs">
-                  <input
-                    type="checkbox"
-                    checked={targetIds.includes(mesa.id)}
-                    onChange={(event) =>
-                      setTargetIds((ids) =>
-                        event.target.checked
-                          ? [...new Set([...ids, mesa.id])]
-                          : ids.filter((id) => id !== mesa.id),
-                      )
-                    }
-                  />
-                  {mesa.name}
-                </label>
+      {error ? (
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-400/30 p-3 text-sm text-red-200"
+        >
+          {error}
+        </p>
+      ) : null}
+      {notice ? (
+        <p
+          role="status"
+          className="mt-4 rounded-lg border border-[#8a3045]/40 p-3 text-sm text-[#f0c59a]"
+        >
+          {notice}
+        </p>
+      ) : null}
+      {!libraryMode ? (
+        <div className="mt-4 grid gap-3 rounded-xl border border-[#742233]/35 bg-[#10070b]/60 p-4 sm:grid-cols-2">
+          <label className="text-sm">
+            Campanha
+            <select
+              className={field}
+              value={draft.campaignId ?? ""}
+              onChange={(e) => setDraft({ ...draft, campaignId: e.target.value || null })}
+            >
+              <option value="">Mesa atual</option>
+              {payload.mesa?.campaigns?.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
               ))}
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
+            </select>
+          </label>
+          <label className="text-sm">
+            Título / tema
+            <input
+              className={field}
+              value={draft.title}
+              onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+            />
+          </label>
+          <label className="text-sm sm:col-span-2">
+            Premissa
+            <textarea
+              className={field}
+              rows={2}
+              value={draft.premise}
+              onChange={(e) => setDraft({ ...draft, premise: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Objetivo pedagógico
+            <input
+              className={field}
+              value={draft.pedagogicalObjective}
+              onChange={(e) => setDraft({ ...draft, pedagogicalObjective: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Gramática alvo
+            <input
+              className={field}
+              value={draft.grammarTarget}
+              onChange={(e) => setDraft({ ...draft, grammarTarget: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Vocabulário
+            <textarea
+              className={field}
+              rows={2}
+              value={lines(draft.vocabulary)}
+              onChange={(e) => updateArray("vocabulary", e.target.value)}
+              placeholder="Uma expressão por linha"
+            />
+          </label>
+          <label className="text-sm">
+            Duração (minutos)
+            <input
+              className={field}
+              type="number"
+              min={5}
+              max={240}
+              value={draft.estimatedMinutes ?? 45}
+              onChange={(e) => setDraft({ ...draft, estimatedMinutes: Number(e.target.value) })}
+            />
+          </label>
+          <label className="text-sm">
+            Tom
+            <input
+              className={field}
+              value={draft.tone}
+              onChange={(e) => setDraft({ ...draft, tone: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Dificuldade
+            <input
+              className={field}
+              value={draft.difficulty}
+              onChange={(e) => setDraft({ ...draft, difficulty: e.target.value })}
+            />
+          </label>
+          <label className="text-sm sm:col-span-2">
+            Cenas — JSON editável
+            <textarea
+              className={field + " font-mono text-xs"}
+              rows={6}
+              value={scenesJson}
+              onChange={(e) => setScenesJson(e.target.value)}
+            />
+          </label>
+          <label className="text-sm">
+            NPCs — JSON
+            <textarea
+              className={field + " font-mono text-xs"}
+              rows={4}
+              value={npcsJson}
+              onChange={(e) => setNpcsJson(e.target.value)}
+            />
+          </label>
+          <label className="text-sm">
+            Escolhas
+            <textarea
+              className={field}
+              rows={3}
+              value={lines(draft.choices)}
+              onChange={(e) =>
+                setDraft({ ...draft, choices: e.target.value.split("\n").filter(Boolean) })
+              }
+            />
+          </label>
+          <label className="text-sm">
+            Desafios
+            <textarea
+              className={field}
+              rows={3}
+              value={lines(draft.challenges)}
+              onChange={(e) => updateArray("challenges", e.target.value)}
+            />
+          </label>
+          <label className="text-sm">
+            Perguntas em inglês
+            <textarea
+              className={field}
+              rows={3}
+              value={lines(draft.englishQuestions)}
+              onChange={(e) => updateArray("englishQuestions", e.target.value)}
+            />
+          </label>
+          <label className="text-sm">
+            Apoios possíveis
+            <textarea
+              className={field}
+              rows={3}
+              value={lines(draft.supports)}
+              onChange={(e) => updateArray("supports", e.target.value)}
+            />
+          </label>
+          <label className="text-sm">
+            Conclusão
+            <textarea
+              className={field}
+              rows={2}
+              value={draft.conclusion}
+              onChange={(e) => setDraft({ ...draft, conclusion: e.target.value })}
+            />
+          </label>
+          <label className="text-sm">
+            Gancho
+            <textarea
+              className={field}
+              rows={2}
+              value={draft.hook}
+              onChange={(e) => setDraft({ ...draft, hook: e.target.value })}
+            />
+          </label>
+          <label className="text-sm sm:col-span-2">
+            Tarefa sugerida
+            <textarea
+              className={field}
+              rows={2}
+              value={draft.suggestedTask}
+              onChange={(e) => setDraft({ ...draft, suggestedTask: e.target.value })}
+            />
+          </label>
+          <div className="sm:col-span-2 flex flex-wrap gap-2">
             <button
               type="button"
+              className={button}
+              disabled={busy}
+              onClick={() => void generate()}
+            >
+              Gerusa, gerar aventura
+            </button>
+            <button
+              type="button"
+              className={button}
               disabled={busy || !draft.title.trim()}
               onClick={() => void save()}
-              className="min-h-11 rounded-lg bg-[color:var(--gold)] px-4 text-xs font-semibold uppercase tracking-[0.12em] text-black disabled:opacity-50"
             >
-              Salvar estado
+              {selectedId ? "Salvar alterações" : "Salvar aventura"}
             </button>
-            <button
-              type="button"
-              disabled={busy || !selectedId || !targetIds.length || !draft.publicContent.trim()}
-              onClick={() => void publish("publish")}
-              className="min-h-11 rounded-lg border border-emerald-300/40 px-4 text-xs uppercase tracking-[0.12em] text-emerald-200 disabled:opacity-50"
-            >
-              Revelar selecionadas
-            </button>
-            <button
-              type="button"
-              disabled={busy || !selectedId || !targetIds.length}
-              onClick={() => void publish("hide")}
-              className="min-h-11 rounded-lg border border-amber-300/30 px-4 text-xs uppercase tracking-[0.12em] text-amber-100 disabled:opacity-50"
-            >
-              Ocultar selecionadas
-            </button>
-            {selectedId ? (
-              <button
-                type="button"
-                disabled={busy}
-                onClick={() => void archive()}
-                className="min-h-11 rounded-lg border border-red-300/30 px-4 text-xs uppercase tracking-[0.12em] text-red-200 disabled:opacity-50"
-              >
-                Arquivar
-              </button>
-            ) : null}
           </div>
-          {message ? (
-            <p role="status" className="text-xs text-[#F3EBDD]/65">
-              {message}
-            </p>
-          ) : null}
-          {selected?.mediaUrl ? (
-            <img
-              src={selected.mediaUrl}
-              alt={selected.title}
-              className="max-h-48 rounded-lg border border-white/10 object-contain"
-            />
-          ) : null}
         </div>
+      ) : null}
+      <div className="mt-5 grid gap-3 lg:grid-cols-2">
+        {adventures.map((adventure) => (
+          <article
+            key={adventure.id}
+            className="rounded-xl border border-[#742233]/40 bg-[#10070b]/60 p-4"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <h3 className="serif text-xl">{adventure.title}</h3>
+                <p className="mt-1 text-xs text-[#e7c9b7]/65">
+                  {adventure.status === "archived" ? "Arquivada" : "Ativa"} ·{" "}
+                  {adventure.grammarTarget || "sem gramática alvo"}
+                </p>
+              </div>
+              <span className="text-sm text-[#d5a56c]">
+                {adventure.estimatedMinutes ?? "—"} min
+              </span>
+            </div>
+            <p className="mt-3 text-sm text-[#e7c9b7]/80">{adventure.premise}</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {!libraryMode ? (
+                <>
+                  <button className={button} type="button" onClick={() => choose(adventure)}>
+                    Editar
+                  </button>
+                  <button className={button} type="button" onClick={() => duplicate(adventure)}>
+                    Duplicar
+                  </button>
+                  <button
+                    className={button}
+                    type="button"
+                    disabled={busy}
+                    onClick={() => void archive(adventure)}
+                  >
+                    {adventure.status === "archived" ? "Reabrir" : "Arquivar"}
+                  </button>
+                </>
+              ) : null}
+              <span className="text-xs text-[#e7c9b7]/60">
+                {(adventure.vocabulary ?? []).join(", ")}
+              </span>
+            </div>
+          </article>
+        ))}
+        {!adventures.length ? (
+          <p className="text-sm text-[#e7c9b7]/65">Nenhuma aventura salva neste contexto.</p>
+        ) : null}
       </div>
+      <section className="mt-6 border-t border-[#742233]/35 pt-4">
+        <h3 className="serif text-xl">Histórico pedagógico</h3>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          {(payload.lessons ?? []).map((lesson) => (
+            <article key={lesson.id} className="rounded-lg border border-[#742233]/30 p-3">
+              <strong>{lesson.title}</strong>
+              <p className="mt-1 text-xs text-[#e7c9b7]/65">
+                {lesson.status} ·{" "}
+                {dateLabel(
+                  (payload.sessions ?? []).find((item) => item.lessonId === lesson.id)?.endedAt ??
+                    null,
+                )}
+              </p>
+              <p className="mt-2 text-sm text-[#e7c9b7]/80">
+                Aventura: {adventures.find((item) => item.id === lesson.adventureId)?.title ?? "—"}
+              </p>
+              {(payload.sessions ?? []).find((item) => item.lessonId === lesson.id)?.summary ? (
+                <pre className="mt-2 whitespace-pre-wrap text-xs">
+                  {JSON.stringify(
+                    (payload.sessions ?? []).find((item) => item.lessonId === lesson.id)?.summary,
+                    null,
+                    2,
+                  )}
+                </pre>
+              ) : null}
+            </article>
+          ))}
+        </div>
+        <ul className="mt-3 space-y-2">
+          {(payload.records ?? []).slice(0, 8).map((record) => (
+            <li key={record.id} className="rounded-lg border border-[#742233]/25 p-3 text-sm">
+              <time className="mr-2 text-xs text-[#d5a56c]">{dateLabel(record.createdAt)}</time>
+              {record.observation}
+            </li>
+          ))}
+        </ul>
+      </section>
+      {libraryMode ? (
+        <section className="mt-5 grid gap-3 sm:grid-cols-2">
+          <article className="rounded-xl border border-[#742233]/35 p-4">
+            <h3 className="serif text-xl">Tarefas</h3>
+            <ul className="mt-2 space-y-2">
+              {(payload.assignments ?? []).slice(0, 12).map((item) => (
+                <li key={item.id} className="rounded-lg bg-[#10070b] p-3 text-sm">
+                  <strong>{item.title}</strong>
+                  <span className="ml-2 text-xs text-[#d5a56c]">
+                    {item.status} · {item.studentName}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            {!payload.assignments?.length ? (
+              <p className="mt-2 text-sm text-[#e7c9b7]/65">Nenhuma tarefa encontrada.</p>
+            ) : null}
+          </article>
+          <article className="rounded-xl border border-[#742233]/35 p-4">
+            <h3 className="serif text-xl">Personagens</h3>
+            <ul className="mt-2 space-y-2">
+              {(payload.characters ?? []).map((item) => (
+                <li key={item.id} className="rounded-lg bg-[#10070b] p-3 text-sm">
+                  <strong>{item.name}</strong>
+                  <span className="ml-2 text-xs text-[#d5a56c]">{dateLabel(item.updatedAt)}</span>
+                </li>
+              ))}
+            </ul>
+            {!payload.characters?.length ? (
+              <p className="mt-2 text-sm text-[#e7c9b7]/65">
+                Nenhuma ficha encontrada neste contexto.
+              </p>
+            ) : null}
+          </article>
+        </section>
+      ) : null}
     </section>
   );
 }

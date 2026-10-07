@@ -1,6 +1,11 @@
 import { useCallback, useState } from "react";
 import { createFileRoute, useNavigate, useRouter } from "@tanstack/react-router";
 import { MasterCommandCenter } from "@/components/MasterCommandCenter";
+import { MasterSheetsPanel } from "@/components/MasterSheetsPanel";
+import { MesaLiveSessionPanel } from "@/components/MesaLiveSessionPanel";
+import { CampaignContinuityManager } from "@/components/CampaignContinuityManager";
+import { CharacterReviewQueue } from "@/components/CharacterReviewQueue";
+import { MasterOperationalRail } from "@/components/MasterOperationalRail";
 import { useProfile } from "@/lib/use-profile";
 import { signOutLocal } from "@/lib/local-auth-client";
 import { toast } from "sonner";
@@ -16,6 +21,9 @@ function MestrePage() {
       ? (new URLSearchParams(window.location.search).get("mesaId") ?? undefined)
       : undefined,
   );
+  const [selectedStudent, setSelectedStudent] = useState<string | undefined>();
+  const [tab, setTab] = useState("overview");
+  const [focusLessonId, setFocusLessonId] = useState<string | undefined>();
   const handleMesaChange = useCallback((mesaId: string) => {
     setSelectedMesa(mesaId);
     if (typeof window === "undefined") return;
@@ -23,6 +31,18 @@ function MestrePage() {
     if (mesaId) url.searchParams.set("mesaId", mesaId);
     else url.searchParams.delete("mesaId");
     window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+  }, []);
+  const changeMesaAndStudent = useCallback(
+    (mesaId: string) => {
+      handleMesaChange(mesaId);
+      setSelectedStudent(undefined);
+      setFocusLessonId(undefined);
+    },
+    [handleMesaChange],
+  );
+  const changeStudent = useCallback((studentId: string) => {
+    setSelectedStudent(studentId);
+    setFocusLessonId(undefined);
   }, []);
   async function logout() {
     try {
@@ -53,7 +73,82 @@ function MestrePage() {
         </button>
       </header>
       <main className="mx-auto max-w-6xl">
-        <MasterCommandCenter selectedMesa={selectedMesa} onSelectedMesaChange={handleMesaChange} />
+        <MasterCommandCenter
+          selectedMesa={selectedMesa}
+          onSelectedMesaChange={changeMesaAndStudent}
+          selectedStudent={selectedStudent}
+          onSelectedStudentChange={changeStudent}
+        />
+        <nav className="mb-5 flex gap-2 overflow-x-auto pb-2" aria-label="Ferramentas pedagógicas">
+          {[
+            ["overview", "Visão geral"],
+            ["planning", "Planejamento"],
+            ["adventures", "Aventuras"],
+            ["lesson", "Aula ao vivo"],
+            ["tasks", "Tarefas"],
+            ["library", "Biblioteca"],
+          ].map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              aria-current={tab === value ? "page" : undefined}
+              className={`min-h-11 shrink-0 rounded-lg border px-4 text-sm ${tab === value ? "border-[#d5a56c]/60 bg-[#4c1425] text-[#fff4e8]" : "border-[#742233]/50 bg-[#180b11] text-[#e7c9b7]/75"}`}
+              onClick={() => setTab(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
+        {tab === "overview" ? (
+          <>
+            <MasterSheetsPanel
+              selectedMesa={selectedMesa}
+              selectedStudent={selectedStudent}
+              onOpenSession={(lessonId) => {
+                setFocusLessonId(lessonId);
+                setTab("lesson");
+              }}
+            />
+            <MasterOperationalRail
+              mesaId={selectedMesa ?? null}
+              studentId={selectedStudent}
+              onNavigate={setTab}
+            />
+          </>
+        ) : null}
+        {tab === "planning" ? (
+          <MasterSheetsPanel
+            selectedMesa={selectedMesa}
+            selectedStudent={selectedStudent}
+            onOpenSession={(lessonId) => {
+              setFocusLessonId(lessonId);
+              setTab("lesson");
+            }}
+          />
+        ) : null}
+        {tab === "adventures" ? (
+          <CampaignContinuityManager
+            selectedMesa={selectedMesa}
+            selectedStudent={selectedStudent}
+          />
+        ) : null}
+        {tab === "lesson" ? (
+          <MesaLiveSessionPanel
+            mesaId={selectedMesa}
+            studentId={selectedStudent}
+            focusLessonId={focusLessonId}
+          />
+        ) : null}
+        {tab === "tasks" ? (
+          <CharacterReviewQueue mesaId={selectedMesa} studentId={selectedStudent} />
+        ) : null}
+        {tab === "library" ? (
+          <CampaignContinuityManager
+            selectedMesa={selectedMesa}
+            selectedStudent={selectedStudent}
+            libraryMode
+          />
+        ) : null}
       </main>
     </div>
   );

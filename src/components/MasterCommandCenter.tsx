@@ -10,17 +10,34 @@ type Student = {
 };
 type Campaign = { id: string; mesaId: string; mesaName: string; name: string; status: string };
 type Summary = { mesas?: Mesa[]; players?: Student[]; campaigns?: Campaign[]; error?: string };
+type Pedagogy = {
+  lessons?: Array<{
+    id: string;
+    title: string;
+    scheduledAt: string | null;
+    status: string;
+    grammar: string;
+  }>;
+  assignments?: Array<{ id: string; title: string; status: string }>;
+  sessions?: Array<{ lessonId: string; endedAt: string | null }>;
+  records?: Array<{ skill: string; observation: string; createdAt: string }>;
+};
 
 export function MasterCommandCenter({
   selectedMesa,
   onSelectedMesaChange,
+  selectedStudent,
+  onSelectedStudentChange,
 }: {
   selectedMesa?: string;
   onSelectedMesaChange: (mesaId: string) => void;
+  selectedStudent?: string;
+  onSelectedStudentChange: (studentId: string) => void;
 }) {
   const [summary, setSummary] = useState<Summary>({});
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pedagogy, setPedagogy] = useState<Pedagogy>({});
 
   useEffect(() => {
     let active = true;
@@ -55,6 +72,33 @@ export function MasterCommandCenter({
     (campaign) => !mesaId || campaign.mesaId === mesaId,
   );
 
+  useEffect(() => {
+    let active = true;
+    if (!mesaId || !selectedStudent) {
+      setPedagogy({});
+      return;
+    }
+    const query = new URLSearchParams({ view: "teacher", mesaId, studentId: selectedStudent });
+    void fetch(`/api/gerusa/pedagogy?${query}`, { credentials: "same-origin", cache: "no-store" })
+      .then(async (response) => {
+        const data = (await response.json().catch(() => ({}))) as Pedagogy;
+        if (!response.ok) throw new Error("pedagogy_summary_failed");
+        if (active) setPedagogy(data);
+      })
+      .catch(() => {
+        if (active) setPedagogy({});
+      });
+    return () => {
+      active = false;
+    };
+  }, [mesaId, selectedStudent]);
+
+  useEffect(() => {
+    if (students.length && !students.some((student) => student.id === selectedStudent)) {
+      onSelectedStudentChange(students[0].id);
+    }
+  }, [onSelectedStudentChange, selectedStudent, students]);
+
   return (
     <section
       className="mb-6 rounded-2xl border border-[#742233]/50 bg-[#180b11] p-5 text-[#f5e9df]"
@@ -65,22 +109,40 @@ export function MasterCommandCenter({
           <p className="text-xs uppercase tracking-[0.2em] text-[#d5a56c]">Gerusa · Professora</p>
           <h1 className="serif mt-1 text-3xl">Mesa de histórias</h1>
         </div>
-        <label className="min-w-56 text-xs uppercase tracking-[0.15em] text-[#e7c9b7]/70">
-          Campanha / grupo
-          <select
-            value={selectedMesa ?? ""}
-            onChange={(event) => onSelectedMesaChange(event.target.value)}
-            disabled={loading || !mesas.length}
-            aria-label="Selecionar campanha ou grupo"
-            className="mt-2 min-h-11 w-full rounded-lg border border-[#743044] bg-[#10070b] px-3 text-sm normal-case tracking-normal text-[#f5e9df]"
-          >
-            {mesas.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="grid min-w-56 gap-3 sm:grid-cols-2">
+          <label className="text-xs uppercase tracking-[0.15em] text-[#e7c9b7]/70">
+            Mesa / grupo
+            <select
+              value={selectedMesa ?? ""}
+              onChange={(event) => onSelectedMesaChange(event.target.value)}
+              disabled={loading || !mesas.length}
+              aria-label="Selecionar campanha ou grupo"
+              className="mt-2 min-h-11 w-full rounded-lg border border-[#743044] bg-[#10070b] px-3 text-sm normal-case tracking-normal text-[#f5e9df]"
+            >
+              {mesas.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs uppercase tracking-[0.15em] text-[#e7c9b7]/70">
+            Aluno atual
+            <select
+              value={selectedStudent ?? ""}
+              onChange={(event) => onSelectedStudentChange(event.target.value)}
+              disabled={loading || !students.length}
+              aria-label="Selecionar aluno"
+              className="mt-2 min-h-11 w-full rounded-lg border border-[#743044] bg-[#10070b] px-3 text-sm normal-case tracking-normal text-[#f5e9df]"
+            >
+              {students.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name || "Aluno"}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
       {error ? (
         <p role="alert" className="mt-4 rounded border border-red-400/30 p-3 text-sm text-red-200">
@@ -117,7 +179,13 @@ export function MasterCommandCenter({
                     key={`${student.id}:${student.mesaId}`}
                     className="flex flex-wrap justify-between gap-2 px-4 py-3 text-sm"
                   >
-                    <span>{student.name || "Aluno"}</span>
+                    <button
+                      type="button"
+                      onClick={() => onSelectedStudentChange(student.id)}
+                      className="text-left hover:text-[#ffd6cc]"
+                    >
+                      {student.name || "Aluno"}
+                    </button>
                     <span className="flex items-center gap-3 text-[#e7c9b7]/65">
                       {student.mesaName}
                       {student.threadId ? (
@@ -135,6 +203,48 @@ export function MasterCommandCenter({
             ) : (
               <p className="mt-2 text-sm text-[#e7c9b7]/65">Nenhum aluno vinculado a esta mesa.</p>
             )}
+          </section>
+          <section className="mt-5" aria-label="Resumo pedagógico do aluno selecionado">
+            <h2 className="serif text-xl">
+              Próximos passos de{" "}
+              {students.find((student) => student.id === selectedStudent)?.name || "aluno"}
+            </h2>
+            <div className="mt-2 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {[
+                [
+                  "Próxima aula",
+                  pedagogy.lessons?.find((lesson) => lesson.status === "planned")?.title ||
+                    "Planejar aula",
+                ],
+                [
+                  "Aulas de hoje",
+                  String(
+                    (pedagogy.lessons ?? []).filter(
+                      (lesson) =>
+                        lesson.scheduledAt &&
+                        new Date(lesson.scheduledAt).toDateString() === new Date().toDateString(),
+                    ).length,
+                  ),
+                ],
+                [
+                  "Tarefas pendentes",
+                  String(
+                    (pedagogy.assignments ?? []).filter((item) =>
+                      ["draft", "published", "submitted"].includes(item.status),
+                    ).length,
+                  ),
+                ],
+                ["Última observação", pedagogy.records?.[0]?.observation || "Sem registros"],
+              ].map(([label, value]) => (
+                <article
+                  key={label}
+                  className="rounded-xl border border-[#742233]/35 bg-[#10070b]/55 p-3"
+                >
+                  <p className="text-xs uppercase tracking-wide text-[#d5a56c]">{label}</p>
+                  <p className="mt-1 line-clamp-2 text-sm">{value}</p>
+                </article>
+              ))}
+            </div>
           </section>
         </>
       ) : null}

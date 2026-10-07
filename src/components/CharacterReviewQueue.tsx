@@ -1,386 +1,517 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-type Character = {
+type Assignment = {
   id: string;
-  name: string;
-  playerName: string;
-  ownerDisplayName?: string;
-  snapshot: Record<string, unknown>;
-};
-type PendingProgression = {
-  id: string;
-  characterId: string;
-  characterName: string;
-  playerName: string;
-  fromMarco: number;
-  toMarco: number;
+  studentId: string;
+  studentName: string;
+  lessonId: string | null;
+  adventureId: string | null;
+  taskType: string;
+  title: string;
+  prompt: string;
+  content: Record<string, unknown>;
   status: string;
-  proposedSnapshot?: Record<string, unknown> | null;
-  epicManifestationStatus?: string | null;
-  epicManifestationFeedback?: string | null;
+  dueAt: string | null;
+  allowResubmit: boolean;
+  studentResponse: string | null;
+  submittedAt: string | null;
+  teacherFeedback: string | null;
+  reviewedAt: string | null;
 };
-type Precedent = PendingProgression;
-const trailOf = (snapshot: Record<string, unknown>) => {
-  const trails = Array.isArray(snapshot.trilhas) ? snapshot.trilhas : [];
-  const trail = trails[Number(snapshot.trilhaAtiva) || 0];
-  return trail && typeof trail === "object" ? (trail as Record<string, unknown>) : null;
+type Payload = {
+  assignments?: Assignment[];
+  lessons?: Array<{ id: string; title: string; adventureId: string | null }>;
+  adventures?: Array<{ id: string; title: string }>;
+  mesa?: { campaigns?: Array<{ id: string; name: string }> };
+  error?: string;
 };
-const manifestationOf = (snapshot?: Record<string, unknown> | null) => {
-  const trail = snapshot ? trailOf(snapshot) : null;
-  const items = trail && Array.isArray(trail.manifestacoesEpicas) ? trail.manifestacoesEpicas : [];
-  const item = items[items.length - 1];
-  return item && typeof item === "object" ? (item as Record<string, unknown>) : null;
+type Draft = {
+  title: string;
+  taskType: string;
+  prompt: string;
+  content: Record<string, unknown>;
+  dueAt: string;
+  allowResubmit: boolean;
+  lessonId: string;
+  adventureId: string;
+  campaignId: string;
 };
+const empty = (): Draft => ({
+  title: "",
+  taskType: "writing",
+  prompt: "",
+  content: {},
+  dueAt: "",
+  allowResubmit: true,
+  lessonId: "",
+  adventureId: "",
+  campaignId: "",
+});
+const field =
+  "min-h-11 w-full rounded-lg border border-[#743044] bg-[#10070b] px-3 py-2 text-sm text-[#f5e9df] placeholder:text-[#e7c9b7]/40";
+const button =
+  "min-h-10 rounded-lg border border-[#8a3045]/70 px-3 text-sm hover:bg-[#742233]/25 disabled:opacity-50";
+const taskTypes = [
+  ["writing", "Escrita"],
+  ["reading", "Leitura / interpretação"],
+  ["vocabulary", "Vocabulário"],
+  ["grammar", "Gramática"],
+  ["sentences", "Completar frases"],
+  ["questions", "Perguntas abertas"],
+  ["quiz", "Quiz"],
+  ["story_continuation", "Continuação narrativa"],
+  ["character_diary", "Diário do personagem"],
+];
+function localDateTime(value: string | null) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000).toISOString().slice(0, 16);
+}
 
-export function CharacterReviewQueue() {
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [progression, setProgression] = useState<PendingProgression[]>([]);
-  const [precedents, setPrecedents] = useState<Precedent[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [notes, setNotes] = useState<Record<string, string>>({});
-  async function load() {
-    setError(null);
-    const response = await fetch("/api/characters?reviewQueue=true", {
+export function CharacterReviewQueue({
+  mesaId,
+  studentId,
+}: {
+  mesaId?: string;
+  studentId?: string;
+}) {
+  const [payload, setPayload] = useState<Payload>({});
+  const [draft, setDraft] = useState<Draft>(empty());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [proposalJson, setProposalJson] = useState("");
+  const [feedback, setFeedback] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
+  const assignments = payload.assignments ?? [];
+  const refresh = useCallback(async () => {
+    if (!mesaId || !studentId) {
+      setPayload({});
+      return;
+    }
+    const query = new URLSearchParams({ view: "teacher", mesaId, studentId });
+    const response = await fetch(`/api/gerusa/pedagogy?${query}`, {
       credentials: "same-origin",
       cache: "no-store",
     });
-    const payload = (await response.json().catch(() => ({}))) as {
-      characters?: Character[];
-      progression?: PendingProgression[];
-      precedents?: Precedent[];
-      error?: string;
-    };
-    if (!response.ok) throw new Error(payload.error || "review_queue_failed");
-    setCharacters(payload.characters || []);
-    setProgression(payload.progression || []);
-    setPrecedents(payload.precedents || []);
-  }
+    const data = (await response.json().catch(() => ({}))) as Payload;
+    if (!response.ok) throw new Error(data.error || "Não foi possível carregar as tarefas.");
+    setPayload(data);
+  }, [mesaId, studentId]);
   useEffect(() => {
-    void load().catch((cause: unknown) =>
-      setError(cause instanceof Error ? cause.message : "review_queue_failed"),
+    void refresh().catch((cause) =>
+      setError(cause instanceof Error ? cause.message : "Falha ao carregar."),
     );
-  }, []);
-  async function decide(character: Character, action: "approve" | "reject") {
-    setBusy(character.id);
-    setError(null);
+  }, [refresh]);
+  useEffect(() => {
+    setDraft(empty());
+    setEditingId(null);
+    setFeedback({});
+  }, [mesaId, studentId]);
+  const post = async (body: Record<string, unknown>) => {
+    const response = await fetch("/api/gerusa/pedagogy", {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ mesaId, studentId, ...body }),
+    });
+    const data = (await response.json().catch(() => ({}))) as { error?: string };
+    if (!response.ok) throw new Error(data.error || "Ação não concluída.");
+  };
+  const save = async (value = draft, id = editingId) => {
+    setBusy(true);
+    setError("");
+    setNotice("");
     try {
-      const response = await fetch("/api/characters", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id: character.id, action, note: notes[character.id]?.trim() || "" }),
+      let content: Record<string, unknown>;
+      try {
+        const parsed: unknown = JSON.parse(proposalJson || JSON.stringify(value.content));
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed))
+          throw new Error("invalid");
+        content = parsed as Record<string, unknown>;
+      } catch {
+        throw new Error("Revise o JSON do conteúdo antes de salvar.");
+      }
+      await post({
+        action: "save_assignment",
+        id,
+        ...value,
+        content,
+        dueAt: value.dueAt || null,
+        lessonId: value.lessonId || null,
+        adventureId: value.adventureId || null,
+        campaignId: value.campaignId || null,
       });
-      const payload = (await response.json().catch(() => ({}))) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "character_review_failed");
-      await load();
+      setDraft(empty());
+      setEditingId(null);
+      setProposalJson("");
+      await refresh();
+      setNotice("Tarefa salva no PostgreSQL Gerusa.");
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "character_review_failed");
+      setError(cause instanceof Error ? cause.message : "Falha ao salvar.");
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
-  }
-  async function decideProgression(
-    item: PendingProgression,
-    action:
-      | "enable"
-      | "reject_progression"
-      | "approve_epic"
-      | "provisionally_approve_epic"
-      | "return_epic"
-      | "reject_epic",
-  ) {
-    setBusy(`progression:${item.id}`);
-    setError(null);
+  };
+  const generate = async () => {
+    if (!mesaId || !studentId) return;
+    const lessonId = draft.lessonId || payload.lessons?.[0]?.id;
+    if (!lessonId) {
+      setError("Vincule ou crie uma aula antes de gerar uma tarefa contextualizada.");
+      return;
+    }
+    setBusy(true);
+    setError("");
     try {
-      const response = await fetch("/api/characters", {
+      const response = await fetch("/api/gerusa/action", {
         method: "POST",
         credentials: "same-origin",
-        headers: { "content-type": "application/json" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          id: item.characterId,
-          action,
-          feedback: notes[item.id]?.trim() || "",
+          action: "task",
+          mesaId,
+          studentId,
+          lessonId,
+          fields: {
+            taskType: draft.taskType,
+            title: draft.title,
+            prompt: draft.prompt,
+            adventureId: draft.adventureId || null,
+          },
         }),
       });
-      const payload = (await response.json().catch(() => ({}))) as { error?: string };
-      if (!response.ok) throw new Error(payload.error || "progression_review_failed");
-      await load();
+      const data = (await response.json().catch(() => ({}))) as {
+        proposal?: {
+          taskType: string;
+          title: string;
+          prompt: string;
+          instructions: string[];
+          expectedEvidence: string;
+          grammarTarget: string;
+          vocabulary: string[];
+        };
+        error?: string;
+      };
+      if (!response.ok || !data.proposal)
+        throw new Error(data.error || "Gerusa não conseguiu gerar a tarefa.");
+      setDraft((current) => ({
+        ...current,
+        taskType: data.proposal!.taskType,
+        title: data.proposal!.title,
+        prompt: data.proposal!.prompt,
+        lessonId,
+        content: {
+          instructions: data.proposal!.instructions,
+          expectedEvidence: data.proposal!.expectedEvidence,
+          grammarTarget: data.proposal!.grammarTarget,
+          vocabulary: data.proposal!.vocabulary,
+        },
+      }));
+      setProposalJson(
+        JSON.stringify(
+          {
+            instructions: data.proposal.instructions,
+            expectedEvidence: data.proposal.expectedEvidence,
+            grammarTarget: data.proposal.grammarTarget,
+            vocabulary: data.proposal.vocabulary,
+          },
+          null,
+          2,
+        ),
+      );
+      setNotice(
+        "Proposta da Gerusa carregada. Edite título, instruções e vínculo antes de salvar.",
+      );
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : "progression_review_failed");
+      setError(cause instanceof Error ? cause.message : "Falha na geração.");
     } finally {
-      setBusy(null);
+      setBusy(false);
     }
-  }
+  };
+  const edit = (item: Assignment) => {
+    setEditingId(item.id);
+    setDraft({
+      title: item.title,
+      taskType: item.taskType,
+      prompt: item.prompt,
+      content: item.content,
+      dueAt: localDateTime(item.dueAt),
+      allowResubmit: item.allowResubmit,
+      lessonId: item.lessonId ?? "",
+      adventureId: item.adventureId ?? "",
+      campaignId: "",
+    });
+    setProposalJson(JSON.stringify(item.content, null, 2));
+  };
+  const act = async (item: Assignment, action: string) => {
+    setBusy(true);
+    setError("");
+    setNotice("");
+    try {
+      await post({ action, assignmentId: item.id, feedback: feedback[item.id] });
+      await refresh();
+      setNotice(
+        action === "review_assignment"
+          ? "Resposta corrigida e feedback salvo."
+          : action === "publish_assignment"
+            ? "Tarefa publicada para o aluno."
+            : "Tarefa arquivada.",
+      );
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Falha na tarefa.");
+    } finally {
+      setBusy(false);
+    }
+  };
+  const updateProposal = (value: string) => {
+    setProposalJson(value);
+    try {
+      setDraft((current) => ({
+        ...current,
+        content: JSON.parse(value) as Record<string, unknown>,
+      }));
+    } catch {
+      /* preserve editor until valid JSON */
+    }
+  };
   return (
-    <section className="mx-auto mb-6 max-w-6xl rounded-xl border border-white/10 bg-black/20 p-5 text-white">
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.24em] text-white/50">Character Forge</p>
-          <h2 className="text-xl font-semibold">Fila de revisão</h2>
-        </div>
-        <button
-          className="rounded border border-white/20 px-3 py-2 text-sm"
-          onClick={() => void load()}
-        >
-          Atualizar
-        </button>
-      </div>
+    <section
+      className="mb-6 rounded-2xl border border-[#742233]/50 bg-[#180b11] p-4 text-[#f5e9df] sm:p-6"
+      aria-label="Tarefas e respostas dos alunos"
+    >
+      <header className="border-b border-[#742233]/40 pb-4">
+        <p className="text-xs uppercase tracking-[0.2em] text-[#d5a56c]">Extensão da aula</p>
+        <h2 className="serif mt-1 text-2xl">Tarefas e respostas</h2>
+        <p className="mt-1 text-sm text-[#e7c9b7]/70">
+          Atribuições e correções de {assignments[0]?.studentName ?? "aluno selecionado"}.
+        </p>
+      </header>
       {error ? (
-        <p className="mb-3 rounded border border-red-400/40 p-3 text-sm text-red-200">
-          Erro: {error}
+        <p
+          role="alert"
+          className="mt-4 rounded-lg border border-red-400/30 p-3 text-sm text-red-200"
+        >
+          {error}
         </p>
       ) : null}
-      {progression.length ? (
-        <div className="mb-5 rounded-lg border border-[color:var(--gold)]/20 bg-[color:var(--gold)]/10 p-4">
-          <div className="mb-3">
-            <p className="text-xs uppercase tracking-[0.24em] text-[color:var(--gold)]/70">
-              MANIFESTAÇÕES PARA HOMOLOGAÇÃO
-            </p>
-            <h3 className="text-lg font-semibold">Propostas aguardando análise humana</h3>
-            <p className="mt-1 text-sm text-white/60">
-              A proposta é do jogador. Você decide o estado e registra feedback; o conteúdo não é
-              reescrito silenciosamente.
-            </p>
-          </div>
-          <div className="grid gap-3 lg:grid-cols-2">
-            {progression.map((item) => {
-              const proposal = manifestationOf(item.proposedSnapshot);
-              const proposalTrail = item.proposedSnapshot ? trailOf(item.proposedSnapshot) : null;
-              const office = String(proposal?.oficio || proposalTrail?.oficio || "—");
-              const epic = item.toMarco >= 11;
-              return (
-                <article className="rounded-lg border border-white/10 p-4" key={item.id}>
-                  <h4 className="font-semibold">{item.characterName || "Personagem"}</h4>
-                  <p className="mt-1 text-sm text-white/65">
-                    Jogador: {item.playerName || "—"} · Marco {item.fromMarco} → {item.toMarco} ·
-                    Ofício {office}
-                  </p>
-                  {proposal ? (
-                    <details
-                      className="mt-3 rounded border border-[color:var(--gold)]/20 bg-[color:var(--gold)]/10 p-3 text-sm"
-                      open={epic}
-                    >
-                      <summary className="cursor-pointer text-[color:var(--gold)]">
-                        Proposta completa da Manifestação Épica
-                      </summary>
-                      <div className="mt-2 grid gap-1 text-white/70">
-                        <p>
-                          <b>Nome:</b> {String(proposal.nome || "—")}
-                        </p>
-                        <p>
-                          <b>Conceito:</b> {String(proposal.conceito || "—")}
-                        </p>
-                        <p>
-                          <b>Marco de origem:</b> {String(proposal.marco || item.toMarco)} ·{" "}
-                          <b>Horizonte:</b> {String(proposal.horizonte || "—")}
-                        </p>
-                        <p>
-                          <b>Tipo:</b> {String(proposal.tipo || "normal")} ·{" "}
-                          <b>Grau de Magia Épica:</b> {String(proposal.grauMagiaEpica || "—")}
-                        </p>
-                        <p>
-                          <b>Descrição/manifestação:</b>{" "}
-                          {String(
-                            proposal.descricao || proposal.manifestacao_visual_ou_ficcional || "—",
-                          )}
-                        </p>
-                        <p>
-                          <b>Ativação:</b> {String(proposal.ativacao || "—")}
-                        </p>
-                        <p>
-                          <b>Efeito:</b> {String(proposal.efeito || "—")}
-                        </p>
-                        <p>
-                          <b>Custo:</b> {String(proposal.custo || "—")} · <b>Duração:</b>{" "}
-                          {String(proposal.duracao || "—")}
-                        </p>
-                        <p>
-                          <b>Alvos/objeto:</b> {String(proposal.alvos_ou_objeto || "—")}
-                        </p>
-                        <p>
-                          <b>Limitações:</b> {String(proposal.limitacoes || "—")}
-                        </p>
-                        <p>
-                          <b>Consequências/riscos:</b>{" "}
-                          {String(proposal.consequencias_ou_riscos || "—")}
-                        </p>
-                        <p>
-                          <b>Estado:</b>{" "}
-                          {String(
-                            proposal.statusHomologacao || item.epicManifestationStatus || "—",
-                          )}
-                        </p>
-                      </div>
-                    </details>
-                  ) : null}
-                  {epic ? (
-                    <>
-                      <details className="mt-3 rounded border border-white/10 p-3 text-sm">
-                        <summary className="cursor-pointer text-white/80">
-                          Checklist do Mestre
-                        </summary>
-                        <div className="mt-2 space-y-1 text-white/65">
-                          <p>□ Pertence a esta personagem?</p>
-                          <p>□ Está no Ofício correto?</p>
-                          <p>
-                            □ Cabe no Horizonte {String(proposal?.horizonte || "derivado do Marco")}
-                            ?
-                          </p>
-                          <p>□ Está operacionalmente clara?</p>
-                          <p>□ Possui limites suficientes?</p>
-                          <p>□ Preserva economia de ações e autonomia?</p>
-                          <p>□ Usa sistemas existentes?</p>
-                          <p>□ É épica por possibilidade, não por números?</p>
-                          <p className="pt-2 text-white/45">
-                            Não conceder turno, ação, reação, recurso ou controle absoluto novos;
-                            preservar a autonomia dos envolvidos.
-                          </p>
-                        </div>
-                      </details>
-                      <p className="mt-2 text-xs text-white/45">
-                        Horizonte é escala narrativa de consequência, não raio, metros, área física
-                        ou número de alvos.
-                      </p>
-                      <textarea
-                        className="mt-3 min-h-20 w-full rounded border border-white/15 bg-black/20 p-2 text-sm"
-                        placeholder="Feedback obrigatório para devolver ou não homologar"
-                        value={notes[item.id] || ""}
-                        onChange={(event) =>
-                          setNotes((current) => ({ ...current, [item.id]: event.target.value }))
-                        }
-                      />
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        <button
-                          className="rounded bg-emerald-700 px-3 py-2 text-sm"
-                          disabled={busy === `progression:${item.id}`}
-                          onClick={() => void decideProgression(item, "approve_epic")}
-                        >
-                          Homologar
-                        </button>
-                        <button
-                          className="rounded bg-amber-700 px-3 py-2 text-sm"
-                          disabled={busy === `progression:${item.id}`}
-                          onClick={() => void decideProgression(item, "provisionally_approve_epic")}
-                        >
-                          Homologar provisoriamente
-                        </button>
-                        <button
-                          className="rounded bg-sky-800 px-3 py-2 text-sm"
-                          disabled={busy === `progression:${item.id}`}
-                          onClick={() => void decideProgression(item, "return_epic")}
-                        >
-                          Devolver para ajuste
-                        </button>
-                        <button
-                          className="rounded bg-red-800 px-3 py-2 text-sm"
-                          disabled={busy === `progression:${item.id}`}
-                          onClick={() => void decideProgression(item, "reject_epic")}
-                        >
-                          Não homologar
-                        </button>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="mt-3 flex gap-2">
-                      <button
-                        className="rounded bg-emerald-700 px-3 py-2 text-sm"
-                        disabled={busy === `progression:${item.id}`}
-                        onClick={() => void decideProgression(item, "enable")}
-                      >
-                        Autorizar Marco {item.toMarco}
-                      </button>
-                      <button
-                        className="rounded bg-red-800 px-3 py-2 text-sm"
-                        disabled={busy === `progression:${item.id}`}
-                        onClick={() => void decideProgression(item, "reject_progression")}
-                      >
-                        Recusar
-                      </button>
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
+      {notice ? (
+        <p
+          role="status"
+          className="mt-4 rounded-lg border border-[#8a3045]/40 p-3 text-sm text-[#f0c59a]"
+        >
+          {notice}
+        </p>
+      ) : null}
+      <form
+        className="mt-4 grid gap-3 rounded-xl border border-[#742233]/35 bg-[#10070b]/60 p-4 sm:grid-cols-2"
+        onSubmit={(event) => {
+          event.preventDefault();
+          void save();
+        }}
+      >
+        <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="serif text-xl">{editingId ? "Editar tarefa" : "Nova tarefa"}</h3>
+          <button type="button" className={button} disabled={busy} onClick={() => void generate()}>
+            Gerusa, gerar tarefa contextualizada
+          </button>
         </div>
-      ) : null}
-      {precedents.length ? (
-        <details className="mb-5 rounded-lg border border-white/10 p-4">
-          <summary className="cursor-pointer text-sm font-semibold">
-            Precedentes homologados da Mesa
-          </summary>
-          <p className="mt-2 text-xs text-white/50">
-            Somente propostas homologadas em mesas às quais você tem acesso. Elas não são cânone
-            global.
-          </p>
-          <div className="mt-3 grid gap-2 md:grid-cols-2">
-            {precedents.map((item) => {
-              const proposal = manifestationOf(item.proposedSnapshot);
-              return (
-                <div className="rounded border border-white/10 p-3 text-sm" key={item.id}>
-                  <p className="font-medium">{String(proposal?.nome || item.characterName)}</p>
-                  <p className="text-white/60">
-                    {item.characterName} · Marco {item.toMarco} ·{" "}
-                    {String(proposal?.horizonte || "—")} ·{" "}
-                    {String(item.epicManifestationStatus || "—")}
-                  </p>
-                </div>
-              );
-            })}
-          </div>
-        </details>
-      ) : null}
-      {!characters.length ? (
-        <p className="text-sm text-white/60">Nenhuma personagem submetida.</p>
-      ) : null}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {characters.map((character) => {
-          const trail = trailOf(character.snapshot);
-          const playerName = character.playerName || character.ownerDisplayName || "—";
-          return (
-            <article className="rounded-lg border border-white/10 p-4" key={character.id}>
-              <h3 className="font-semibold">{character.name || "Sem nome"}</h3>
-              <p className="mt-1 text-sm text-white/65">
-                Jogador: {playerName} · {String(character.snapshot.povo || "Povo não definido")} ·{" "}
-                {String(trail?.oficio || "Ofício não definido")} · Marco {String(trail?.marco || 1)}
-              </p>
-              <a
-                className="mt-3 inline-flex rounded border border-[color:var(--gold)]/40 bg-[color:var(--gold)]/15 px-3 py-2 text-sm text-[color:var(--ivory)]"
-                href={
-                  "/microapp?app=character-forge&mode=tal&characterId=" +
-                  encodeURIComponent(character.id)
-                }
-              >
-                Abrir ficha canônica no Character Forge
-              </a>
-              <textarea
-                className="mt-3 min-h-20 w-full rounded border border-white/15 bg-black/20 p-2 text-sm"
-                placeholder="Nota da rejeição (opcional)"
-                value={notes[character.id] || ""}
-                onChange={(event) =>
-                  setNotes((current) => ({ ...current, [character.id]: event.target.value }))
-                }
-              />
-              <div className="mt-3 flex gap-2">
-                <button
-                  className="rounded bg-emerald-700 px-3 py-2 text-sm"
-                  disabled={busy === character.id}
-                  onClick={() => void decide(character, "approve")}
-                >
-                  Aprovar / publicar
-                </button>
-                <button
-                  className="rounded bg-red-800 px-3 py-2 text-sm"
-                  disabled={busy === character.id}
-                  onClick={() => void decide(character, "reject")}
-                >
-                  Rejeitar
-                </button>
+        <label className="text-sm">
+          Tipo
+          <select
+            className={field}
+            value={draft.taskType}
+            onChange={(e) => setDraft({ ...draft, taskType: e.target.value })}
+          >
+            {taskTypes.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          Título
+          <input
+            className={field}
+            required
+            value={draft.title}
+            onChange={(e) => setDraft({ ...draft, title: e.target.value })}
+          />
+        </label>
+        <label className="text-sm sm:col-span-2">
+          Instruções / proposta
+          <textarea
+            className={field}
+            rows={3}
+            required
+            value={draft.prompt}
+            onChange={(e) => setDraft({ ...draft, prompt: e.target.value })}
+          />
+        </label>
+        <label className="text-sm">
+          Aula
+          <select
+            className={field}
+            value={draft.lessonId}
+            onChange={(e) => setDraft({ ...draft, lessonId: e.target.value })}
+          >
+            <option value="">Sem vínculo</option>
+            {payload.lessons?.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          Aventura
+          <select
+            className={field}
+            value={draft.adventureId}
+            onChange={(e) => setDraft({ ...draft, adventureId: e.target.value })}
+          >
+            <option value="">Nenhuma</option>
+            {payload.adventures?.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.title}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="text-sm">
+          Prazo
+          <input
+            className={field}
+            type="datetime-local"
+            value={draft.dueAt}
+            onChange={(e) => setDraft({ ...draft, dueAt: e.target.value })}
+          />
+        </label>
+        <label className="flex min-h-11 items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={draft.allowResubmit}
+            onChange={(e) => setDraft({ ...draft, allowResubmit: e.target.checked })}
+          />{" "}
+          Permitir reenvio após resposta
+        </label>
+        <label className="text-sm sm:col-span-2">
+          Conteúdo estruturado (JSON)
+          <textarea
+            className={field + " font-mono text-xs"}
+            rows={5}
+            value={proposalJson || JSON.stringify(draft.content, null, 2)}
+            onChange={(e) => updateProposal(e.target.value)}
+          />
+        </label>
+        <div className="sm:col-span-2 flex gap-2">
+          <button
+            className={button}
+            type="submit"
+            disabled={busy || !draft.title.trim() || !draft.prompt.trim()}
+          >
+            Salvar tarefa
+          </button>
+          {editingId ? (
+            <button
+              className={button}
+              type="button"
+              onClick={() => {
+                setDraft(empty());
+                setEditingId(null);
+              }}
+            >
+              Cancelar edição
+            </button>
+          ) : null}
+        </div>
+      </form>
+      <div className="mt-5 space-y-3">
+        {assignments.map((item) => (
+          <article
+            key={item.id}
+            className="rounded-xl border border-[#742233]/40 bg-[#10070b]/50 p-4"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-xs uppercase tracking-wide text-[#d5a56c]">
+                  {taskTypes.find(([value]) => value === item.taskType)?.[1] ?? item.taskType} ·{" "}
+                  {item.status}
+                </p>
+                <h3 className="serif text-xl">{item.title}</h3>
               </div>
-            </article>
-          );
-        })}
+              <p className="text-xs text-[#e7c9b7]/65">
+                Prazo:{" "}
+                {item.dueAt
+                  ? new Intl.DateTimeFormat("pt-BR", {
+                      dateStyle: "short",
+                      timeStyle: "short",
+                    }).format(new Date(item.dueAt))
+                  : "sem prazo"}
+              </p>
+            </div>
+            <p className="mt-3 whitespace-pre-wrap text-sm">{item.prompt}</p>
+            {item.studentResponse ? (
+              <div className="mt-3 rounded-lg border border-[#8a3045]/30 bg-[#220d15] p-3">
+                <p className="text-xs uppercase tracking-wide text-[#d5a56c]">
+                  Resposta do aluno ·{" "}
+                  {item.submittedAt ? new Date(item.submittedAt).toLocaleString("pt-BR") : ""}
+                </p>
+                <p className="mt-2 whitespace-pre-wrap text-sm">{item.studentResponse}</p>
+                <label className="mt-3 block text-sm">
+                  Correção e feedback
+                  <textarea
+                    className={field}
+                    rows={3}
+                    value={feedback[item.id] ?? item.teacherFeedback ?? ""}
+                    onChange={(e) => setFeedback({ ...feedback, [item.id]: e.target.value })}
+                  />
+                </label>
+                {item.status === "submitted" ? (
+                  <button
+                    type="button"
+                    className={button + " mt-2"}
+                    disabled={busy || !feedback[item.id]?.trim()}
+                    onClick={() => void act(item, "review_assignment")}
+                  >
+                    Salvar correção
+                  </button>
+                ) : null}
+              </div>
+            ) : null}
+            <div className="mt-3 flex flex-wrap gap-2">
+              {["draft", "published"].includes(item.status) ? (
+                <button className={button} type="button" onClick={() => edit(item)}>
+                  Editar
+                </button>
+              ) : null}
+              {item.status === "draft" ? (
+                <button
+                  className={button}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void act(item, "publish_assignment")}
+                >
+                  Publicar
+                </button>
+              ) : null}
+              {item.status !== "archived" ? (
+                <button
+                  className={button}
+                  type="button"
+                  disabled={busy}
+                  onClick={() => void act(item, "archive_assignment")}
+                >
+                  Arquivar
+                </button>
+              ) : null}
+            </div>
+          </article>
+        ))}
+        {!assignments.length ? (
+          <p className="text-sm text-[#e7c9b7]/65">Nenhuma tarefa neste contexto ainda.</p>
+        ) : null}
       </div>
     </section>
   );
