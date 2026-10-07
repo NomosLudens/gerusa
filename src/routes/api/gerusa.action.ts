@@ -310,7 +310,16 @@ export const Route = createFileRoute("/api/gerusa/action")({
         const payload = (await response.json().catch(() => null)) as {
           choices?: Array<{ message?: { content?: unknown } }>;
         } | null;
-        const content = payload?.choices?.[0]?.message?.content;
+        let content = payload?.choices?.[0]?.message?.content;
+        if (Array.isArray(content)) {
+          content = content
+            .map((part) =>
+              part && typeof part === "object" && "text" in part && typeof part.text === "string"
+                ? part.text
+                : "",
+            )
+            .join("\n");
+        }
         if (typeof content !== "string")
           return errorResponse("invalid_provider_response", 502, requestId);
         let candidate: unknown;
