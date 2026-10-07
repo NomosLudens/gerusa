@@ -229,6 +229,6 @@ publicada altera a senha atual mediante confirmação da senha vigente.
 O código de onboarding e contas foi publicado do SHA
 `5c39b2d5b906199e71fa2939427fa382e0a8a3e6`. O Worker está na versão
 `838eaa6d-5490-49e5-8622-42744816f5e0`; a Mini está sincronizada ao código e
-serviu o Core após o restart. Este mapa é uma alteração somente documental e
-não exige novo deploy. `origin/master` deve receber esta atualização documental
-e a Mini deve sincronizar o clone; isso não altera o SHA do código publicado.
+serviu o Core após o restart. A atualização documental está em `master` e foi
+sincronizada ao clone da Mini. Como ela não altera runtime, não exige novo
+deploy; o Worker permanece no SHA de código acima.
