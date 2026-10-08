@@ -81,6 +81,13 @@ export function GerusaCampaignsPanel({
   useEffect(() => {
     setCharacterName(character?.name ?? "");
   }, [character?.id, character?.name]);
+  useEffect(() => {
+    if (!activeCampaigns.length) return;
+    if (selectedCampaignId && activeCampaigns.some((item) => item.id === selectedCampaignId))
+      return;
+    const characterCampaign = activeCampaigns.find((item) => item.id === character?.campaignId);
+    onSelectedCampaignChange((characterCampaign ?? activeCampaigns[0]).id);
+  }, [activeCampaigns, character?.campaignId, onSelectedCampaignChange, selectedCampaignId]);
 
   const createCampaign = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

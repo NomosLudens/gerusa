@@ -47,6 +47,7 @@ function MestrePage() {
   );
   const changeStudent = useCallback((studentId: string) => {
     setSelectedStudent(studentId);
+    setSelectedCampaignId(undefined);
     setFocusLessonId(undefined);
   }, []);
   async function logout() {
