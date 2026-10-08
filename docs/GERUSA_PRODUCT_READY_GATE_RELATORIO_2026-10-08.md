@@ -1,11 +1,87 @@
 # GERUSA — Relatório do GERUSA_PRODUCT_READY_GATE
 
 **Data:** 2026-10-08 (America/Sao_Paulo)  
-**Veredito:** `GERUSA_PRODUCT_READY_INCIDENT`  
+**Veredito final:** `GERUSA_PRODUCT_READY_PASS`
 **Produção:** https://gerusa.nomosludens.ia.br/  
 **Escopo:** fechamento do mesmo gate, missões 1–5; sem criar gate adicional.
 
-## Decisão de publicação
+## Fechamento final — aceitação de produção
+
+Esta seção é o estado final e prevalece sobre os registros históricos abaixo,
+que descrevem incidentes e evidências parciais anteriores à publicação.
+
+- **Código e publicação:** `master` e `origin/master` estão no commit
+  `8f6ccb0f575b0635951513d9087683dcab148608`. O Core da Mini está ativo e serve
+  `101a0930cf64b9067e025970c2a95e6807d93e02`; os commits seguintes só alteram
+  a seleção de campanha na UI. O Worker publicado a 100% é
+  `37cdac3d-16a6-4e5f-ab4e-323e84aa297e`, com a correção de seleção por aluno.
+  `/health` local e público respondeu `200`; a rota protegida sem sessão
+  respondeu `401`.
+- **Banco:** migrations `0008_username_format` e `0009_campaign_context`
+  constam no ledger de produção. Antes da limpeza, consulta `READ ONLY`
+  confirmou os dois alunos QA, memberships, 2 campanhas, 6 personagens, 2
+  aventuras, 2 aulas, 2 sessões e tarefas vinculadas; a tarefa de Lucas estava
+  `reviewed` com o feedback editado pela professora.
+- **Contas e administração:** professora QA autenticada pelo login normal do
+  Worker; Lucas e Maria foram criados pela UI Mestre e autenticados pelos seus
+  próprios logins/PINs. Reset de PIN e desativação/reativação foram exercitados
+  pela UI. Username simples, sugestão normalizada e duplicidade foram
+  verificados. A professora real não foi modificada. `/api/setup/status`
+  continuou `available=false`, como esperado porque já existe Mestre em
+  produção; o setup inicial foi testado na QA isolada.
+- **Campanha e ciclo pedagógico:** Lucas/Elias Ward/The Clockmaker's Paradox e
+  Maria/Nora Vale/The Red Library foram criados e vinculados pela interface a
+  aventuras, planejamento, sessões, tarefas e submissions. Após a correção
+  publicada, alternar de Lucas para Maria atualizou a campanha para Red Library
+  e a personagem para Nora Vale.
+- **IA real:** a professora acionou “Analisar com Gerusa” em produção. A análise
+  estruturada detectou erros gramaticais e a ausência do relojoeiro na
+  narrativa. O log do Worker registrou sucesso de `review_submission` com
+  modelo pedido e retornado
+  `nvidia/nemotron-3-ultra-550b-a55b:free`. A professora editou o feedback,
+  salvou a correção e, após reload, a UI e o PostgreSQL mantiveram feedback e
+  status `reviewed`. A submissão original permaneceu intacta.
+- **Próxima aula com histórico:** em uma sessão QA adicional, a professora
+  criou pela UI uma campanha, salvou uma aula concluída com objetivo e alvos de
+  idioma, e acionou “Sugerir próxima aula com histórico”. A proposta editável
+  retomou o mistério da estação e o vocabulário anterior, avançando de Past
+  Simple para Past Continuous. A ação não publicou nem salvou a proposta sem
+  decisão da professora; não ocorreram `pageerror`.
+- **Isolamento:** sessões normais separadas para Lucas e Maria. Cada aluno
+  recebeu seu próprio contexto; tentativas bilaterais de ler o outro perfil e
+  mutar tarefa alheia retornaram `404`, sem título/nome do outro no payload.
+  Acesso cruzado a thread foi negado com `404`; POST cruzado de chat terminou
+  em `503 chat_unavailable`, sem contexto ou dado cruzado. Nota exclusiva da
+  professora não apareceu no perfil, payload pedagógico nem UI do aluno.
+- **Desktop, mobile e segredo:** fluxos críticos foram exercitados no browser
+  automatizado. Em viewport móvel de 390 px, telas de aluno e professora
+  ficaram sem overflow horizontal; os fluxos observados terminaram sem
+  `pageerror`. O bundle não contém chave/host OpenRouter ou segredo Core e o
+  browser não chamou o provider diretamente.
+- **Limpeza:** em duas transações delimitadas por IDs, as sessões e registros QA
+  foram revogados/removidos, as Mesas QA e recursos foram excluídos e 9
+  identidades descartáveis (professoras e alunos das duas rodadas) removidas.
+  Na rodada principal, usuários `10 → 3`; na rodada final, `5 → 3`. Verificação
+  final: QA user IDs `0`, Mesas QA `0`, recursos e sessões QA `0`,
+  `system_master` `1 → 1`. Arquivos temporários de credenciais/PIN e o backup
+  temporário que continha QA foram removidos. O backup anterior à campanha de
+  QA foi preservado.
+- **Verificações de código:** typecheck, build, lint dirigido, sintaxe dos
+  módulos Core e `git diff --check` passaram. A suíte histórica completa teve
+  599 aprovados e 9 falhas não relacionadas, em contratos KALLISTIS obsoletos/
+  arquivos ausentes; não foram ocultadas nem alteradas para certificar Gerusa.
+
+**Veredito:** `GERUSA_PRODUCT_READY_PASS`. A prova é dos fluxos de produção
+executados por identidades QA descartáveis e das consultas de persistência; não
+depende da sessão do proprietário. As identidades e os dados QA foram removidos
+após a coleta das evidências.
+
+## Registro histórico — estado antes da correção e publicação
+
+O texto desta seção e das seções históricas subsequentes registra o diagnóstico
+anterior e não representa o estado final documentado acima.
+
+### Decisão naquele momento
 
 Não houve commit, push, migration nem deploy de produto. A QA real passou por
 setup, provisionamento, fluxo de campanha/sessão/tarefa e persistência PostgreSQL,

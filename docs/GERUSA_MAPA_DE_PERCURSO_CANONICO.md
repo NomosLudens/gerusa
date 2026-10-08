@@ -4,7 +4,38 @@
 
 **Missão:** adaptação multiusuário de KALLISTIS para Gerusa  
 **Resultado da adaptação pedagógica anterior:** `GERUSA_PEDAGOGICAL_PRODUCT_ADAPTATION_PASS` — prova funcional parcial, não certifica o produto completo.
-**Gate único atual:** `GERUSA_PRODUCT_READY_INCIDENT`
+**Gate único atual:** `GERUSA_PRODUCT_READY_PASS` (fechado em 2026-10-08)
+
+## Fechamento final do GERUSA_PRODUCT_READY_GATE
+
+O relatório detalhado, com as etapas anteriores preservadas como histórico, está
+em [GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md](GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md).
+
+- `master` e `origin/master`: `8f6ccb0f575b0635951513d9087683dcab148608`.
+- Gerusa Core ativo na Mini: `101a0930cf64b9067e025970c2a95e6807d93e02`;
+  health local e público `200`. Os commits posteriores até HEAD alteram somente
+  a seleção de campanha na interface Mestre.
+- Worker a 100%: `37cdac3d-16a6-4e5f-ab4e-323e84aa297e`.
+- Migrations `0008_username_format` e `0009_campaign_context` constam no banco
+  de produção.
+- Em produção, professora QA autenticou normalmente e criou Lucas e Maria pela
+  interface. Foram comprovados username, PIN, campanhas, personagens,
+  planejamento, aventuras, sessões, tarefas, submissions, revisão assistida
+  por IA real, feedback editado/persistido, isolamento bilateral e telas
+  desktop/mobile. A ação “Sugerir próxima aula com histórico” também foi
+  executada após salvar uma aula concluída pela UI: a proposta retomou a
+  aventura e os alvos anteriores, avançou de Past Simple para Past Continuous,
+  permaneceu editável e não foi salva automaticamente.
+- OpenRouter respondeu pelo Worker usando
+  `nvidia/nemotron-3-ultra-550b-a55b:free`; a chave permaneceu server-side.
+- Limpeza final: 9 identidades QA criadas em duas rodadas, sessões, Mesas e
+  recursos QA removidos. Contagens: usuários `10 → 3` na rodada principal e
+  `5 → 3` na validação adicional; QA IDs/recursos/sessões `0`;
+  `system_master` `1 → 1`. Arquivos de credenciais/PIN e backup temporário que
+  continha QA removidos.
+
+Os estados `INCIDENT` abaixo preservam o histórico dos bloqueios anteriores e
+não descrevem o estado operacional final.
 
 ## Antes desta adaptação
 
