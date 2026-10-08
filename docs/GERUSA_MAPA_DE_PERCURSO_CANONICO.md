@@ -11,6 +11,14 @@
 O relatório detalhado, com as etapas anteriores preservadas como histórico, está
 em [GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md](GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md).
 
+Auditoria somente leitura anterior às atualizações documentais: `master` e
+`origin/master` em `ef1e768`, worktree limpo e sem tags locais/remotas. Core
+ativo (`101a0930`), Worker a 100% (`37cdac3d-16a6-4e5f-ab4e-323e84aa297e`),
+`/health` local/público `200`, migrations de `0001_initial` a
+`0009_campaign_context`. O Wrangler confirmou os nomes dos Secrets do Core e
+OpenRouter sem ler seus valores; evidências de runtime confirmam o modelo
+validado. A auditoria não alterou produção.
+
 - Aplicação publicada até `8f6ccb0f575b0635951513d9087683dcab148608`; os commits
   posteriores no repositório atualizam apenas o relatório e o mapa deste
   fechamento.

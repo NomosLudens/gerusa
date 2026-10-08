@@ -10,6 +10,18 @@
 Esta seção é o estado final e prevalece sobre os registros históricos abaixo,
 que descrevem incidentes e evidências parciais anteriores à publicação.
 
+### Auditoria somente leitura de 2026-10-08
+
+Antes das atualizações documentais desta missão, `master` e `origin/master`
+coincidiam em `ef1e768`; o worktree estava limpo e não havia tags locais ou
+remotas. O Core estava ativo na Mini, com SHA `101a0930`, e `/health` local e
+público respondiam `200`. O Worker ativo a 100% era
+`37cdac3d-16a6-4e5f-ab4e-323e84aa297e`. O ledger PostgreSQL continha migrations
+`0001_initial` a `0009_campaign_context`. O Wrangler confirmou os nomes dos
+Secrets `GERUSA_CORE_SECRET`, `GERUSA_CORE_URL`, `OPENROUTER_API_KEY` e
+`OPENROUTER_MODEL`; nenhum valor foi lido. O modelo foi confirmado pelas
+evidências de runtime da aceitação acima. Esta auditoria não alterou produção.
+
 - **Código e publicação:** a aplicação publicada inclui até
   `8f6ccb0f575b0635951513d9087683dcab148608`; os commits posteriores no repositório
   atualizam apenas o relatório e o mapa deste fechamento. O Core da Mini está
