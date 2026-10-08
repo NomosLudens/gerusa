@@ -1,135 +1,126 @@
-# KALLISTIS
+# GERUSA POULAIN
 
-**Plataforma autoral de RPG, campanhas, personagens, sessões e ferramentas narrativas digitais.**
+**Plataforma de ensino de inglês por RPG, com campanhas narrativas persistentes e assistência pedagógica por inteligência artificial.**
 
-KALLISTIS reúne o domínio do jogo, o cânone, a aplicação web e as superfícies operacionais usadas por jogadores e Mestre. Este repositório é o núcleo técnico autoritativo do produto atual.
+Gerusa une aprendizagem de inglês e narrativa interativa. A professora conduz a
+experiência, acompanha cada aluno e usa a persona da Gerusa para planejar aulas,
+criar aventuras e apoiar a revisão de atividades. O Gate de Produto 1.0 foi
+aceito em produção em 8 de outubro de 2026.
 
-> **Runtime real antes de sucesso aparente.**
->
-> Build, CI e mocks protegem contra regressão; não substituem prova funcional em runtime, persistência e autorização.
+## Como funciona
 
-## Escopo atual
+O produto tem duas experiências ligadas pelo mesmo contexto pedagógico:
 
-O repositório contém, entre outras superfícies:
+- **Mestre / Professora:** cria alunos pela interface, organiza campanhas,
+  personagens e aventuras, planeja aulas e sessões, publica tarefas e revisa
+  submissions. As sugestões da IA são editáveis; a professora decide o que
+  salvar e compartilhar.
+- **Aluno:** entra com username e PIN, acompanha a própria campanha,
+  personagem, aventura, aulas e tarefas, envia respostas e conversa com a
+  Gerusa dentro do seu contexto.
 
-- autenticação e sessões;
-- perfis, identidade e contexto de usuário;
-- Mesas, membros, campanhas e continuidade;
-- criação e ciclo de personagens;
-- fichas, progressão, perícias, capacidades e Manifestação;
-- Chat Geral, chats privados e experiências de campanha;
-- Mestre, NPCs, presença, mensagens privadas e Live Session;
-- Momento / Pulso de Cena;
-- memória e sedimentação;
-- regras, cânone e Velarim;
-- mídia e anexos;
-- integrações delimitadas com Gravewright/VTT.
+A campanha e a história dão contexto às atividades. A professora acompanha o
+progresso do aluno e pode pedir uma sugestão de próxima aula baseada no
+histórico. O acesso de cada aluno é isolado no servidor.
 
-Funcionalidade planejada não é apresentada como funcional.
+## Recursos entregues
 
-## Autoridade
+- Autenticação Mestre/Aluno com sessões protegidas, username e PIN.
+- Criação e gestão de alunos pela interface da professora.
+- Campanhas persistentes, personagens, aventuras, aulas e sessões vinculadas.
+- Tarefas, submissions, feedback e progresso pedagógico.
+- Planejamento assistido por IA, sugestão de próxima aula e análise estruturada
+  de atividade, incluindo gramática, vocabulário e fidelidade narrativa.
+- Isolamento entre alunos aplicado nas rotas autenticadas do servidor.
+- Interface adaptável para desktop e mobile.
 
-A autoridade operacional e de domínio pertence a este repositório e aos seus artefatos canônicos atuais.
+A IA sugere e explica. A professora mantém a decisão final sobre planejamento e
+feedback.
 
-Documentos de referência:
-
-- [KALLISTIS_AUTHORITY.md](./KALLISTIS_AUTHORITY.md)
-- [.kallistis-authority.json](./.kallistis-authority.json)
-- [ONTOLOGY.md](./ONTOLOGY.md)
-- [RULES_2_0_IMPLEMENTATION_MAP.md](./RULES_2_0_IMPLEMENTATION_MAP.md)
-
-Ambientes, snapshots e repositórios legados não devem ser usados como fallback nem reconciliados automaticamente com a autoridade corrente.
-
-## Arquitetura
-
-A aplicação atual usa uma camada de servidor para concentrar domínio, autorização e persistência.
+## Arquitetura de produção
 
 ```text
 Browser
-  ↓
-KALLISTIS application server
-  ↓
-PostgreSQL
+  → Cloudflare Worker Gerusa
+  → Gerusa Core na Mini
+  → PostgreSQL (database `gerusa`)
 ```
 
-A camada de aplicação é responsável por ownership, autorização e contratos do domínio. O browser não acessa o PostgreSQL diretamente.
+- O Worker atende `https://gerusa.nomosludens.ia.br/`, mantém a fronteira
+  server-side da aplicação e encaminha operações autenticadas ao Core.
+- O Gerusa Core é um serviço Node.js na Mini, disponível localmente em
+  `127.0.0.1:4530`. O browser não se conecta diretamente ao Core ou ao
+  PostgreSQL.
+- A persistência usa o schema `gerusa` no PostgreSQL, incluindo users, profiles,
+  credentials, sessions, mesas, memberships, campaigns e recursos pedagógicos.
+- As chamadas OpenRouter são feitas pelo Worker. A chave fica em Secret
+  server-side e não deve ser incluída no client, no repositório ou em artefatos
+  públicos.
+- O modelo gratuito validado no aceite 1.0 foi
+  `nvidia/nemotron-3-ultra-550b-a55b:free`.
 
-Principais tecnologias presentes:
+O primeiro setup cria o Mestre inicial uma única vez. Com um Mestre ativo, o
+setup permanece fechado; a criação e gestão de alunos acontecem pela interface
+da professora.
 
-- TypeScript;
-- React 19;
-- TanStack Router / Start / Query;
-- Vite;
-- Bun;
-- PostgreSQL;
-- integrações externas delimitadas por contrato;
-- Vitest e Playwright para regressão automatizada.
+## Tecnologias
 
-## Cânone e regras
+- TypeScript, React 19 e TanStack Start / Router.
+- Vite e Bun para desenvolvimento e build.
+- Cloudflare Workers com Wrangler para o runtime web.
+- Node.js para o serviço Gerusa Core.
+- PostgreSQL para identidade, campanhas e persistência pedagógica.
+- OpenRouter para modelos de linguagem no lado servidor.
+- Vitest e Playwright para testes automatizados.
 
-O sistema de regras, o mundo, personagens, progressão, histórico e demais autoridades ficcionais pertencem ao domínio KALLISTIS.
+## Desenvolvimento local
 
-A árvore [CANON/](./CANON) e os contratos de autoridade devem prevalecer sobre textos históricos, snapshots, fixtures e material legado quando houver divergência.
-
-## Gravewright
-
-KALLISTIS e Gravewright têm responsabilidades distintas:
-
-- **KALLISTIS** — autoridade de mundo, regras, personagens, progressão, histórico e continuidade;
-- **Gravewright** — runtime VTT para campanha, cena, mapa, token, chat e realtime.
-
-A integração deve respeitar contratos explícitos; o VTT não substitui a autoridade de domínio do KALLISTIS.
-
-## Desenvolvimento
-
-Requer Bun compatível com o lockfile do projeto.
+Requer Bun compatível com `packageManager` no `package.json`.
 
 ```bash
 bun install --frozen-lockfile
 bun run dev
 ```
 
-Gates principais:
+Comandos de validação disponíveis:
 
 ```bash
-bun run lint
 bun run typecheck
+bun run lint
 bun run test
 bun run build
 bun run test:e2e
 ```
 
-Quando aplicável, verificações adicionais de cânone, migrações e runtime devem ser executadas antes de promover alterações.
+Esses comandos verificam o checkout local. Eles não substituem uma verificação
+do runtime, da persistência e das autorizações no ambiente publicado. Não use
+credenciais de produção em ambiente local; configure segredos apenas pelo
+mecanismo seguro do runtime correspondente.
 
-## Critério de validação
+## Documentação e evidências
 
-Uma mudança não é considerada entregue apenas porque compila.
+- [Gerusa Core: contrato e operações](./docs/GERUSA_CORE.md)
+- [Mapa canônico de percurso e arquitetura](./docs/GERUSA_MAPA_DE_PERCURSO_CANONICO.md)
+- [Relatório de aceitação GERUSA_PRODUCT_READY_GATE](./docs/GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md)
 
-A régua operacional é:
+O relatório registra o aceite 1.0, as versões de aplicação e runtime observadas,
+e a limpeza das identidades QA. Seu histórico preserva estados anteriores como
+evidência datada; consulte a seção de fechamento final para o estado aceito.
 
-```text
-CODE PASS
-  ↓
-RUNTIME PASS
-  ↓
-REAL DATA / PERSISTENCE PASS
-  ↓
-AUTHORIZATION PASS
-  ↓
-SAFE ROLLBACK
-```
+## Versão estável
 
-Mocks, placeholders, fallbacks fictícios e estados simulados não contam como funcionamento real.
+**GERUSA 1.0 — aceite de produto:** `GERUSA_PRODUCT_READY_PASS`
 
-## Estado
+**Aplicação publicada:** `8f6ccb0`
 
-**Active development.**
+**Worker:** `37cdac3d-16a6-4e5f-ab4e-323e84aa297e`
 
-Relatórios datados na raiz do repositório registram provas e incidentes específicos de cada execução. Eles devem ser lidos como evidência histórica do momento em que foram produzidos, não como substitutos do estado corrente do código e do runtime.
+O Gate de Produto 1.0 foi encerrado. Mudanças posteriores devem partir de uma
+nova solicitação e preservar esta baseline, o contrato de autenticação e a
+arquitetura publicada.
 
 ---
 
-### Nomos Ludens
+**Nomos Ludens — Technology for human agency.**
 
-**Technology for human agency.**  
 **Empower, not replace.**
