@@ -6,6 +6,8 @@ type Lesson = {
   studentId: string;
   studentName: string;
   mesaId: string;
+  campaignId: string | null;
+  campaignName: string | null;
   status: string;
   scheduledAt: string | null;
   objective: string;
@@ -18,6 +20,10 @@ type Session = {
   id: string;
   lessonId: string;
   studentId: string;
+  campaignId: string | null;
+  campaignName: string | null;
+  characterName: string | null;
+  adventureTitle: string | null;
   status: "live" | "closed";
   currentSceneIndex: number;
   quickNotes: string;
@@ -111,10 +117,12 @@ function summaryFields(value: Record<string, unknown> | undefined): Summary {
 export function MesaLiveSessionPanel({
   mesaId,
   studentId,
+  selectedCampaignId,
   focusLessonId,
 }: {
   mesaId?: string;
   studentId?: string;
+  selectedCampaignId?: string;
   focusLessonId?: string;
 }) {
   const [payload, setPayload] = useState<Payload>({});
@@ -132,7 +140,13 @@ export function MesaLiveSessionPanel({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
 
-  const lessons = useMemo(() => payload.lessons ?? [], [payload.lessons]);
+  const lessons = useMemo(
+    () =>
+      (payload.lessons ?? []).filter(
+        (lesson) => !selectedCampaignId || lesson.campaignId === selectedCampaignId,
+      ),
+    [payload.lessons, selectedCampaignId],
+  );
   const sessions = useMemo(() => payload.sessions ?? [], [payload.sessions]);
   const records = payload.records ?? [];
   const adventures = payload.adventures ?? [];
@@ -444,8 +458,8 @@ export function MesaLiveSessionPanel({
                 .filter((lesson) => ["draft", "planned"].includes(lesson.status))
                 .map((lesson) => (
                   <option key={lesson.id} value={lesson.id}>
-                    {lesson.title} · {lesson.studentName} ·{" "}
-                    {lesson.scheduledAt ? dateLabel(lesson.scheduledAt) : "sem data"}
+                    {lesson.title} · {lesson.studentName} · {lesson.campaignName || "sem campanha"}{" "}
+                    · {lesson.scheduledAt ? dateLabel(lesson.scheduledAt) : "sem data"}
                   </option>
                 ))}
             </select>
@@ -471,6 +485,10 @@ export function MesaLiveSessionPanel({
                 <h3 className="serif mt-1 text-xl">
                   {selectedLesson.studentName} · {selectedLesson.title}
                 </h3>
+                <p className="mt-1 text-xs text-[#d5a56c]">
+                  {liveSession.campaignName || "Sem campanha"} · Personagem:{" "}
+                  {liveSession.characterName || "—"} · Aventura: {liveSession.adventureTitle || "—"}
+                </p>
                 <p className="mt-1 text-sm text-[#e7c9b7]/70">{selectedLesson.objective}</p>
                 <p className="mt-2 text-sm">
                   Gramática: {selectedLesson.grammar || "—"} · Vocabulário:{" "}

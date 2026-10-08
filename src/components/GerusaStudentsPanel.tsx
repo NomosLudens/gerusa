@@ -16,6 +16,9 @@ type Mesa = { id: string; name: string };
 type Campaign = { id: string; mesaId: string; name: string };
 type Summary = { mesas?: Mesa[]; campaigns?: Campaign[] };
 
+const usernamePattern = /^[a-z0-9][a-z0-9_\x2d]{2,31}$/;
+const usernameHtmlPattern = "[a-z0-9][a-z0-9_\\x2d]{2,31}";
+
 function makePin() {
   const bytes = new Uint32Array(1);
   crypto.getRandomValues(bytes);
@@ -29,7 +32,11 @@ function suggestedUsername(name: string) {
       .replace(/[\u0300-\u036f]/g, "")
       .toLowerCase()
       .split(/\s+/)[0] ?? "";
-  return first.replace(/[^a-z0-9._-]/g, "").slice(0, 40);
+  const base = first
+    .replace(/[^a-z0-9_\x2d]/g, "")
+    .replace(/^[_\x2d]+/, "")
+    .slice(0, 32);
+  return base.length >= 3 ? base : "aluno";
 }
 
 export function GerusaStudentsPanel({
@@ -83,7 +90,8 @@ export function GerusaStudentsPanel({
     let candidate = base;
     let suffix = 2;
     while (candidate && students.some((student) => student.username.toLowerCase() === candidate)) {
-      candidate = `${base.slice(0, 37)}${suffix++}`;
+      const suffixText = String(suffix++);
+      candidate = `${base.slice(0, 32 - suffixText.length)}${suffixText}`;
     }
     setUsername(candidate);
   }, [name, students]);
@@ -94,6 +102,12 @@ export function GerusaStudentsPanel({
   );
   async function createStudent(event: React.FormEvent) {
     event.preventDefault();
+    if (!usernamePattern.test(username)) {
+      setNotice(
+        "Nome de acesso inválido. Use de 3 a 32 caracteres: letras minúsculas, números, hífen (-) ou sublinhado (_).",
+      );
+      return;
+    }
     setBusy(true);
     setNotice("");
     const selectedPin = pin || makePin();
@@ -115,9 +129,11 @@ export function GerusaStudentsPanel({
       const data = (await response.json()) as { student?: Student; pin?: string; error?: string };
       if (!response.ok || !data.student || !data.pin)
         throw new Error(
-          data.error === "student_conflict"
+          data.error === "username_unavailable" || data.error === "student_conflict"
             ? "Esse nome de acesso já está em uso. Escolha outro."
-            : "Não foi possível criar o aluno.",
+            : data.error === "invalid_username"
+              ? "Nome de acesso inválido. Use de 3 a 32 caracteres: letras minúsculas, números, hífen (-) ou sublinhado (_)."
+              : "Não foi possível criar o aluno.",
         );
       setIssued({ name: data.student.name, username: data.student.username, pin: data.pin });
       setName("");
@@ -249,11 +265,14 @@ export function GerusaStudentsPanel({
           Nome de acesso
           <Input
             required
-            minLength={2}
-            maxLength={40}
-            pattern="[a-zA-Z0-9][a-zA-Z0-9._-]*"
+            minLength={3}
+            maxLength={32}
+            pattern={usernameHtmlPattern}
+            title="Use de 3 a 32 caracteres: letras minúsculas, números, hífen (-) ou sublinhado (_)."
+            autoCapitalize="none"
+            autoComplete="username"
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())}
           />
         </label>
         <label className="grid gap-1 text-sm">

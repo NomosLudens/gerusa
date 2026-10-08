@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useProfile } from "@/lib/use-profile";
 
 type StudentPayload = {
-  context?: { mesaName: string; campaignName: string | null };
+  context?: { mesaName: string; campaignName: string | null; campaignPremise: string | null };
   character?: { id: string; name: string; sheet: Record<string, string> } | null;
   adventures?: Array<{
     id: string;
@@ -44,6 +44,10 @@ type StudentPayload = {
   sessions?: Array<{
     id: string;
     lessonTitle: string;
+    campaignName: string | null;
+    characterName: string | null;
+    adventureTitle: string | null;
+    status: string;
     endedAt: string | null;
     summary: Record<string, unknown>;
   }>;
@@ -174,12 +178,13 @@ function StudentHome() {
         ) : null}
         {data.context ? (
           <section className="rounded-2xl border border-[#742233]/45 bg-[#180b11] p-5">
-            <p className="text-xs uppercase tracking-wide text-[#d5a56c]">
-              {data.context.mesaName}
-            </p>
+            <p className="text-xs uppercase tracking-wide text-[#d5a56c]">Sua campanha</p>
             <h2 className="serif mt-1 text-2xl">
               {data.context.campaignName || "Campanha em preparação"}
             </h2>
+            {data.context.campaignPremise ? (
+              <p className="mt-2 text-sm text-[#e7c9b7]/75">{data.context.campaignPremise}</p>
+            ) : null}
             {data.character ? (
               <div className="mt-4 rounded-xl border border-[#742233]/35 bg-[#10070b]/60 p-4">
                 <p className="text-xs uppercase tracking-wide text-[#d5a56c]">Seu personagem</p>
@@ -242,6 +247,23 @@ function StudentHome() {
             ))}
           </section>
         ) : null}
+        {data.sessions?.length ? (
+          <section className="rounded-2xl border border-[#742233]/45 bg-[#180b11] p-5">
+            <p className="text-xs uppercase tracking-wide text-[#d5a56c]">Continuidade</p>
+            <div className="mt-2 space-y-2">
+              {data.sessions.slice(0, 3).map((session) => (
+                <article key={session.id} className="rounded-lg border border-[#742233]/30 p-3">
+                  <h2 className="serif text-lg">{session.adventureTitle || session.lessonTitle}</h2>
+                  <p className="mt-1 text-sm text-[#e7c9b7]/75">
+                    {session.characterName || "Seu personagem"} ·{" "}
+                    {session.campaignName || "Campanha"} ·{" "}
+                    {session.status === "closed" ? "sessão concluída" : "sessão em andamento"}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </section>
+        ) : null}
         <section className="space-y-3">
           <h2 className="serif text-2xl">Tarefas</h2>
           {(data.assignments ?? []).map((item) => (
@@ -253,6 +275,11 @@ function StudentHome() {
                 <h3 className="serif text-xl">{item.title}</h3>
                 <span className="text-xs text-[#d5a56c]">{item.status}</span>
               </div>
+              {data.context?.campaignName ? (
+                <p className="mt-1 text-xs text-[#e7c9b7]/65">
+                  Campanha: {data.context.campaignName}
+                </p>
+              ) : null}
               <p className="mt-3 whitespace-pre-wrap text-sm">{item.prompt}</p>
               {item.content && Object.keys(item.content).length ? (
                 <div className="mt-3 rounded-lg bg-[#10070b] p-3 text-sm">

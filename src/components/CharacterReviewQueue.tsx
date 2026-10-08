@@ -5,7 +5,10 @@ type Assignment = {
   studentId: string;
   studentName: string;
   lessonId: string | null;
+  liveSessionId: string | null;
   adventureId: string | null;
+  campaignId: string | null;
+  campaignName: string | null;
   taskType: string;
   title: string;
   prompt: string;
@@ -18,11 +21,39 @@ type Assignment = {
   teacherFeedback: string | null;
   reviewedAt: string | null;
 };
+type ReviewAnalysis = {
+  summary: string;
+  strengths: string[];
+  corrections: Array<{ original: string; suggestion: string; reason: string }>;
+  grammar_observations: string[];
+  vocabulary_observations: string[];
+  narrative_fidelity: string;
+  pedagogical_next_step: string;
+  suggested_feedback: string;
+};
 type Payload = {
   assignments?: Assignment[];
-  lessons?: Array<{ id: string; title: string; adventureId: string | null }>;
-  adventures?: Array<{ id: string; title: string }>;
-  mesa?: { campaigns?: Array<{ id: string; name: string }> };
+  lessons?: Array<{
+    id: string;
+    title: string;
+    objective: string;
+    grammar: string;
+    vocabulary: string;
+    adventureId: string | null;
+    campaignId: string | null;
+  }>;
+  adventures?: Array<{ id: string; title: string; campaignId: string | null }>;
+  sessions?: Array<{
+    id: string;
+    lessonId: string;
+    campaignId: string | null;
+    campaignName: string | null;
+    characterName: string | null;
+    adventureId: string | null;
+    adventureTitle: string | null;
+    startedAt: string;
+  }>;
+  mesa?: { campaigns?: Array<{ id: string; name: string; status: string }> };
   error?: string;
 };
 type Draft = {
@@ -33,6 +64,7 @@ type Draft = {
   dueAt: string;
   allowResubmit: boolean;
   lessonId: string;
+  liveSessionId: string;
   adventureId: string;
   campaignId: string;
 };
@@ -44,6 +76,7 @@ const empty = (): Draft => ({
   dueAt: "",
   allowResubmit: true,
   lessonId: "",
+  liveSessionId: "",
   adventureId: "",
   campaignId: "",
 });
@@ -72,15 +105,22 @@ function localDateTime(value: string | null) {
 export function CharacterReviewQueue({
   mesaId,
   studentId,
+  selectedCampaignId,
+  onSelectedCampaignChange,
 }: {
   mesaId?: string;
   studentId?: string;
+  selectedCampaignId?: string;
+  onSelectedCampaignChange: (campaignId: string) => void;
 }) {
   const [payload, setPayload] = useState<Payload>({});
   const [draft, setDraft] = useState<Draft>(empty());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [proposalJson, setProposalJson] = useState("");
   const [feedback, setFeedback] = useState<Record<string, string>>({});
+  const [analyses, setAnalyses] = useState<Record<string, ReviewAnalysis>>({});
+  const [analysisErrors, setAnalysisErrors] = useState<Record<string, string>>({});
+  const [analyzingId, setAnalyzingId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -108,7 +148,20 @@ export function CharacterReviewQueue({
     setDraft(empty());
     setEditingId(null);
     setFeedback({});
+    setAnalyses({});
+    setAnalysisErrors({});
   }, [mesaId, studentId]);
+  useEffect(() => {
+    if (!editingId) {
+      setDraft((current) => ({
+        ...current,
+        campaignId: selectedCampaignId || "",
+        lessonId: "",
+        liveSessionId: "",
+        adventureId: "",
+      }));
+    }
+  }, [editingId, selectedCampaignId]);
   const post = async (body: Record<string, unknown>) => {
     const response = await fetch("/api/gerusa/pedagogy", {
       method: "POST",
@@ -140,10 +193,11 @@ export function CharacterReviewQueue({
         content,
         dueAt: value.dueAt || null,
         lessonId: value.lessonId || null,
+        liveSessionId: value.liveSessionId || null,
         adventureId: value.adventureId || null,
-        campaignId: value.campaignId || null,
+        campaignId: value.campaignId || selectedCampaignId || null,
       });
-      setDraft(empty());
+      setDraft({ ...empty(), campaignId: selectedCampaignId || "" });
       setEditingId(null);
       setProposalJson("");
       await refresh();
@@ -156,6 +210,10 @@ export function CharacterReviewQueue({
   };
   const generate = async () => {
     if (!mesaId || !studentId) return;
+    if (!draft.campaignId || !draft.liveSessionId) {
+      setError("Selecione a campanha e a sessão antes de gerar uma tarefa.");
+      return;
+    }
     const lessonId = draft.lessonId || payload.lessons?.[0]?.id;
     if (!lessonId) {
       setError("Vincule ou crie uma aula antes de gerar uma tarefa contextualizada.");
@@ -174,6 +232,8 @@ export function CharacterReviewQueue({
           studentId,
           lessonId,
           fields: {
+            campaignId: selectedCampaignId || null,
+            liveSessionId: draft.liveSessionId || null,
             taskType: draft.taskType,
             title: draft.title,
             prompt: draft.prompt,
@@ -239,9 +299,11 @@ export function CharacterReviewQueue({
       dueAt: localDateTime(item.dueAt),
       allowResubmit: item.allowResubmit,
       lessonId: item.lessonId ?? "",
+      liveSessionId: item.liveSessionId ?? "",
       adventureId: item.adventureId ?? "",
-      campaignId: "",
+      campaignId: item.campaignId ?? "",
     });
+    if (item.campaignId) onSelectedCampaignChange(item.campaignId);
     setProposalJson(JSON.stringify(item.content, null, 2));
   };
   const act = async (item: Assignment, action: string) => {
@@ -263,6 +325,65 @@ export function CharacterReviewQueue({
     } finally {
       setBusy(false);
     }
+  };
+  const analyzeSubmission = async (item: Assignment) => {
+    if (!mesaId || !studentId || item.status !== "submitted" || !item.studentResponse) return;
+    setAnalyzingId(item.id);
+    setAnalysisErrors((current) => {
+      const next = { ...current };
+      delete next[item.id];
+      return next;
+    });
+    try {
+      const response = await fetch("/api/gerusa/action", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "review_submission",
+          mesaId,
+          studentId,
+          assignmentId: item.id,
+        }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        analysis?: ReviewAnalysis;
+        error?: string;
+      };
+      if (!response.ok || !data.analysis) throw new Error(data.error || "analysis_unavailable");
+      setAnalyses((current) => ({ ...current, [item.id]: data.analysis! }));
+    } catch {
+      setAnalysisErrors((current) => ({
+        ...current,
+        [item.id]: "A análise não foi concluída. A resposta continua salva; tente novamente.",
+      }));
+    } finally {
+      setAnalyzingId(null);
+    }
+  };
+  const updateAnalysis = (assignmentId: string, suggested_feedback: string) => {
+    setAnalyses((current) => {
+      const analysis = current[assignmentId];
+      return analysis
+        ? { ...current, [assignmentId]: { ...analysis, suggested_feedback } }
+        : current;
+    });
+  };
+  const incorporateFeedback = (item: Assignment, suggestion: string) => {
+    setFeedback((current) => {
+      const existing = current[item.id] ?? item.teacherFeedback ?? "";
+      return {
+        ...current,
+        [item.id]: [existing.trim(), suggestion.trim()].filter(Boolean).join("\n\n"),
+      };
+    });
+  };
+  const discardAnalysis = (assignmentId: string) => {
+    setAnalyses((current) => {
+      const next = { ...current };
+      delete next[assignmentId];
+      return next;
+    });
   };
   const updateProposal = (value: string) => {
     setProposalJson(value);
@@ -312,10 +433,36 @@ export function CharacterReviewQueue({
       >
         <div className="sm:col-span-2 flex flex-wrap items-center justify-between gap-2">
           <h3 className="serif text-xl">{editingId ? "Editar tarefa" : "Nova tarefa"}</h3>
-          <button type="button" className={button} disabled={busy} onClick={() => void generate()}>
+          <button
+            type="button"
+            className={button}
+            disabled={busy || !draft.campaignId || !draft.liveSessionId}
+            onClick={() => void generate()}
+          >
             Gerusa, gerar tarefa contextualizada
           </button>
         </div>
+        <label className="text-sm">
+          Campanha
+          <select
+            className={field}
+            value={draft.campaignId}
+            onChange={(event) => {
+              const campaignId = event.target.value;
+              onSelectedCampaignChange(campaignId);
+              setDraft({ ...draft, campaignId, lessonId: "", liveSessionId: "", adventureId: "" });
+            }}
+          >
+            <option value="">Sem campanha</option>
+            {payload.mesa?.campaigns
+              ?.filter((item) => item.status === "active")
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+          </select>
+        </label>
         <label className="text-sm">
           Tipo
           <select
@@ -350,6 +497,35 @@ export function CharacterReviewQueue({
           />
         </label>
         <label className="text-sm">
+          Sessão da aula
+          <select
+            className={field}
+            value={draft.liveSessionId}
+            onChange={(event) => {
+              const session = payload.sessions?.find((item) => item.id === event.target.value);
+              const campaignId = session?.campaignId ?? "";
+              onSelectedCampaignChange(campaignId);
+              setDraft({
+                ...draft,
+                liveSessionId: event.target.value,
+                lessonId: session?.lessonId ?? draft.lessonId,
+                campaignId,
+                adventureId: session?.adventureId ?? draft.adventureId,
+              });
+            }}
+          >
+            <option value="">Sem vínculo</option>
+            {payload.sessions
+              ?.filter((item) => !draft.campaignId || item.campaignId === draft.campaignId)
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.campaignName || "Sem campanha"} · {item.adventureTitle || "sessão"} ·{" "}
+                  {localDateTime(item.startedAt)}
+                </option>
+              ))}
+          </select>
+        </label>
+        <label className="text-sm">
           Aula
           <select
             className={field}
@@ -357,11 +533,13 @@ export function CharacterReviewQueue({
             onChange={(e) => setDraft({ ...draft, lessonId: e.target.value })}
           >
             <option value="">Sem vínculo</option>
-            {payload.lessons?.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
+            {payload.lessons
+              ?.filter((item) => !draft.campaignId || item.campaignId === draft.campaignId)
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
           </select>
         </label>
         <label className="text-sm">
@@ -372,11 +550,13 @@ export function CharacterReviewQueue({
             onChange={(e) => setDraft({ ...draft, adventureId: e.target.value })}
           >
             <option value="">Nenhuma</option>
-            {payload.adventures?.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.title}
-              </option>
-            ))}
+            {payload.adventures
+              ?.filter((item) => !draft.campaignId || item.campaignId === draft.campaignId)
+              .map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
           </select>
         </label>
         <label className="text-sm">
@@ -409,7 +589,13 @@ export function CharacterReviewQueue({
           <button
             className={button}
             type="submit"
-            disabled={busy || !draft.title.trim() || !draft.prompt.trim()}
+            disabled={
+              busy ||
+              !draft.title.trim() ||
+              !draft.prompt.trim() ||
+              !draft.campaignId ||
+              !draft.liveSessionId
+            }
           >
             Salvar tarefa
           </button>
@@ -418,7 +604,7 @@ export function CharacterReviewQueue({
               className={button}
               type="button"
               onClick={() => {
-                setDraft(empty());
+                setDraft({ ...empty(), campaignId: selectedCampaignId || "" });
                 setEditingId(null);
               }}
             >
@@ -437,7 +623,7 @@ export function CharacterReviewQueue({
               <div>
                 <p className="text-xs uppercase tracking-wide text-[#d5a56c]">
                   {taskTypes.find(([value]) => value === item.taskType)?.[1] ?? item.taskType} ·{" "}
-                  {item.status}
+                  {item.status} · {item.campaignName || "Sem campanha"}
                 </p>
                 <h3 className="serif text-xl">{item.title}</h3>
               </div>
@@ -459,6 +645,60 @@ export function CharacterReviewQueue({
                   {item.submittedAt ? new Date(item.submittedAt).toLocaleString("pt-BR") : ""}
                 </p>
                 <p className="mt-2 whitespace-pre-wrap text-sm">{item.studentResponse}</p>
+                {(() => {
+                  const lesson = payload.lessons?.find((entry) => entry.id === item.lessonId);
+                  const session = payload.sessions?.find(
+                    (entry) => entry.id === item.liveSessionId,
+                  );
+                  const grammarTarget =
+                    typeof item.content.grammarTarget === "string"
+                      ? item.content.grammarTarget
+                      : lesson?.grammar;
+                  const vocabularyTarget = Array.isArray(item.content.vocabulary)
+                    ? item.content.vocabulary.map(String).join(", ")
+                    : lesson?.vocabulary;
+                  return lesson || grammarTarget || vocabularyTarget || session ? (
+                    <dl className="mt-3 grid gap-2 rounded-lg border border-[#742233]/30 bg-[#10070b]/60 p-3 text-sm sm:grid-cols-2">
+                      {lesson ? (
+                        <div className="sm:col-span-2">
+                          <dt className="text-xs uppercase tracking-wide text-[#d5a56c]">
+                            Objetivo pedagógico
+                          </dt>
+                          <dd className="mt-1 whitespace-pre-wrap">{lesson.objective || "—"}</dd>
+                        </div>
+                      ) : null}
+                      <div>
+                        <dt className="text-xs uppercase tracking-wide text-[#d5a56c]">
+                          Gramática
+                        </dt>
+                        <dd className="mt-1 whitespace-pre-wrap">{grammarTarget || "—"}</dd>
+                      </div>
+                      <div>
+                        <dt className="text-xs uppercase tracking-wide text-[#d5a56c]">
+                          Vocabulário
+                        </dt>
+                        <dd className="mt-1 whitespace-pre-wrap">{vocabularyTarget || "—"}</dd>
+                      </div>
+                      {session ? (
+                        <div className="sm:col-span-2">
+                          <dt className="text-xs uppercase tracking-wide text-[#d5a56c]">
+                            Sessão vinculada
+                          </dt>
+                          <dd className="mt-1">
+                            {[session.characterName, session.campaignName, session.adventureTitle]
+                              .filter(Boolean)
+                              .join(" · ") || new Date(session.startedAt).toLocaleString("pt-BR")}
+                          </dd>
+                        </div>
+                      ) : null}
+                    </dl>
+                  ) : null;
+                })()}
+                {item.teacherFeedback ? (
+                  <p className="mt-3 rounded-lg border border-[#742233]/30 p-3 text-sm">
+                    <strong>Feedback já salvo:</strong> {item.teacherFeedback}
+                  </p>
+                ) : null}
                 <label className="mt-3 block text-sm">
                   Correção e feedback
                   <textarea
@@ -468,6 +708,129 @@ export function CharacterReviewQueue({
                     onChange={(e) => setFeedback({ ...feedback, [item.id]: e.target.value })}
                   />
                 </label>
+                {item.status === "submitted" ? (
+                  <button
+                    type="button"
+                    className={button + " mt-2"}
+                    disabled={analyzingId !== null || busy}
+                    onClick={() => void analyzeSubmission(item)}
+                  >
+                    {analyzingId === item.id
+                      ? "Gerusa está analisando…"
+                      : analysisErrors[item.id]
+                        ? "Tentar novamente"
+                        : "Analisar com Gerusa"}
+                  </button>
+                ) : null}
+                {analysisErrors[item.id] ? (
+                  <p role="alert" className="mt-2 text-sm text-red-200">
+                    {analysisErrors[item.id]}
+                  </p>
+                ) : null}
+                {analyses[item.id] ? (
+                  <section
+                    className="mt-3 space-y-3 rounded-xl border border-[#8a3045]/40 bg-[#10070b]/70 p-4"
+                    aria-label="Análise da Gerusa"
+                  >
+                    <header>
+                      <p className="text-xs uppercase tracking-wide text-[#d5a56c]">
+                        Sugestão para revisão da professora
+                      </p>
+                      <p className="mt-1 text-sm">{analyses[item.id].summary}</p>
+                    </header>
+                    <div>
+                      <h4 className="text-sm font-medium">Pontos fortes</h4>
+                      {analyses[item.id].strengths.length ? (
+                        <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+                          {analyses[item.id].strengths.map((entry, index) => (
+                            <li key={index}>{entry}</li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-1 text-sm text-[#e7c9b7]/65">Nenhum ponto informado.</p>
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-medium">Correções sugeridas</h4>
+                      {analyses[item.id].corrections.length ? (
+                        <ul className="mt-1 space-y-2 text-sm">
+                          {analyses[item.id].corrections.map((entry, index) => (
+                            <li key={index} className="rounded-lg border border-[#742233]/25 p-2">
+                              <p>
+                                <span className="text-[#e7c9b7]/65">Original:</span>{" "}
+                                {entry.original}
+                              </p>
+                              <p>
+                                <span className="text-[#e7c9b7]/65">Sugestão:</span>{" "}
+                                {entry.suggestion}
+                              </p>
+                              <p className="mt-1 text-[#e7c9b7]/75">{entry.reason}</p>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-1 text-sm text-[#e7c9b7]/65">Nenhuma correção apontada.</p>
+                      )}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {[
+                        ["Observações gramaticais", analyses[item.id].grammar_observations],
+                        ["Observações de vocabulário", analyses[item.id].vocabulary_observations],
+                      ].map(([label, entries]) => (
+                        <div key={label as string}>
+                          <h4 className="text-sm font-medium">{label as string}</h4>
+                          {(entries as string[]).length ? (
+                            <ul className="mt-1 list-disc space-y-1 pl-5 text-sm">
+                              {(entries as string[]).map((entry, index) => (
+                                <li key={index}>{entry}</li>
+                              ))}
+                            </ul>
+                          ) : (
+                            <p className="mt-1 text-sm text-[#e7c9b7]/65">Sem observações.</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <p className="text-sm">
+                        <strong>Fidelidade narrativa:</strong>{" "}
+                        {analyses[item.id].narrative_fidelity}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Próximo passo pedagógico:</strong>{" "}
+                        {analyses[item.id].pedagogical_next_step}
+                      </p>
+                    </div>
+                    <label className="block text-sm">
+                      Feedback sugerido (editável)
+                      <textarea
+                        className={field + " mt-1"}
+                        rows={4}
+                        value={analyses[item.id].suggested_feedback}
+                        onChange={(event) => updateAnalysis(item.id, event.target.value)}
+                      />
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className={button}
+                        onClick={() =>
+                          incorporateFeedback(item, analyses[item.id].suggested_feedback)
+                        }
+                        disabled={!analyses[item.id].suggested_feedback.trim()}
+                      >
+                        Incorporar ao feedback
+                      </button>
+                      <button
+                        type="button"
+                        className={button}
+                        onClick={() => discardAnalysis(item.id)}
+                      >
+                        Ignorar análise
+                      </button>
+                    </div>
+                  </section>
+                ) : null}
                 {item.status === "submitted" ? (
                   <button
                     type="button"

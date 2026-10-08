@@ -4,6 +4,7 @@ type Adventure = {
   id: string;
   studentId: string;
   campaignId: string | null;
+  campaignName?: string | null;
   title: string;
   premise: string;
   pedagogicalObjective: string;
@@ -24,7 +25,8 @@ type Adventure = {
   status: string;
 };
 type Payload = {
-  mesa?: { campaigns?: Array<{ id: string; name: string }> };
+  students?: Array<{ id: string; name: string }>;
+  mesa?: { campaigns?: Array<{ id: string; name: string; status?: string }> };
   adventures?: Adventure[];
   lessons?: Array<{ id: string; title: string; adventureId: string | null; status: string }>;
   sessions?: Array<{
@@ -91,10 +93,14 @@ function dateLabel(value: string | null) {
 export function CampaignContinuityManager({
   selectedMesa,
   selectedStudent,
+  selectedCampaignId,
+  onSelectedCampaignChange,
   libraryMode = false,
 }: {
   selectedMesa?: string;
   selectedStudent?: string;
+  selectedCampaignId?: string;
+  onSelectedCampaignChange: (campaignId: string) => void;
   libraryMode?: boolean;
 }) {
   const [payload, setPayload] = useState<Payload>({});
@@ -107,6 +113,7 @@ export function CampaignContinuityManager({
   const [notice, setNotice] = useState("");
   const adventures = payload.adventures ?? [];
   const selected = adventures.find((item) => item.id === selectedId) ?? null;
+  const selectedStudentName = payload.students?.find((item) => item.id === selectedStudent)?.name;
   const refresh = useCallback(async () => {
     if (!selectedMesa || !selectedStudent) {
       setPayload({});
@@ -137,8 +144,19 @@ export function CampaignContinuityManager({
     setNpcsJson("[]");
   }, [selectedMesa, selectedStudent]);
 
+  useEffect(() => {
+    if (
+      !selectedId &&
+      selectedCampaignId &&
+      payload.mesa?.campaigns?.some((item) => item.id === selectedCampaignId)
+    ) {
+      setDraft((current) => ({ ...current, campaignId: selectedCampaignId }));
+    }
+  }, [payload.mesa?.campaigns, selectedCampaignId, selectedId]);
+
   const choose = (adventure: Adventure) => {
     setSelectedId(adventure.id);
+    if (adventure.campaignId) onSelectedCampaignChange(adventure.campaignId);
     const { id: _id, studentId: _studentId, status: _status, ...values } = adventure;
     setDraft({ ...blank, ...values });
     setScenesJson(JSON.stringify(adventure.scenes, null, 2));
@@ -164,6 +182,7 @@ export function CampaignContinuityManager({
           mesaId: selectedMesa,
           studentId: selectedStudent,
           ...value,
+          campaignId: value.campaignId || selectedCampaignId || null,
           scenes,
           npcs,
           id,
@@ -282,7 +301,8 @@ export function CampaignContinuityManager({
             {libraryMode ? "Biblioteca de aventuras e aulas" : "Aventuras"}
           </h2>
           <p className="mt-1 text-sm text-[#e7c9b7]/70">
-            Contexto de {selected?.title ? selected.title : "aluno e campanha selecionados"}.
+            {selectedStudentName || "Aluno selecionado"} ·{" "}
+            {selected?.title || "campanha selecionada"}.
           </p>
         </div>
         <button
@@ -290,7 +310,7 @@ export function CampaignContinuityManager({
           className={button}
           onClick={() => {
             setSelectedId(null);
-            setDraft({ ...blank });
+            setDraft({ ...blank, campaignId: selectedCampaignId || null });
             setNotice("");
           }}
         >
@@ -320,14 +340,19 @@ export function CampaignContinuityManager({
             <select
               className={field}
               value={draft.campaignId ?? ""}
-              onChange={(e) => setDraft({ ...draft, campaignId: e.target.value || null })}
+              onChange={(e) => {
+                onSelectedCampaignChange(e.target.value);
+                setDraft({ ...draft, campaignId: e.target.value || null });
+              }}
             >
               <option value="">Mesa atual</option>
-              {payload.mesa?.campaigns?.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.name}
-                </option>
-              ))}
+              {payload.mesa?.campaigns
+                ?.filter((item) => item.status !== "archived")
+                .map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.name}
+                  </option>
+                ))}
             </select>
           </label>
           <label className="text-sm">
@@ -487,7 +512,7 @@ export function CampaignContinuityManager({
             <button
               type="button"
               className={button}
-              disabled={busy}
+              disabled={busy || !draft.campaignId}
               onClick={() => void generate()}
             >
               Gerusa, gerar aventura
@@ -495,7 +520,7 @@ export function CampaignContinuityManager({
             <button
               type="button"
               className={button}
-              disabled={busy || !draft.title.trim()}
+              disabled={busy || !draft.title.trim() || !draft.campaignId}
               onClick={() => void save()}
             >
               {selectedId ? "Salvar alterações" : "Salvar aventura"}
@@ -513,6 +538,8 @@ export function CampaignContinuityManager({
               <div>
                 <h3 className="serif text-xl">{adventure.title}</h3>
                 <p className="mt-1 text-xs text-[#e7c9b7]/65">
+                  Campanha: {adventure.campaignName || "Sem campanha"} · Aluno:{" "}
+                  {selectedStudentName || "—"} ·{" "}
                   {adventure.status === "archived" ? "Arquivada" : "Ativa"} ·{" "}
                   {adventure.grammarTarget || "sem gramática alvo"}
                 </p>

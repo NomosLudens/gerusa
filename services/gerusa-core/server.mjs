@@ -674,12 +674,14 @@ const server = createServer(async (request, response) => {
           ) ||
           name.length < 2 ||
           name.length > 60 ||
-          !/^[a-z0-9][a-z0-9._-]{1,39}$/.test(username) ||
           !/^\d{6}$/.test(pin) ||
           (age !== null && (!Number.isInteger(age) || age < 5 || age > 120)) ||
           note.length > 2000
         ) {
           return sendJson(response, 400, { error: "invalid_student" });
+        }
+        if (!/^[a-z0-9][a-z0-9_\x2d]{2,31}$/.test(username)) {
+          return sendJson(response, 400, { error: "invalid_username" });
         }
         const client = await pool.connect();
         let open = false;

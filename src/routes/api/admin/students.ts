@@ -3,6 +3,8 @@ import { requireUser } from "@/lib/require-user.server";
 import { gerusaCoreRequest, isSameOrigin } from "@/server/gerusa/store";
 import { readSessionCookie } from "@/server/local-core/cookies";
 
+const usernamePattern = /^[a-z0-9][a-z0-9_\x2d]{2,31}$/;
+
 export const Route = createFileRoute("/api/admin/students")({
   server: {
     handlers: {
@@ -25,6 +27,12 @@ export const Route = createFileRoute("/api/admin/students")({
         if ("error" in auth) return auth.error;
         const body = await request.json().catch(() => null);
         if (!body) return Response.json({ error: "invalid_student" }, { status: 400 });
+        if (
+          typeof body.username !== "string" ||
+          !usernamePattern.test(body.username.trim().toLowerCase())
+        ) {
+          return Response.json({ error: "invalid_username" }, { status: 400 });
+        }
         const token = readSessionCookie(request.headers.get("cookie"));
         try {
           return Response.json(
@@ -40,10 +48,19 @@ export const Route = createFileRoute("/api/admin/students")({
             {
               error:
                 error instanceof Error && error.message.endsWith("409")
-                  ? "student_conflict"
-                  : "student_unavailable",
+                  ? "username_unavailable"
+                  : error instanceof Error && error.message.endsWith("400")
+                    ? "invalid_student"
+                    : "student_unavailable",
             },
-            { status: error instanceof Error && error.message.endsWith("409") ? 409 : 503 },
+            {
+              status:
+                error instanceof Error && error.message.endsWith("409")
+                  ? 409
+                  : error instanceof Error && error.message.endsWith("400")
+                    ? 400
+                    : 503,
+            },
           );
         }
       },

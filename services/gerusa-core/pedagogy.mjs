@@ -98,6 +98,26 @@ async function validateCampaign(pool, mesaId, campaignId) {
   if (!result.rowCount) fail("campaign_not_found", 404);
 }
 
+async function saveCampaign(pool, user, body) {
+  const mesaId = optionalUuid(body.mesaId);
+  const studentId = optionalUuid(body.studentId);
+  if (!studentId) fail("student_required");
+  await authorizeTeacherContext(pool, user.id, mesaId, studentId);
+  const name = text(body.name, 120);
+  if (!name) fail("campaign_name_required");
+  if (body.status != null && !["active", "archived"].includes(body.status))
+    fail("invalid_campaign_status");
+  const status = body.status === "archived" ? "archived" : "active";
+  const result = await pool.query(
+    `INSERT INTO gerusa.campaigns (mesa_id,name,premise,status)
+     VALUES ($1,$2,$3,$4)
+     RETURNING id::text AS id,mesa_id::text AS "mesaId",name,premise,status,
+       created_at AS "createdAt"`,
+    [mesaId, name, text(body.premise, 4000), status],
+  );
+  return { campaign: result.rows[0] };
+}
+
 async function getTeacherView(pool, user, params) {
   const mesaId = optionalUuid(params.get("mesaId"));
   const studentId = optionalUuid(params.get("studentId"));
@@ -132,33 +152,47 @@ async function getTeacherView(pool, user, params) {
       ),
       pool.query(
         `SELECT a.* FROM (
-         SELECT id::text,student_id::text AS "studentId",mesa_id::text AS "mesaId",
-                campaign_id::text AS "campaignId",title,premise,"pedagogical_objective" AS "pedagogicalObjective",
-                grammar_target AS "grammarTarget",vocabulary,estimated_minutes AS "estimatedMinutes",tone,
-                difficulty,scenes,npcs,choices,challenges,english_questions AS "englishQuestions",supports,
-                conclusion,hook,suggested_task AS "suggestedTask",status,created_at AS "createdAt",updated_at AS "updatedAt"
-           FROM gerusa.adventures WHERE mesa_id=$1 AND ($2::uuid IS NULL OR student_id=$2)
+         SELECT adventure.id::text,adventure.student_id::text AS "studentId",adventure.mesa_id::text AS "mesaId",
+                adventure.campaign_id::text AS "campaignId",campaign.name AS "campaignName",adventure.title,
+                adventure.premise,adventure.pedagogical_objective AS "pedagogicalObjective",
+                adventure.grammar_target AS "grammarTarget",adventure.vocabulary,
+                adventure.estimated_minutes AS "estimatedMinutes",adventure.tone,
+                adventure.difficulty,adventure.scenes,adventure.npcs,adventure.choices,adventure.challenges,
+                adventure.english_questions AS "englishQuestions",adventure.supports,
+                adventure.conclusion,adventure.hook,adventure.suggested_task AS "suggestedTask",
+                adventure.status,adventure.created_at AS "createdAt",adventure.updated_at AS "updatedAt"
+           FROM gerusa.adventures adventure
+           LEFT JOIN gerusa.campaigns campaign ON campaign.id=adventure.campaign_id
+          WHERE adventure.mesa_id=$1 AND ($2::uuid IS NULL OR adventure.student_id=$2)
         ) a ORDER BY a."updatedAt" DESC LIMIT 100`,
         [mesaId, studentId],
       ),
       pool.query(
         `SELECT a.id::text AS id,a.student_id::text AS "studentId",p.display_name AS "studentName",
-              a.mesa_id::text AS "mesaId",a.campaign_id::text AS "campaignId",a.lesson_id::text AS "lessonId",
+              a.mesa_id::text AS "mesaId",a.campaign_id::text AS "campaignId",c.name AS "campaignName",
+              a.lesson_id::text AS "lessonId",a.live_session_id::text AS "liveSessionId",
               a.adventure_id::text AS "adventureId",a.task_type AS "taskType",a.title,a.prompt,a.content,
               a.status,a.due_at AS "dueAt",a.allow_resubmit AS "allowResubmit",a.student_response AS "studentResponse",
               a.submitted_at AS "submittedAt",a.teacher_feedback AS "teacherFeedback",a.reviewed_at AS "reviewedAt",
               a.created_at AS "createdAt",a.updated_at AS "updatedAt"
          FROM gerusa.assignments a JOIN gerusa.profiles p ON p.id=a.student_id
+         LEFT JOIN gerusa.campaigns c ON c.id=a.campaign_id
         WHERE a.mesa_id=$1 AND ($2::uuid IS NULL OR a.student_id=$2)
         ORDER BY a.due_at NULLS LAST,a.updated_at DESC LIMIT 100`,
         [mesaId, studentId],
       ),
       pool.query(
         `SELECT s.id::text AS id,s.lesson_id::text AS "lessonId",s.student_id::text AS "studentId",
-              p.display_name AS "studentName",s.mesa_id::text AS "mesaId",s.adventure_id::text AS "adventureId",
+              p.display_name AS "studentName",s.mesa_id::text AS "mesaId",l.campaign_id::text AS "campaignId",
+              c.name AS "campaignName",ch.name AS "characterName",ad.title AS "adventureTitle",
+              s.adventure_id::text AS "adventureId",
               s.status,s.current_scene_index AS "currentSceneIndex",s.quick_notes AS "quickNotes",s.summary,
               s.started_at AS "startedAt",s.ended_at AS "endedAt",s.updated_at AS "updatedAt"
          FROM gerusa.live_sessions s JOIN gerusa.profiles p ON p.id=s.student_id
+         JOIN gerusa.lessons l ON l.id=s.lesson_id
+         LEFT JOIN gerusa.campaigns c ON c.id=l.campaign_id
+         LEFT JOIN gerusa.characters ch ON ch.owner_user_id=s.student_id AND ch.mesa_id=s.mesa_id
+         LEFT JOIN gerusa.adventures ad ON ad.id=s.adventure_id
         WHERE s.mesa_id=$1 AND ($2::uuid IS NULL OR s.student_id=$2)
         ORDER BY s.started_at DESC LIMIT 50`,
         [mesaId, studentId],
@@ -182,9 +216,14 @@ async function getTeacherView(pool, user, params) {
       ),
     ]);
   const mesa = user.mesas.find((item) => item.id === mesaId);
+  const campaigns = await pool.query(
+    `SELECT id::text AS id,name,premise,status,created_at AS "createdAt"
+       FROM gerusa.campaigns WHERE mesa_id=$1 ORDER BY created_at DESC,id`,
+    [mesaId],
+  );
   return {
     view: "teacher",
-    mesa: mesa ?? null,
+    mesa: mesa ? { ...mesa, campaigns: campaigns.rows } : null,
     students: students.rows,
     lessons: lessons.rows,
     adventures: adventures.rows,
@@ -196,13 +235,19 @@ async function getTeacherView(pool, user, params) {
 }
 
 async function getStudentView(pool, user, params) {
+  const requestedStudentId = optionalUuid(params.get("studentId"));
+  if (requestedStudentId && requestedStudentId.toLowerCase() !== user.id.toLowerCase())
+    fail("student_not_found", 404);
   const mesaId = await authorizeOwnContext(pool, user.id, optionalUuid(params.get("mesaId")));
   const campaign = await pool.query(
-    `SELECT m.id::text AS id,m.name AS "mesaName",c.id::text AS "campaignId",c.name AS "campaignName"
+    `SELECT m.id::text AS id,m.name AS "mesaName",c.id::text AS "campaignId",
+            c.name AS "campaignName",c.premise AS "campaignPremise"
        FROM gerusa.mesas m JOIN gerusa.mesa_members mm ON mm.mesa_id=m.id
-       LEFT JOIN gerusa.campaigns c ON c.id=COALESCE(
-         (SELECT ch.campaign_id FROM gerusa.characters ch WHERE ch.owner_user_id=$2 AND ch.mesa_id=m.id LIMIT 1),
-         (SELECT fallback.id FROM gerusa.campaigns fallback WHERE fallback.mesa_id=m.id AND fallback.status='active' ORDER BY fallback.created_at DESC LIMIT 1)
+       LEFT JOIN gerusa.campaigns c ON c.id=(
+         SELECT ch.campaign_id FROM gerusa.characters ch
+           JOIN gerusa.campaigns active_character_campaign ON active_character_campaign.id=ch.campaign_id
+             AND active_character_campaign.status='active'
+           WHERE ch.owner_user_id=$2 AND ch.mesa_id=m.id LIMIT 1
        ) AND c.status='active'
       WHERE m.id=$1 AND mm.user_id=$2 AND mm.member_role='jogador' AND mm.membership_status='active'
       LIMIT 1`,
@@ -212,46 +257,59 @@ async function getStudentView(pool, user, params) {
   const [character, lessons, adventures, assignments, sessions, records, conversations] =
     await Promise.all([
       pool.query(
-        `SELECT id::text AS id,name,sheet,updated_at AS "updatedAt" FROM gerusa.characters
+        `SELECT id::text AS id,campaign_id::text AS "campaignId",name,sheet,updated_at AS "updatedAt" FROM gerusa.characters
         WHERE owner_user_id=$1 AND mesa_id=$2 LIMIT 1`,
         [user.id, mesaId],
       ),
       pool.query(
-        `SELECT id::text AS id,title,scheduled_at AS "scheduledAt",status,objective,grammar,vocabulary,
-              duration_minutes AS "durationMinutes",outline,notes,adventure_id::text AS "adventureId"
-         FROM gerusa.lessons WHERE student_id=$1 AND mesa_id=$2 AND status<>'cancelled'
-        ORDER BY scheduled_at DESC NULLS LAST,updated_at DESC LIMIT 20`,
-        [user.id, mesaId],
+        `SELECT l.id::text AS id,l.title,l.scheduled_at AS "scheduledAt",l.status,l.objective,l.grammar,l.vocabulary,
+              l.campaign_id::text AS "campaignId",campaign.name AS "campaignName",
+              l.duration_minutes AS "durationMinutes",l.outline,l.notes,l.adventure_id::text AS "adventureId"
+         FROM gerusa.lessons l LEFT JOIN gerusa.campaigns campaign ON campaign.id=l.campaign_id
+        WHERE l.student_id=$1 AND l.mesa_id=$2 AND l.status<>'cancelled'
+          AND ($3::uuid IS NULL OR l.campaign_id=$3)
+        ORDER BY l.scheduled_at DESC NULLS LAST,l.updated_at DESC LIMIT 20`,
+        [user.id, mesaId, campaign.rows[0].campaignId],
       ),
       pool.query(
         `SELECT id::text AS id,campaign_id::text AS "campaignId",title,premise,pedagogical_objective AS "pedagogicalObjective",
               grammar_target AS "grammarTarget",vocabulary,estimated_minutes AS "estimatedMinutes",tone,difficulty,
               scenes,npcs,choices,challenges,english_questions AS "englishQuestions",supports,conclusion,hook,suggested_task AS "suggestedTask"
          FROM gerusa.adventures WHERE student_id=$1 AND mesa_id=$2 AND status='active'
+           AND ($3::uuid IS NULL OR campaign_id=$3)
         ORDER BY updated_at DESC LIMIT 20`,
-        [user.id, mesaId],
+        [user.id, mesaId, campaign.rows[0].campaignId],
       ),
       pool.query(
-        `SELECT id::text AS id,task_type AS "taskType",title,prompt,content,status,due_at AS "dueAt",
+        `SELECT id::text AS id,campaign_id::text AS "campaignId",lesson_id::text AS "lessonId",
+              live_session_id::text AS "liveSessionId",task_type AS "taskType",title,prompt,content,status,due_at AS "dueAt",
               allow_resubmit AS "allowResubmit",student_response AS "studentResponse",submitted_at AS "submittedAt",
               teacher_feedback AS "teacherFeedback",reviewed_at AS "reviewedAt",created_at AS "createdAt"
          FROM gerusa.assignments WHERE student_id=$1 AND mesa_id=$2 AND status IN ('published','submitted','reviewed')
+           AND ($3::uuid IS NULL OR campaign_id=$3)
         ORDER BY due_at NULLS LAST,created_at DESC LIMIT 50`,
-        [user.id, mesaId],
+        [user.id, mesaId, campaign.rows[0].campaignId],
       ),
       pool.query(
         `SELECT s.id::text AS id,s.status,s.summary,s.started_at AS "startedAt",s.ended_at AS "endedAt",
-              l.title AS "lessonTitle",l.objective,l.grammar,l.vocabulary
+              l.title AS "lessonTitle",l.campaign_id::text AS "campaignId",c.name AS "campaignName",
+              ch.name AS "characterName",ad.title AS "adventureTitle",l.objective,l.grammar,l.vocabulary
          FROM gerusa.live_sessions s JOIN gerusa.lessons l ON l.id=s.lesson_id
-        WHERE s.student_id=$1 AND s.mesa_id=$2 ORDER BY s.started_at DESC LIMIT 10`,
-        [user.id, mesaId],
+         LEFT JOIN gerusa.campaigns c ON c.id=l.campaign_id
+         LEFT JOIN gerusa.characters ch ON ch.owner_user_id=s.student_id AND ch.mesa_id=s.mesa_id
+         LEFT JOIN gerusa.adventures ad ON ad.id=s.adventure_id
+        WHERE s.student_id=$1 AND s.mesa_id=$2 AND ($3::uuid IS NULL OR l.campaign_id=$3)
+        ORDER BY s.started_at DESC LIMIT 10`,
+        [user.id, mesaId, campaign.rows[0].campaignId],
       ),
       pool.query(
-        `SELECT id::text AS id,record_type AS "recordType",skill,progress_status AS "progressStatus",
-              observation,confirmed,created_at AS "createdAt"
-         FROM gerusa.lesson_records WHERE student_id=$1 AND mesa_id=$2 AND confirmed=true
-        ORDER BY created_at DESC LIMIT 50`,
-        [user.id, mesaId],
+        `SELECT r.id::text AS id,r.record_type AS "recordType",r.skill,
+              r.progress_status AS "progressStatus",r.observation,r.confirmed,r.created_at AS "createdAt"
+         FROM gerusa.lesson_records r JOIN gerusa.lessons l ON l.id=r.lesson_id
+        WHERE r.student_id=$1 AND r.mesa_id=$2 AND r.confirmed=true
+          AND ($3::uuid IS NULL OR l.campaign_id=$3)
+        ORDER BY r.created_at DESC LIMIT 50`,
+        [user.id, mesaId, campaign.rows[0].campaignId],
       ),
       pool.query(
         `SELECT id::text AS id,updated_at AS "updatedAt" FROM gerusa.conversations
@@ -293,12 +351,150 @@ export async function getPedagogyView(pool, user, params) {
   fail("invalid_view");
 }
 
+async function getAssignmentReviewContext(pool, user, mesaId, studentId, assignmentId) {
+  await authorizeTeacherContext(pool, user.id, mesaId, studentId);
+  const assignment = await pool.query(
+    `SELECT a.id::text AS id,a.task_type AS "taskType",a.title,a.prompt,a.content,
+            a.student_response AS response,a.teacher_feedback AS "teacherFeedback",a.status,
+            a.campaign_id::text AS "campaignId",a.lesson_id::text AS "lessonId",
+            a.live_session_id::text AS "liveSessionId",a.adventure_id::text AS "adventureId",
+            p.display_name AS "studentName",p.age_years AS "studentAge",
+            campaign.id::text AS "linkedCampaignId",campaign.name AS "campaignName",
+            campaign.premise AS "campaignPremise",
+            ch.name AS "characterName",
+            lesson.id::text AS "linkedLessonId",lesson.title AS "lessonTitle",lesson.objective AS "lessonObjective",
+            lesson.grammar AS "lessonGrammar",lesson.vocabulary AS "lessonVocabulary",
+            adventure.id::text AS "linkedAdventureId",adventure.title AS "adventureTitle",
+            adventure.premise AS "adventurePremise",
+            live_session.id::text AS "linkedSessionId",live_session.started_at AS "sessionStartedAt",
+            live_session.ended_at AS "sessionEndedAt",live_session.summary AS "sessionSummary"
+       FROM gerusa.assignments a
+       JOIN gerusa.profiles p ON p.id=a.student_id
+       LEFT JOIN gerusa.campaigns campaign ON campaign.id=a.campaign_id AND campaign.mesa_id=a.mesa_id
+       LEFT JOIN gerusa.characters ch ON ch.owner_user_id=a.student_id
+         AND ch.mesa_id=a.mesa_id AND ch.campaign_id=a.campaign_id
+       LEFT JOIN gerusa.lessons lesson ON lesson.id=a.lesson_id
+         AND lesson.student_id=a.student_id AND lesson.mesa_id=a.mesa_id
+         AND lesson.campaign_id IS NOT DISTINCT FROM a.campaign_id
+       LEFT JOIN gerusa.adventures adventure ON adventure.id=a.adventure_id
+         AND adventure.student_id=a.student_id AND adventure.mesa_id=a.mesa_id
+         AND adventure.campaign_id IS NOT DISTINCT FROM a.campaign_id
+       LEFT JOIN gerusa.live_sessions live_session ON live_session.id=a.live_session_id
+         AND live_session.lesson_id=a.lesson_id AND live_session.student_id=a.student_id
+         AND live_session.mesa_id=a.mesa_id
+         AND live_session.adventure_id IS NOT DISTINCT FROM a.adventure_id
+      WHERE a.id=$1 AND a.student_id=$2 AND a.mesa_id=$3 AND a.status='submitted'
+      LIMIT 1`,
+    [assignmentId, studentId, mesaId],
+  );
+  if (!assignment.rowCount || !assignment.rows[0].response) fail("submission_not_available", 404);
+  const item = assignment.rows[0];
+  if (
+    (item.campaignId && !item.linkedCampaignId) ||
+    (item.lessonId && !item.linkedLessonId) ||
+    (item.adventureId && !item.linkedAdventureId)
+  )
+    fail("submission_context_unavailable", 409);
+  if (item.liveSessionId && !item.linkedSessionId) fail("submission_context_unavailable", 409);
+  const content = jsonObject(item.content);
+  const campaignId = item.campaignId;
+  const progress = await pool.query(
+    `SELECT r.skill,r.progress_status AS status,r.observation,r.evidence
+       FROM gerusa.lesson_records r
+       JOIN gerusa.lessons l ON l.id=r.lesson_id AND l.student_id=r.student_id AND l.mesa_id=r.mesa_id
+      WHERE r.student_id=$1 AND r.mesa_id=$2 AND r.confirmed=true
+        AND (($3::uuid IS NOT NULL AND l.campaign_id=$3)
+          OR ($3::uuid IS NULL AND $4::uuid IS NOT NULL AND l.id=$4))
+      ORDER BY r.created_at DESC LIMIT 8`,
+    [studentId, mesaId, campaignId, item.lessonId],
+  );
+  const sessionSummary = jsonObject(item.sessionSummary);
+  const summaryKeys = [
+    "narrativeSummary",
+    "pedagogicalSummary",
+    "grammar",
+    "vocabulary",
+    "strengths",
+    "difficulties",
+    "nextStep",
+  ];
+  const session = item.linkedSessionId
+    ? {
+        startedAt: item.sessionStartedAt,
+        endedAt: item.sessionEndedAt,
+        summary: Object.fromEntries(
+          summaryKeys.flatMap((key) => {
+            const value = sessionSummary[key];
+            if (typeof value === "string") return [[key, text(value, 1200)]];
+            if (Array.isArray(value))
+              return [[key, jsonArray(value, 12).map((part) => text(part, 240))]];
+            return [];
+          }),
+        ),
+      }
+    : null;
+  return {
+    student: {
+      name: text(item.studentName, 100),
+      ...(Number.isInteger(item.studentAge) ? { age: item.studentAge } : {}),
+    },
+    task: {
+      id: item.id,
+      type: item.taskType,
+      title: text(item.title, 160),
+      instructions: text(item.prompt, 4000),
+      details: {
+        steps: jsonArray(content.instructions, 12).map((part) => text(part, 400)),
+        expectedEvidence: text(content.expectedEvidence, 1200),
+        grammarTarget: text(content.grammarTarget || item.lessonGrammar, 1000),
+        vocabularyTarget: jsonArray(content.vocabulary, 20).length
+          ? jsonArray(content.vocabulary, 20).map((part) => text(part, 120))
+          : text(item.lessonVocabulary, 1000),
+      },
+      response: text(item.response, 12000),
+      existingTeacherFeedback: text(item.teacherFeedback, 2000),
+    },
+    lesson: item.linkedLessonId
+      ? {
+          title: text(item.lessonTitle, 160),
+          objective: text(item.lessonObjective, 1200),
+        }
+      : null,
+    character: item.characterName ? { name: text(item.characterName, 100) } : null,
+    campaign: item.linkedCampaignId
+      ? {
+          name: text(item.campaignName, 120),
+          premise: text(item.campaignPremise, 1600),
+        }
+      : null,
+    adventure: item.linkedAdventureId
+      ? {
+          title: text(item.adventureTitle, 160),
+          premise: text(item.adventurePremise, 1600),
+        }
+      : null,
+    session,
+    relevantProgress: progress.rows.map((record) => ({
+      skill: text(record.skill, 100),
+      status: record.status,
+      observation: text(record.observation, 400),
+      evidence: text(record.evidence, 400),
+    })),
+  };
+}
+
 export async function getPedagogyAiContext(pool, user, params) {
   const mesaId = optionalUuid(params.get("mesaId"));
   const studentId = optionalUuid(params.get("studentId"));
   const lessonId = optionalUuid(params.get("lessonId"));
+  const campaignId = optionalUuid(params.get("campaignId"));
+  const assignmentId = optionalUuid(params.get("assignmentId"));
   if (!studentId) fail("student_required");
+  if (assignmentId) {
+    return getAssignmentReviewContext(pool, user, mesaId, studentId, assignmentId);
+  }
   await authorizeTeacherContext(pool, user.id, mesaId, studentId);
+  await validateCampaign(pool, mesaId, campaignId);
   const [
     profile,
     membership,
@@ -315,43 +511,57 @@ export async function getPedagogyAiContext(pool, user, params) {
       [studentId],
     ),
     pool.query(
-      `SELECT m.name AS "mesaName",c.name AS "campaignName" FROM gerusa.mesa_members mm
-       JOIN gerusa.mesas m ON m.id=mm.mesa_id LEFT JOIN gerusa.campaigns c ON c.mesa_id=m.id AND c.status='active'
+      `SELECT m.name AS "mesaName",c.id::text AS "campaignId",c.name AS "campaignName",c.premise AS "campaignPremise"
+       FROM gerusa.mesa_members mm JOIN gerusa.mesas m ON m.id=mm.mesa_id
+       LEFT JOIN gerusa.campaigns c ON c.mesa_id=m.id AND c.status='active' AND c.id=COALESCE(
+         $3::uuid,
+         (SELECT ch.campaign_id FROM gerusa.characters ch
+           JOIN gerusa.campaigns active_character_campaign ON active_character_campaign.id=ch.campaign_id
+             AND active_character_campaign.status='active'
+           WHERE ch.owner_user_id=$1 AND ch.mesa_id=m.id LIMIT 1)
+       )
        WHERE mm.user_id=$1 AND mm.mesa_id=$2 AND mm.member_role='jogador' AND mm.membership_status='active'
-       ORDER BY c.created_at DESC NULLS LAST LIMIT 1`,
-      [studentId, mesaId],
+       LIMIT 1`,
+      [studentId, mesaId, campaignId],
     ),
     pool.query(
-      `SELECT name,sheet FROM gerusa.characters WHERE owner_user_id=$1 AND mesa_id=$2 LIMIT 1`,
-      [studentId, mesaId],
+      `SELECT name,sheet FROM gerusa.characters WHERE owner_user_id=$1 AND mesa_id=$2
+         AND ($3::uuid IS NULL OR campaign_id=$3) LIMIT 1`,
+      [studentId, mesaId, campaignId],
     ),
     pool.query(
       `SELECT title,scheduled_at AS "scheduledAt",objective,grammar,vocabulary,status
-       FROM gerusa.lessons WHERE student_id=$1 AND mesa_id=$2 ORDER BY scheduled_at DESC NULLS LAST LIMIT 5`,
-      [studentId, mesaId],
+       FROM gerusa.lessons WHERE student_id=$1 AND mesa_id=$2 AND ($3::uuid IS NULL OR campaign_id=$3)
+       ORDER BY scheduled_at DESC NULLS LAST LIMIT 5`,
+      [studentId, mesaId, campaignId],
     ),
     pool.query(
       `SELECT l.title,l.objective,l.grammar,l.vocabulary,s.summary,s.started_at AS "startedAt",s.ended_at AS "endedAt"
            FROM gerusa.live_sessions s JOIN gerusa.lessons l ON l.id=s.lesson_id
           WHERE s.student_id=$1 AND s.mesa_id=$2 AND s.status='closed'
+            AND ($3::uuid IS NULL OR l.campaign_id=$3)
           ORDER BY s.ended_at DESC LIMIT 5`,
-      [studentId, mesaId],
+      [studentId, mesaId, campaignId],
     ),
     pool.query(
-      `SELECT record_type AS type,skill,progress_status AS status,observation,evidence,confirmed
-       FROM gerusa.lesson_records WHERE student_id=$1 AND mesa_id=$2 ORDER BY created_at DESC LIMIT 20`,
-      [studentId, mesaId],
+      `SELECT r.record_type AS type,r.skill,r.progress_status AS status,r.observation,r.evidence,r.confirmed
+       FROM gerusa.lesson_records r JOIN gerusa.lessons l ON l.id=r.lesson_id
+       WHERE r.student_id=$1 AND r.mesa_id=$2 AND ($3::uuid IS NULL OR l.campaign_id=$3)
+       ORDER BY r.created_at DESC LIMIT 20`,
+      [studentId, mesaId, campaignId],
     ),
     pool.query(
       `SELECT task_type AS type,title,prompt,status,student_response AS response,teacher_feedback AS feedback
-       FROM gerusa.assignments WHERE student_id=$1 AND mesa_id=$2 ORDER BY created_at DESC LIMIT 8`,
-      [studentId, mesaId],
+       FROM gerusa.assignments WHERE student_id=$1 AND mesa_id=$2 AND ($3::uuid IS NULL OR campaign_id=$3)
+       ORDER BY created_at DESC LIMIT 8`,
+      [studentId, mesaId, campaignId],
     ),
     lessonId
       ? pool.query(
           `SELECT id::text AS id,title,objective,grammar,vocabulary,outline,notes
-       FROM gerusa.lessons WHERE id=$1 AND student_id=$2 AND mesa_id=$3 LIMIT 1`,
-          [lessonId, studentId, mesaId],
+       FROM gerusa.lessons WHERE id=$1 AND student_id=$2 AND mesa_id=$3
+         AND ($4::uuid IS NULL OR campaign_id=$4) LIMIT 1`,
+          [lessonId, studentId, mesaId, campaignId],
         )
       : Promise.resolve({ rows: [] }),
     lessonId
@@ -360,8 +570,9 @@ export async function getPedagogyAiContext(pool, user, params) {
               a.vocabulary,a.estimated_minutes AS duration,a.tone,a.difficulty,a.scenes,a.npcs,a.choices,
               a.challenges,a.english_questions AS questions,a.supports,a.conclusion,a.hook,a.suggested_task AS task
          FROM gerusa.adventures a JOIN gerusa.lessons l ON l.adventure_id=a.id
-        WHERE l.id=$1 AND l.student_id=$2 AND l.mesa_id=$3 LIMIT 1`,
-          [lessonId, studentId, mesaId],
+        WHERE l.id=$1 AND l.student_id=$2 AND l.mesa_id=$3
+          AND ($4::uuid IS NULL OR l.campaign_id=$4) LIMIT 1`,
+          [lessonId, studentId, mesaId, campaignId],
         )
       : Promise.resolve({ rows: [] }),
   ]);
@@ -408,17 +619,19 @@ async function saveLesson(pool, user, body) {
   const outline = JSON.stringify(jsonArray(body.outline));
   if (adventureId) {
     const check = await pool.query(
-      "SELECT 1 FROM gerusa.adventures WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
+      "SELECT campaign_id FROM gerusa.adventures WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
       [adventureId, mesaId, studentId],
     );
     if (!check.rowCount) fail("adventure_not_found", 404);
+    if (check.rows[0].campaign_id !== campaignId) fail("campaign_link_mismatch");
   }
   if (assignmentId) {
     const check = await pool.query(
-      "SELECT 1 FROM gerusa.assignments WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
+      "SELECT campaign_id FROM gerusa.assignments WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
       [assignmentId, mesaId, studentId],
     );
     if (!check.rowCount) fail("assignment_not_found", 404);
+    if (check.rows[0].campaign_id !== campaignId) fail("campaign_link_mismatch");
   }
   if (id) {
     const result = await pool.query(
@@ -553,34 +766,46 @@ async function saveAssignment(pool, user, body) {
   const title = text(body.title, 160),
     prompt = text(body.prompt);
   if (!title || !prompt) fail("assignment_content_required");
-  const lessonId = optionalUuid(body.lessonId),
-    adventureId = optionalUuid(body.adventureId);
-  if (
-    lessonId &&
-    !(
-      await pool.query(
-        "SELECT 1 FROM gerusa.lessons WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
-        [lessonId, mesaId, studentId],
-      )
-    ).rowCount
-  )
-    fail("lesson_not_found", 404);
-  if (
-    adventureId &&
-    !(
-      await pool.query(
-        "SELECT 1 FROM gerusa.adventures WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
-        [adventureId, mesaId, studentId],
-      )
-    ).rowCount
-  )
-    fail("adventure_not_found", 404);
+  let lessonId = optionalUuid(body.lessonId);
+  const liveSessionId = optionalUuid(body.liveSessionId);
+  let adventureId = optionalUuid(body.adventureId);
+  if (!campaignId || !liveSessionId) fail("assignment_context_required");
+  const session = await pool.query(
+    `SELECT s.lesson_id,s.adventure_id,l.campaign_id
+       FROM gerusa.live_sessions s JOIN gerusa.lessons l ON l.id=s.lesson_id
+      WHERE s.id=$1 AND s.mesa_id=$2 AND s.student_id=$3`,
+    [liveSessionId, mesaId, studentId],
+  );
+  if (!session.rowCount) fail("live_session_not_found", 404);
+  if (session.rows[0].campaign_id !== campaignId) fail("campaign_link_mismatch");
+  if (lessonId && session.rows[0].lesson_id !== lessonId) fail("session_lesson_mismatch");
+  lessonId ??= session.rows[0].lesson_id;
+  if (adventureId && session.rows[0].adventure_id !== adventureId)
+    fail("session_adventure_mismatch");
+  adventureId ??= session.rows[0].adventure_id;
+  if (lessonId) {
+    const related = await pool.query(
+      "SELECT campaign_id FROM gerusa.lessons WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
+      [lessonId, mesaId, studentId],
+    );
+    if (!related.rowCount) fail("lesson_not_found", 404);
+    if (related.rows[0].campaign_id !== campaignId) fail("campaign_link_mismatch");
+  }
+  if (adventureId) {
+    const related = await pool.query(
+      "SELECT campaign_id FROM gerusa.adventures WHERE id=$1 AND mesa_id=$2 AND student_id=$3",
+      [adventureId, mesaId, studentId],
+    );
+    if (!related.rowCount) fail("adventure_not_found", 404);
+    if (related.rows[0].campaign_id !== campaignId) fail("campaign_link_mismatch");
+  }
   const args = [
     user.id,
     studentId,
     mesaId,
     campaignId,
     lessonId,
+    liveSessionId,
     adventureId,
     type,
     title,
@@ -592,14 +817,14 @@ async function saveAssignment(pool, user, body) {
   ];
   const result = id
     ? await pool.query(
-        `UPDATE gerusa.assignments SET campaign_id=$4,lesson_id=$5,adventure_id=$6,task_type=$7,title=$8,prompt=$9,
+        `UPDATE gerusa.assignments SET campaign_id=$3,lesson_id=$4,live_session_id=$5,adventure_id=$6,task_type=$7,title=$8,prompt=$9,
        content=$10::jsonb,due_at=$11,allow_resubmit=$12,updated_at=now()
-       WHERE id=$13 AND mesa_id=$3 AND student_id=$2 AND status IN ('draft','published') RETURNING id::text AS id`,
-        args,
+       WHERE id=$13 AND mesa_id=$2 AND student_id=$1 AND status IN ('draft','published') RETURNING id::text AS id`,
+        args.slice(1),
       )
     : await pool.query(
-        `INSERT INTO gerusa.assignments (created_by,student_id,mesa_id,campaign_id,lesson_id,adventure_id,task_type,title,prompt,content,due_at,allow_resubmit)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10::jsonb,$11,$12) RETURNING id::text AS id`,
+        `INSERT INTO gerusa.assignments (created_by,student_id,mesa_id,campaign_id,lesson_id,live_session_id,adventure_id,task_type,title,prompt,content,due_at,allow_resubmit)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11::jsonb,$12,$13) RETURNING id::text AS id`,
         args.slice(0, -1),
       );
   if (!result.rowCount) fail("assignment_not_found_or_locked", 404);
@@ -608,8 +833,12 @@ async function saveAssignment(pool, user, body) {
 
 export async function mutatePedagogy(pool, user, body) {
   const action = text(body.action, 60);
+  if (action === "create_campaign") return saveCampaign(pool, user, body);
   if (action === "save_character") return saveCharacter(pool, user, body);
   if (action === "submit_assignment") {
+    const requestedStudentId = optionalUuid(body.studentId);
+    if (requestedStudentId && requestedStudentId.toLowerCase() !== user.id.toLowerCase())
+      fail("assignment_not_available", 404);
     const id = optionalUuid(body.assignmentId),
       response = text(body.response, 12000);
     if (!id || !response) fail("assignment_response_required");

@@ -8,6 +8,7 @@ import { CharacterReviewQueue } from "@/components/CharacterReviewQueue";
 import { MasterOperationalRail } from "@/components/MasterOperationalRail";
 import { GerusaStudentsPanel } from "@/components/GerusaStudentsPanel";
 import { GerusaAccountPanel } from "@/components/GerusaAccountPanel";
+import { GerusaCampaignsPanel } from "@/components/GerusaCampaignsPanel";
 import { useProfile } from "@/lib/use-profile";
 import { signOutLocal } from "@/lib/local-auth-client";
 import { toast } from "sonner";
@@ -24,6 +25,7 @@ function MestrePage() {
       : undefined,
   );
   const [selectedStudent, setSelectedStudent] = useState<string | undefined>();
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | undefined>();
   const [tab, setTab] = useState("overview");
   const [focusLessonId, setFocusLessonId] = useState<string | undefined>();
   const handleMesaChange = useCallback((mesaId: string) => {
@@ -38,6 +40,7 @@ function MestrePage() {
     (mesaId: string) => {
       handleMesaChange(mesaId);
       setSelectedStudent(undefined);
+      setSelectedCampaignId(undefined);
       setFocusLessonId(undefined);
     },
     [handleMesaChange],
@@ -85,6 +88,7 @@ function MestrePage() {
           {[
             ["overview", "Visão geral"],
             ["students", "Alunos"],
+            ["campaigns", "Campanhas"],
             ["account", "Minha conta"],
             ["planning", "Planejamento"],
             ["adventures", "Aventuras"],
@@ -108,6 +112,8 @@ function MestrePage() {
             <MasterSheetsPanel
               selectedMesa={selectedMesa}
               selectedStudent={selectedStudent}
+              selectedCampaignId={selectedCampaignId}
+              onSelectedCampaignChange={setSelectedCampaignId}
               onOpenSession={(lessonId) => {
                 setFocusLessonId(lessonId);
                 setTab("lesson");
@@ -128,11 +134,21 @@ function MestrePage() {
             }}
           />
         ) : null}
+        {tab === "campaigns" ? (
+          <GerusaCampaignsPanel
+            selectedMesa={selectedMesa}
+            selectedStudent={selectedStudent}
+            selectedCampaignId={selectedCampaignId}
+            onSelectedCampaignChange={setSelectedCampaignId}
+          />
+        ) : null}
         {tab === "account" ? <GerusaAccountPanel /> : null}
         {tab === "planning" ? (
           <MasterSheetsPanel
             selectedMesa={selectedMesa}
             selectedStudent={selectedStudent}
+            selectedCampaignId={selectedCampaignId}
+            onSelectedCampaignChange={setSelectedCampaignId}
             onOpenSession={(lessonId) => {
               setFocusLessonId(lessonId);
               setTab("lesson");
@@ -143,22 +159,32 @@ function MestrePage() {
           <CampaignContinuityManager
             selectedMesa={selectedMesa}
             selectedStudent={selectedStudent}
+            selectedCampaignId={selectedCampaignId}
+            onSelectedCampaignChange={setSelectedCampaignId}
           />
         ) : null}
         {tab === "lesson" ? (
           <MesaLiveSessionPanel
             mesaId={selectedMesa}
             studentId={selectedStudent}
+            selectedCampaignId={selectedCampaignId}
             focusLessonId={focusLessonId}
           />
         ) : null}
         {tab === "tasks" ? (
-          <CharacterReviewQueue mesaId={selectedMesa} studentId={selectedStudent} />
+          <CharacterReviewQueue
+            mesaId={selectedMesa}
+            studentId={selectedStudent}
+            selectedCampaignId={selectedCampaignId}
+            onSelectedCampaignChange={setSelectedCampaignId}
+          />
         ) : null}
         {tab === "library" ? (
           <CampaignContinuityManager
             selectedMesa={selectedMesa}
             selectedStudent={selectedStudent}
+            selectedCampaignId={selectedCampaignId}
+            onSelectedCampaignChange={setSelectedCampaignId}
             libraryMode
           />
         ) : null}

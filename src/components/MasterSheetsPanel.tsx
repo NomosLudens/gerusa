@@ -7,6 +7,7 @@ type Lesson = {
   studentName: string;
   mesaId: string;
   campaignId: string | null;
+  campaignName: string | null;
   adventureId: string | null;
   assignmentId: string | null;
   scheduledAt: string | null;
@@ -28,14 +29,14 @@ type Character = {
   updatedAt: string;
 };
 type Payload = {
-  mesa?: { campaigns?: Array<{ id: string; name: string }> };
+  mesa?: { campaigns?: Array<{ id: string; name: string; status?: string }> };
   lessons?: Lesson[];
   characters?: Character[];
   adventures?: Array<{ id: string; title: string }>;
   assignments?: Array<{ id: string; title: string }>;
   error?: string;
 };
-type Draft = Omit<Lesson, "id" | "studentId" | "studentName" | "mesaId">;
+type Draft = Omit<Lesson, "id" | "studentId" | "studentName" | "mesaId" | "campaignName">;
 
 const emptyDraft = (): Draft => ({
   title: "Aula de RPG",
@@ -85,10 +86,14 @@ function fromLocalInput(value: string | null) {
 export function MasterSheetsPanel({
   selectedMesa,
   selectedStudent,
+  selectedCampaignId,
+  onSelectedCampaignChange,
   onOpenSession,
 }: {
   selectedMesa?: string;
   selectedStudent?: string;
+  selectedCampaignId?: string;
+  onSelectedCampaignChange: (campaignId: string) => void;
   onOpenSession: (lessonId: string) => void;
 }) {
   const [payload, setPayload] = useState<Payload>({});
@@ -103,7 +108,14 @@ export function MasterSheetsPanel({
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
   const [tab, setTab] = useState<"plan" | "character">("plan");
-  const campaigns = payload.mesa?.campaigns ?? [];
+  const campaigns = useMemo(() => payload.mesa?.campaigns ?? [], [payload.mesa?.campaigns]);
+  const activeCampaigns = useMemo(
+    () => campaigns.filter((item) => item.status !== "archived"),
+    [campaigns],
+  );
+  const currentCampaignId = activeCampaigns.some((item) => item.id === selectedCampaignId)
+    ? selectedCampaignId
+    : activeCampaigns[0]?.id;
   const lessons = useMemo(() => payload.lessons ?? [], [payload.lessons]);
   const characters = payload.characters ?? [];
   const adventures = payload.adventures ?? [];
@@ -140,6 +152,22 @@ export function MasterSheetsPanel({
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    if (selectedCampaignId == null && activeCampaigns[0]) {
+      onSelectedCampaignChange(activeCampaigns[0].id);
+    }
+  }, [activeCampaigns, onSelectedCampaignChange, selectedCampaignId]);
+
+  useEffect(() => {
+    if (
+      !editingId &&
+      selectedCampaignId &&
+      campaigns.some((item) => item.id === selectedCampaignId)
+    ) {
+      setDraft((current) => ({ ...current, campaignId: selectedCampaignId }));
+    }
+  }, [campaigns, editingId, selectedCampaignId]);
 
   const visibleLessons = useMemo(
     () =>
@@ -185,6 +213,7 @@ export function MasterSheetsPanel({
   };
 
   const editLesson = (lesson: Lesson) => {
+    onSelectedCampaignChange(lesson.campaignId ?? "");
     setEditingId(lesson.id);
     setDraft({
       title: lesson.title,
@@ -218,6 +247,7 @@ export function MasterSheetsPanel({
           mesaId: selectedMesa,
           studentId: selectedStudent,
           fields: {
+            campaignId: selectedCampaignId || null,
             objective: draft.objective,
             grammar: draft.grammar,
             vocabulary: draft.vocabulary,
@@ -259,7 +289,7 @@ export function MasterSheetsPanel({
   };
 
   const saveCharacter = async () => {
-    if (!selectedMesa || !selectedStudent || !characterName.trim()) return;
+    if (!selectedMesa || !selectedStudent || !characterName.trim() || !currentCampaignId) return;
     setBusy(true);
     setError("");
     setNotice("");
@@ -272,7 +302,7 @@ export function MasterSheetsPanel({
           action: "save_character",
           mesaId: selectedMesa,
           studentId: selectedStudent,
-          campaignId: campaigns[0]?.id ?? null,
+          campaignId: currentCampaignId || null,
           name: characterName,
           sheet,
         }),
@@ -436,10 +466,13 @@ export function MasterSheetsPanel({
               <select
                 className={field}
                 value={draft.campaignId ?? ""}
-                onChange={(e) => setDraft({ ...draft, campaignId: e.target.value || null })}
+                onChange={(e) => {
+                  onSelectedCampaignChange(e.target.value);
+                  setDraft({ ...draft, campaignId: e.target.value || null });
+                }}
               >
                 <option value="">Sem campanha</option>
-                {campaigns.map((item) => (
+                {activeCampaigns.map((item) => (
                   <option value={item.id} key={item.id}>
                     {item.name}
                   </option>
@@ -565,7 +598,7 @@ export function MasterSheetsPanel({
               />
             </label>
             <div className="sm:col-span-2 flex flex-wrap gap-2">
-              <button type="submit" className={button} disabled={busy}>
+              <button type="submit" className={button} disabled={busy || !draft.campaignId}>
                 {busy ? "Salvando…" : "Salvar aula"}
               </button>
               {editingId ? (
@@ -574,7 +607,10 @@ export function MasterSheetsPanel({
                   className={button}
                   onClick={() => {
                     setEditingId(null);
-                    setDraft(emptyDraft());
+                    setDraft({
+                      ...emptyDraft(),
+                      campaignId: selectedCampaignId || activeCampaigns[0]?.id || null,
+                    });
                   }}
                 >
                   Cancelar edição
@@ -633,6 +669,9 @@ export function MasterSheetsPanel({
                     <td className="px-3 py-3">{lesson.studentName}</td>
                     <td className="px-3 py-3">
                       <strong>{lesson.title}</strong>
+                      <p className="mt-1 text-xs text-[#d5a56c]">
+                        Campanha: {lesson.campaignName || "Sem campanha"}
+                      </p>
                       <p className="mt-1 max-w-48 text-[#e7c9b7]/70">{lesson.objective}</p>
                     </td>
                     <td className="px-3 py-3">{lesson.grammar || "—"}</td>
@@ -729,7 +768,7 @@ export function MasterSheetsPanel({
               type="button"
               className={button}
               onClick={() => void saveCharacter()}
-              disabled={busy || !characterName.trim()}
+              disabled={busy || !characterName.trim() || !currentCampaignId}
             >
               Salvar ficha
             </button>

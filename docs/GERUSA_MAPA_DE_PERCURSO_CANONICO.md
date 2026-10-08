@@ -1,6 +1,7 @@
 # GERUSA — Mapa de percurso canônico
 
-**Atualizado em:** 2026-10-07  
+**Atualizado em:** 2026-10-08
+
 **Missão:** adaptação multiusuário de KALLISTIS para Gerusa  
 **Resultado da adaptação pedagógica anterior:** `GERUSA_PEDAGOGICAL_PRODUCT_ADAPTATION_PASS` — prova funcional parcial, não certifica o produto completo.
 **Gate único atual:** `GERUSA_PRODUCT_READY_INCIDENT`
@@ -239,5 +240,100 @@ O provisioning e login de alunos foram publicados do SHA
 `5c39b2d5b906199e71fa2939427fa382e0a8a3e6`; a recuperação do primeiro Mestre
 foi publicada do SHA `c27221d8fb305b157c8978abf4ce5bd64d34109c`. O Worker está
 na versão `4f85de0d-c4bb-48be-b570-bb39f73daca1`; a Mini está sincronizada ao
-HEAD e serviu o Core após as migrations e o restart. Esta atualização do mapa
-é somente documental e não exige novo deploy.
+HEAD e serviu o Core após as migrations e o restart. Este registro descreve a
+verificação de 2026-10-07; o SHA atual do Core não foi revalidado em 2026-10-08.
+
+## Atualização operacional — 2026-10-08
+
+`GERUSA_PRODUCT_READY_GATE=INCIDENT`. O relatório completo desta execução está
+em [docs/GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md](GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md)
+e [na cópia completa do Drive](https://drive.google.com/file/d/1lWU9Qkn8h5vcqZ9KheA-agRq5r0Reml0/view).
+
+- O Worker observado permaneceu em `4f85de0d-c4bb-48be-b570-bb39f73daca1`
+  (100%). Home respondeu 200; `/api/profile` e `/api/gerusa/pedagogy` sem
+  sessão responderam 401.
+- `/api/setup/status` respondeu `available=false`; `/setup` mostrou a
+  configuração inicial concluída e não exibiu o formulário. Nenhuma identidade
+  foi criada ou alterada.
+- Core `/health` respondeu 200 e `/profile` sem segredo respondeu 401. O acesso
+  SSH à Mini falhou com `No route to host`; Tailscale estava deslogado e
+  reportou falha de validação de certificado. SHA Core e estado das migrations
+  não foram lidos nesta execução.
+- M1–M3 permanecem alterações locais não publicadas. Typecheck, build, lint dos
+  arquivos alterados, `node --check` e `git diff --check` passaram; o bundle
+  client não teve correspondências para chave OpenRouter, bearer ou host do
+  provider. O fluxo real não foi repetido.
+- A revisão M4 não teve duas contas autenticadas. Uma correção de escopo está
+  local: rejeitar `studentId` diferente do usuário da sessão e não escolher
+  campanha fallback de outra pessoa. Isso não prova isolamento em produção.
+- M5 segue FAIL: não existe alvo QA isolado sem Mestre. O `system_master`
+  ativo da produção não foi removido, desativado ou alterado.
+- Deploy de Worker/Core e migrations foi retido porque a Mini não pode ser
+  atualizada neste momento. Publicar apenas o Worker criaria incompatibilidade
+  com Core/schema. Nenhum commit, push, migration ou cleanup QA ocorreu.
+
+O PASS histórico de chat e ciclo pedagógico com contas existentes permanece
+como evidência parcial; não substitui o primeiro setup, a criação UI de Lucas e
+Maria, os ataques cruzados, nem a aceitação final. O gate permanece incidente.
+
+### Retomada após mudança de rede — QA parcial — 2026-10-08
+
+O registro acima descreve a tentativa anterior do dia. Após a mudança de Wi-Fi,
+`tailscale status` voltou a mostrar a Mini ativa e `ssh mini` conectou sem
+alteração de SSH/TLS/firewall. O relatório atualizado e detalhado está em
+[GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md](GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md).
+
+- Produção: Core ativo, limpo em `dc4bb4d2777af2b7e0bebd0cfc841b49c8662af6`,
+  porta 4530; `/health` local/público 200. PostgreSQL `gerusa` consultado em
+  `READ ONLY`, migrations até `0007_teacher_recovery`; `0008_username_format`
+  e `0009_campaign_context` ausentes. `/api/setup/status` mantém
+  `available=false`; nenhuma escrita de QA foi feita em produção.
+- Worker: `OPENROUTER_API_KEY` e `OPENROUTER_MODEL` existem como Secrets; seus
+  valores não foram lidos. A versão ativa `3f22aa6f-04f9-47e3-8de7-0a8e82d2e2b7`
+  decorre de mudança de Secret; source SHA do deployment não foi identificado.
+- QA isolada executou `/setup` pela UI até criação, sessão, reload, login e
+  bloqueio posterior. Pela UI criou Lucas, João e uma Maria com username
+  `mariamaria` por erro de colagem; os fluxos Clockmaker/Red Library, personagens,
+  planejamento, aventura, sessão, tarefa e resposta foram persistidos no
+  PostgreSQL QA e lidos em `READ ONLY` sem órfãos nas relações verificadas.
+- A UI de cada aluno exibiu seu próprio contexto após reload. Testes de ataque
+  HTTP autenticados, chat cruzado e notas privadas não foram concluídos.
+- `Analisar com Gerusa` falhou com a chave ausente no Wrangler QA. A resposta
+  permaneceu salva, sem feedback fabricado, e a UI ofereceu retry. Análise
+  OpenRouter real e fidelidade pedagógica continuam sem prova.
+- A redefinição de PIN foi acionada na UI, mas login com o PIN novo/antigo não
+  foi verificado; desativação/reativação também falta. Mobile do aluno não
+  apresentou overflow horizontal em 390 × 844; mobile da professora falta.
+- Typecheck, build, ESLint dirigido, `node --check` e `git diff --check`
+  passaram. As mudanças seguem locais e sem commit. Nenhuma migration, commit,
+  push ou deploy de produto foi feito, pois a aceitação permanece incompleta.
+- Um segredo Core impresso acidentalmente em saída anterior foi rotacionado;
+  os valores foram omitidos do relatório. A QA temporária ainda estava ativa
+  ao registrar esta atualização e deve ser encerrada após preservar evidências.
+
+`GERUSA_PRODUCT_READY_GATE=INCIDENT`. A instrução operacional de 2026-10-08
+substitui essa dependência: não pedir sessão à professora real. O bloqueio atual
+é a inexistência de mecanismo autorizado de provisionamento QA em produção e de
+um Secret disponível no runtime QA; ver a seção de bloqueio abaixo.
+
+#### Cleanup após captura das evidências — 2026-10-08
+
+Wrangler QA foi encerrado; `gerusa-core-qa` e o túnel estão inativos; container
+`gerusa_qa_postgres` e volume `gerusa_qa_data` foram removidos. A base QA foi
+eliminada (`QA_RESIDUE_DB=0`). Na retomada sob autorização explícita, os arquivos
+de segredo locais e remotos foram removidos e a ausência foi verificada. Resta
+somente a cópia do código QA `/home/tonyus-dev/gerusa-qa`, sem banco ou
+credenciais. `QA_DATA_CLEANUP=PASS`.
+
+#### Bloqueio de provisionamento QA em produção — 2026-10-08
+
+A instrução atual elimina qualquer dependência da sessão do proprietário. A QA
+isolada já criou a professora via setup e alunos pela UI, depois teve seus dados
+apagados. Em produção, o único criador de `system_master` é
+`/setup/initialize`, condicionado à ausência de Mestre ativo; o status observado
+é `available=false`. A rota de recovery exige sessão de Mestre existente e não
+cria identidade. Não há convite/provisionamento de professora QA no código
+atual. Não foi usado SQL, bypass ou conta real. A aceitação em produção e IA
+OpenRouter real permanecem bloqueadas até existir um mecanismo autorizado para
+provisionar a identidade QA (e, para teste isolado de IA, configurar um Secret
+OpenRouter válido no runtime QA). Nenhum deploy foi feito.
