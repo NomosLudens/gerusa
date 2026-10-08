@@ -49,8 +49,11 @@ export function GerusaCampaignsPanel({
     () => campaigns.filter((campaign) => campaign.status === "active"),
     [campaigns],
   );
-  const selectedCampaign = activeCampaigns.find((item) => item.id === selectedCampaignId);
   const character = payload.characters?.find((item) => item.ownerUserId === selectedStudent);
+  const selectedCampaign =
+    activeCampaigns.find((item) => item.id === selectedCampaignId) ??
+    activeCampaigns.find((item) => item.id === character?.campaignId) ??
+    activeCampaigns[0];
 
   const refresh = useCallback(async () => {
     if (!selectedMesa) {
@@ -81,13 +84,6 @@ export function GerusaCampaignsPanel({
   useEffect(() => {
     setCharacterName(character?.name ?? "");
   }, [character?.id, character?.name]);
-  useEffect(() => {
-    if (!activeCampaigns.length) return;
-    if (selectedCampaignId && activeCampaigns.some((item) => item.id === selectedCampaignId))
-      return;
-    const characterCampaign = activeCampaigns.find((item) => item.id === character?.campaignId);
-    onSelectedCampaignChange((characterCampaign ?? activeCampaigns[0]).id);
-  }, [activeCampaigns, character?.campaignId, onSelectedCampaignChange, selectedCampaignId]);
 
   const createCampaign = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
