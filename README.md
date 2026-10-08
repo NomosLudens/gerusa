@@ -111,13 +111,18 @@ evidência datada; consulte a seção de fechamento final para o estado aceito.
 
 **GERUSA 1.0 — aceite de produto:** `GERUSA_PRODUCT_READY_PASS`
 
+**Release estável:** [v1.0.0](https://github.com/NomosLudens/gerusa/releases/tag/v1.0.0)
+
 **Aplicação publicada:** `8f6ccb0`
 
 **Worker:** `37cdac3d-16a6-4e5f-ab4e-323e84aa297e`
 
 O Gate de Produto 1.0 foi encerrado. Mudanças posteriores devem partir de uma
 nova solicitação e preservar esta baseline, o contrato de autenticação e a
-arquitetura publicada.
+arquitetura publicada. No GitHub, a referência da release `v1.0.0` é protegida
+contra atualização e exclusão; a branch `master` está congelada enquanto este
+marco está em vigor. Alterações futuras exigem uma solicitação explícita e a
+revisão da regra de congelamento.
 
 ---
 

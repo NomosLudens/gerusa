@@ -14,7 +14,12 @@ que descrevem incidentes e evidências parciais anteriores à publicação.
 
 Antes das atualizações documentais desta missão, `master` e `origin/master`
 coincidiam em `ef1e768`; o worktree estava limpo e não havia tags locais ou
-remotas. O Core estava ativo na Mini, com SHA `101a0930`, e `/health` local e
+remotas. A baseline estável foi registrada depois na release GitHub
+[`v1.0.0`](https://github.com/NomosLudens/gerusa/releases/tag/v1.0.0), apontada
+para o commit documental `5278bd1`; a tag tem regras ativas contra atualização
+e exclusão. A branch `master` foi congelada por ruleset ativo sem bypass.
+Commits posteriores na branch antes do congelamento alteraram apenas
+documentação. O Core estava ativo na Mini, com SHA `101a0930`, e `/health` local e
 público respondiam `200`. O Worker ativo a 100% era
 `37cdac3d-16a6-4e5f-ab4e-323e84aa297e`. O ledger PostgreSQL continha migrations
 `0001_initial` a `0009_campaign_context`. O Wrangler confirmou os nomes dos

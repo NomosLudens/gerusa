@@ -11,6 +11,11 @@
 O relatório detalhado, com as etapas anteriores preservadas como histórico, está
 em [GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md](GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md).
 
+Baseline estável registrada na release GitHub
+[v1.0.0](https://github.com/NomosLudens/gerusa/releases/tag/v1.0.0), apontada
+para `5278bd1`, com proteção ativa contra atualização e exclusão da tag. A
+branch `master` está congelada por ruleset ativo sem bypass.
+
 Auditoria somente leitura anterior às atualizações documentais: `master` e
 `origin/master` em `ef1e768`, worktree limpo e sem tags locais/remotas. Core
 ativo (`101a0930`), Worker a 100% (`37cdac3d-16a6-4e5f-ab4e-323e84aa297e`),
