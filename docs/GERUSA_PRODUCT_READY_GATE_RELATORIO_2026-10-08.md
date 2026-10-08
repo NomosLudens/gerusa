@@ -10,10 +10,12 @@
 Esta seção é o estado final e prevalece sobre os registros históricos abaixo,
 que descrevem incidentes e evidências parciais anteriores à publicação.
 
-- **Código e publicação:** `master` e `origin/master` estão no commit
-  `8f6ccb0f575b0635951513d9087683dcab148608`. O Core da Mini está ativo e serve
-  `101a0930cf64b9067e025970c2a95e6807d93e02`; os commits seguintes só alteram
-  a seleção de campanha na UI. O Worker publicado a 100% é
+- **Código e publicação:** a aplicação publicada inclui até
+  `8f6ccb0f575b0635951513d9087683dcab148608`. `master` e `origin/master` estão
+  agora em `c1bd35b492ad3df252e49d4088fa50e69d8ca910`, commit somente de
+  documentação deste fechamento. O Core da Mini está ativo e serve
+  `101a0930cf64b9067e025970c2a95e6807d93e02`; os commits seguintes até a versão
+  publicada do Worker só alteram a seleção de campanha na UI. O Worker a 100% é
   `37cdac3d-16a6-4e5f-ab4e-323e84aa297e`, com a correção de seleção por aluno.
   `/health` local e público respondeu `200`; a rota protegida sem sessão
   respondeu `401`.

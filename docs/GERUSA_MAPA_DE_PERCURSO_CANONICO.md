@@ -11,7 +11,9 @@
 O relatório detalhado, com as etapas anteriores preservadas como histórico, está
 em [GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md](GERUSA_PRODUCT_READY_GATE_RELATORIO_2026-10-08.md).
 
-- `master` e `origin/master`: `8f6ccb0f575b0635951513d9087683dcab148608`.
+- Aplicação publicada até `8f6ccb0f575b0635951513d9087683dcab148608`;
+  `master` e `origin/master` agora em `c1bd35b492ad3df252e49d4088fa50e69d8ca910`
+  (commit apenas de documentação).
 - Gerusa Core ativo na Mini: `101a0930cf64b9067e025970c2a95e6807d93e02`;
   health local e público `200`. Os commits posteriores até HEAD alteram somente
   a seleção de campanha na interface Mestre.
