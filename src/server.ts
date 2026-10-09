@@ -167,6 +167,7 @@ export default {
       url.pathname.startsWith("/api/gerusa/") || url.pathname.startsWith("/api/setup/");
     const isGerusaIdentityPage = [
       "/auth",
+      "/cadastro",
       "/setup",
       "/home",
       "/mestre",
@@ -175,11 +176,15 @@ export default {
     ].includes(url.pathname);
     const isGerusaIdentityApi = [
       "/api/auth/session",
+      "/api/auth/register-teacher",
       "/api/auth/password",
       "/api/auth/recover",
       "/api/profile",
       "/api/master/characters",
       "/api/admin/students",
+      "/api/admin/teachers",
+      "/api/admin/student-invites",
+      "/api/student-invites",
     ].includes(url.pathname);
 
     let response: Response;

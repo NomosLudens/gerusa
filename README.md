@@ -26,7 +26,10 @@ histórico. O acesso de cada aluno é isolado no servidor.
 ## Recursos entregues
 
 - Autenticação Mestre/Aluno com sessões protegidas, username e PIN.
-- Criação e gestão de alunos pela interface da professora.
+- Cadastro e gestão de alunos pela professora, com acesso individual por username e PIN.
+- Cadastro público de professoras, cada uma com conta e Mesa próprias.
+- Convites de uso único para estudantes criarem conta e entrarem na Mesa da professora.
+- Contas individuais para professoras, sempre limitadas às Mesas a que têm vínculo.
 - Campanhas persistentes, personagens, aventuras, aulas e sessões vinculadas.
 - Tarefas, submissions, feedback e progresso pedagógico.
 - Planejamento assistido por IA, sugestão de próxima aula e análise estruturada

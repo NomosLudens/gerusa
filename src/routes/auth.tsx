@@ -179,6 +179,11 @@ function AuthPage() {
             {recovering ? "Voltar ao login" : "Esqueci a senha da professora"}
           </button>
         ) : null}
+        {!recovering ? (
+          <Link className="auth-card__hint block underline" to="/cadastro">
+            Criar conta de professora
+          </Link>
+        ) : null}
         {setupAvailable ? (
           <Link className="auth-card__hint block underline" to="/setup">
             Primeiro acesso da professora
