@@ -7,6 +7,7 @@ import { CampaignContinuityManager } from "@/components/CampaignContinuityManage
 import { CharacterReviewQueue } from "@/components/CharacterReviewQueue";
 import { MasterOperationalRail } from "@/components/MasterOperationalRail";
 import { GerusaStudentsPanel } from "@/components/GerusaStudentsPanel";
+import { GerusaTeachersPanel } from "@/components/GerusaTeachersPanel";
 import { GerusaAccountPanel } from "@/components/GerusaAccountPanel";
 import { GerusaCampaignsPanel } from "@/components/GerusaCampaignsPanel";
 import { useProfile } from "@/lib/use-profile";
@@ -16,7 +17,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/_authenticated/mestre")({ component: MestrePage });
 
 function MestrePage() {
-  const { profile } = useProfile();
+  const { profile, isSystemMaster } = useProfile();
   const navigate = useNavigate();
   const router = useRouter();
   const [selectedMesa, setSelectedMesa] = useState<string | undefined>(() =>
@@ -89,6 +90,7 @@ function MestrePage() {
           {[
             ["overview", "Visão geral"],
             ["students", "Alunos"],
+            ...(isSystemMaster ? [["teachers", "Equipe"]] : []),
             ["campaigns", "Campanhas"],
             ["account", "Minha conta"],
             ["planning", "Planejamento"],
@@ -135,6 +137,7 @@ function MestrePage() {
             }}
           />
         ) : null}
+        {tab === "teachers" && isSystemMaster ? <GerusaTeachersPanel /> : null}
         {tab === "campaigns" ? (
           <GerusaCampaignsPanel
             selectedMesa={selectedMesa}

@@ -59,6 +59,11 @@ export function GerusaStudentsPanel({
   const [issued, setIssued] = useState<{ name: string; username: string; pin: string } | null>(
     null,
   );
+  const [issuedInvite, setIssuedInvite] = useState<{
+    url: string;
+    mesaName: string;
+    expiresAt: string;
+  } | null>(null);
   const [notice, setNotice] = useState("");
 
   const refresh = useCallback(async () => {
@@ -186,6 +191,48 @@ export function GerusaStudentsPanel({
     );
     setNotice("Dados de acesso copiados.");
   }
+  async function createInvite() {
+    if (!mesaId) {
+      setNotice("Escolha uma Mesa para criar o convite.");
+      return;
+    }
+    setBusy(true);
+    setNotice("");
+    try {
+      const response = await fetch("/api/admin/student-invites", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ mesaId }),
+      });
+      const data = (await response.json().catch(() => ({}))) as {
+        token?: string;
+        mesaName?: string;
+        expiresAt?: string;
+        error?: string;
+      };
+      if (!response.ok || !data.token || !data.mesaName || !data.expiresAt)
+        throw new Error("Não foi possível criar o convite para esta Mesa.");
+      setIssuedInvite({
+        url: `${window.location.origin}/cadastro?convite=${encodeURIComponent(data.token)}`,
+        mesaName: data.mesaName,
+        expiresAt: data.expiresAt,
+      });
+    } catch (error) {
+      setNotice(error instanceof Error ? error.message : "Não foi possível criar o convite.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function copyInvite() {
+    if (!issuedInvite) return;
+    try {
+      await navigator.clipboard.writeText(issuedInvite.url);
+      setNotice("Convite copiado. Ele permite um cadastro e vence em 30 dias.");
+    } catch {
+      setNotice("Selecione e copie o link do convite.");
+    }
+  }
 
   return (
     <section
@@ -236,6 +283,51 @@ export function GerusaStudentsPanel({
           </div>
         </article>
       ) : null}
+      {issuedInvite ? (
+        <article
+          className="rounded-xl border border-[#bb5263]/70 bg-[#310d1a] p-5"
+          aria-live="polite"
+        >
+          <h2 className="serif text-2xl">Convite para {issuedInvite.mesaName}</h2>
+          <p className="mt-3 break-all rounded-lg border border-[#8a3045] bg-[#10070b] p-3 text-sm">
+            {issuedInvite.url}
+          </p>
+          <p className="mt-2 text-sm text-[#f0c7b6]">
+            Link de uso único, válido até {new Date(issuedInvite.expiresAt).toLocaleString("pt-BR")}
+            . O aluno cria seu próprio nome de acesso e PIN.
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="min-h-11 rounded-lg bg-[#9f3049] px-4"
+              onClick={() => void copyInvite()}
+            >
+              Copiar convite
+            </button>
+            <button
+              type="button"
+              className="min-h-11 rounded-lg border border-[#8a3045] px-4"
+              onClick={() => setIssuedInvite(null)}
+            >
+              Concluir
+            </button>
+          </div>
+        </article>
+      ) : null}
+      <article className="grid gap-3 rounded-xl border border-[#742233]/40 bg-[#220d15] p-4">
+        <h2 className="serif text-xl">Convidar estudante para uma Mesa</h2>
+        <p className="text-sm text-[#e7c9b7]/70">
+          Crie um link de uso único. O estudante escolhe seu próprio acesso ao concluir o cadastro.
+        </p>
+        <button
+          type="button"
+          disabled={busy || loading || !mesaId}
+          onClick={() => void createInvite()}
+          className="min-h-11 rounded-lg border border-[#8a3045] px-4 disabled:opacity-60"
+        >
+          Gerar convite para {mesas.find((mesa) => mesa.id === mesaId)?.name ?? "Mesa"}
+        </button>
+      </article>
       <form
         onSubmit={createStudent}
         className="grid gap-3 rounded-xl border border-[#742233]/40 bg-[#220d15] p-4 sm:grid-cols-2"

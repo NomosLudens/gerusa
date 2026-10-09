@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
+import { Link } from "@tanstack/react-router";
 import { getLocalSession } from "@/lib/local-auth-client";
 
 export const Route = createFileRoute("/")({ component: GerusaHome });
@@ -101,6 +102,9 @@ function GerusaHome() {
           <p className="gerusa-note" id="gerusa-note" role={error ? "alert" : undefined}>
             {error ||
               (setupAvailable ? "Primeiro acesso da professora." : "Uma conversa, sem pressa.")}
+          </p>
+          <p className="gerusa-note">
+            Professora? <Link to="/cadastro">Crie sua conta e sua Mesa</Link>.
           </p>
           <p className="gerusa-signature">Por enquanto, podemos começar com uma boa pergunta.</p>
         </div>

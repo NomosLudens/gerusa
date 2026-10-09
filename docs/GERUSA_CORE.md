@@ -32,8 +32,21 @@ systemctl --user enable --now gerusa-core.service
 - `POST /auth/login`, `GET /auth/session` e `POST /auth/logout`: autenticação e
   sessão persistida; o Core armazena somente o digest do token e hash scrypt da
   senha.
+- `POST /auth/register-teacher`: cadastro público de professora, criação da
+  primeira Mesa, sessão de entrada e código de recuperação exibido uma vez.
+- `POST /admin/student-invites`, `GET /student-invites/validate` e
+  `POST /student-invites/claim`: convite de uso único, válido por 30 dias, e
+  cadastro do estudante na Mesa indicada.
 - `GET` e `PUT /profile`: identidade própria resolvida pela sessão.
 - `GET /master/summary`: alunos, mesas e campanhas das mesas de mestre ativas.
+- `GET`, `POST /admin/teachers` e `PATCH /admin/teachers/:id`: a administradora
+  principal lista e cadastra professoras nas próprias Mesas e pode gerar uma nova
+  senha temporária. A senha inicial ou redefinida é exibida uma única vez na interface.
+- `GET`, `POST /admin/students` e `PATCH /admin/students/:id`: professoras
+  cadastram alunos e administram o acesso dos alunos vinculados às próprias Mesas.
+- `0010_public_registration.sql` cria a tabela de convites de cadastro de
+  estudantes. Deve ser aplicada à database isolada `gerusa`, com a role `gerusa`,
+  antes de publicar as novas rotas.
 - `POST /threads`: cria conversa de jogador vinculada ao usuário e à mesa ativa.
 - `GET` e `POST /threads/:threadId/messages`: lê/grava mensagens; o dono e a
   professora vinculada à mesa podem acessar a conversa.

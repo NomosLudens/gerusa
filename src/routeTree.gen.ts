@@ -10,11 +10,13 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SetupRouteImport } from './routes/setup'
+import { Route as CadastroRouteImport } from './routes/cadastro'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as ConversaIndexRouteImport } from './routes/conversa.index'
 import { Route as ConversaThreadIdRouteImport } from './routes/conversa.$threadId'
+import { Route as ApiStudentInvitesRouteImport } from './routes/api/student-invites'
 import { Route as ApiProfileRouteImport } from './routes/api/profile'
 import { Route as AuthenticatedMestreRouteImport } from './routes/_authenticated/mestre'
 import { Route as AuthenticatedHomeRouteImport } from './routes/_authenticated/home'
@@ -26,13 +28,21 @@ import { Route as ApiGerusaPedagogyRouteImport } from './routes/api/gerusa.pedag
 import { Route as ApiGerusaChatRouteImport } from './routes/api/gerusa.chat'
 import { Route as ApiGerusaActionRouteImport } from './routes/api/gerusa.action'
 import { Route as ApiAuthSessionRouteImport } from './routes/api/auth/session'
+import { Route as ApiAuthRegisterTeacherRouteImport } from './routes/api/auth/register-teacher'
 import { Route as ApiAuthRecoverRouteImport } from './routes/api/auth/recover'
 import { Route as ApiAuthPasswordRouteImport } from './routes/api/auth/password'
+import { Route as ApiAdminTeachersRouteImport } from './routes/api/admin/teachers'
 import { Route as ApiAdminStudentsRouteImport } from './routes/api/admin/students'
+import { Route as ApiAdminStudentInvitesRouteImport } from './routes/api/admin/student-invites'
 
 const SetupRoute = SetupRouteImport.update({
   id: '/setup',
   path: '/setup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CadastroRoute = CadastroRouteImport.update({
+  id: '/cadastro',
+  path: '/cadastro',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -57,6 +67,11 @@ const ConversaIndexRoute = ConversaIndexRouteImport.update({
 const ConversaThreadIdRoute = ConversaThreadIdRouteImport.update({
   id: '/conversa/$threadId',
   path: '/conversa/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiStudentInvitesRoute = ApiStudentInvitesRouteImport.update({
+  id: '/api/student-invites',
+  path: '/api/student-invites',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiProfileRoute = ApiProfileRouteImport.update({
@@ -114,6 +129,11 @@ const ApiAuthSessionRoute = ApiAuthSessionRouteImport.update({
   path: '/api/auth/session',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthRegisterTeacherRoute = ApiAuthRegisterTeacherRouteImport.update({
+  id: '/api/auth/register-teacher',
+  path: '/api/auth/register-teacher',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAuthRecoverRoute = ApiAuthRecoverRouteImport.update({
   id: '/api/auth/recover',
   path: '/api/auth/recover',
@@ -124,24 +144,39 @@ const ApiAuthPasswordRoute = ApiAuthPasswordRouteImport.update({
   path: '/api/auth/password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAdminTeachersRoute = ApiAdminTeachersRouteImport.update({
+  id: '/api/admin/teachers',
+  path: '/api/admin/teachers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiAdminStudentsRoute = ApiAdminStudentsRouteImport.update({
   id: '/api/admin/students',
   path: '/api/admin/students',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiAdminStudentInvitesRoute = ApiAdminStudentInvitesRouteImport.update({
+  id: '/api/admin/student-invites',
+  path: '/api/admin/student-invites',
   getParentRoute: () => rootRouteImport,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cadastro': typeof CadastroRoute
   '/setup': typeof SetupRoute
   '/home': typeof AuthenticatedHomeRoute
   '/mestre': typeof AuthenticatedMestreRoute
   '/api/profile': typeof ApiProfileRoute
+  '/api/student-invites': typeof ApiStudentInvitesRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa/': typeof ConversaIndexRoute
+  '/api/admin/student-invites': typeof ApiAdminStudentInvitesRoute
   '/api/admin/students': typeof ApiAdminStudentsRoute
+  '/api/admin/teachers': typeof ApiAdminTeachersRoute
   '/api/auth/password': typeof ApiAuthPasswordRoute
   '/api/auth/recover': typeof ApiAuthRecoverRoute
+  '/api/auth/register-teacher': typeof ApiAuthRegisterTeacherRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
@@ -154,15 +189,20 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/cadastro': typeof CadastroRoute
   '/setup': typeof SetupRoute
   '/home': typeof AuthenticatedHomeRoute
   '/mestre': typeof AuthenticatedMestreRoute
   '/api/profile': typeof ApiProfileRoute
+  '/api/student-invites': typeof ApiStudentInvitesRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa': typeof ConversaIndexRoute
+  '/api/admin/student-invites': typeof ApiAdminStudentInvitesRoute
   '/api/admin/students': typeof ApiAdminStudentsRoute
+  '/api/admin/teachers': typeof ApiAdminTeachersRoute
   '/api/auth/password': typeof ApiAuthPasswordRoute
   '/api/auth/recover': typeof ApiAuthRecoverRoute
+  '/api/auth/register-teacher': typeof ApiAuthRegisterTeacherRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
@@ -177,15 +217,20 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/cadastro': typeof CadastroRoute
   '/setup': typeof SetupRoute
   '/_authenticated/home': typeof AuthenticatedHomeRoute
   '/_authenticated/mestre': typeof AuthenticatedMestreRoute
   '/api/profile': typeof ApiProfileRoute
+  '/api/student-invites': typeof ApiStudentInvitesRoute
   '/conversa/$threadId': typeof ConversaThreadIdRoute
   '/conversa/': typeof ConversaIndexRoute
+  '/api/admin/student-invites': typeof ApiAdminStudentInvitesRoute
   '/api/admin/students': typeof ApiAdminStudentsRoute
+  '/api/admin/teachers': typeof ApiAdminTeachersRoute
   '/api/auth/password': typeof ApiAuthPasswordRoute
   '/api/auth/recover': typeof ApiAuthRecoverRoute
+  '/api/auth/register-teacher': typeof ApiAuthRegisterTeacherRoute
   '/api/auth/session': typeof ApiAuthSessionRoute
   '/api/gerusa/action': typeof ApiGerusaActionRoute
   '/api/gerusa/chat': typeof ApiGerusaChatRoute
@@ -200,15 +245,20 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/cadastro'
     | '/setup'
     | '/home'
     | '/mestre'
     | '/api/profile'
+    | '/api/student-invites'
     | '/conversa/$threadId'
     | '/conversa/'
+    | '/api/admin/student-invites'
     | '/api/admin/students'
+    | '/api/admin/teachers'
     | '/api/auth/password'
     | '/api/auth/recover'
+    | '/api/auth/register-teacher'
     | '/api/auth/session'
     | '/api/gerusa/action'
     | '/api/gerusa/chat'
@@ -221,15 +271,20 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/cadastro'
     | '/setup'
     | '/home'
     | '/mestre'
     | '/api/profile'
+    | '/api/student-invites'
     | '/conversa/$threadId'
     | '/conversa'
+    | '/api/admin/student-invites'
     | '/api/admin/students'
+    | '/api/admin/teachers'
     | '/api/auth/password'
     | '/api/auth/recover'
+    | '/api/auth/register-teacher'
     | '/api/auth/session'
     | '/api/gerusa/action'
     | '/api/gerusa/chat'
@@ -243,15 +298,20 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/cadastro'
     | '/setup'
     | '/_authenticated/home'
     | '/_authenticated/mestre'
     | '/api/profile'
+    | '/api/student-invites'
     | '/conversa/$threadId'
     | '/conversa/'
+    | '/api/admin/student-invites'
     | '/api/admin/students'
+    | '/api/admin/teachers'
     | '/api/auth/password'
     | '/api/auth/recover'
+    | '/api/auth/register-teacher'
     | '/api/auth/session'
     | '/api/gerusa/action'
     | '/api/gerusa/chat'
@@ -266,13 +326,18 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
+  CadastroRoute: typeof CadastroRoute
   SetupRoute: typeof SetupRoute
   ApiProfileRoute: typeof ApiProfileRoute
+  ApiStudentInvitesRoute: typeof ApiStudentInvitesRoute
   ConversaThreadIdRoute: typeof ConversaThreadIdRoute
   ConversaIndexRoute: typeof ConversaIndexRoute
+  ApiAdminStudentInvitesRoute: typeof ApiAdminStudentInvitesRoute
   ApiAdminStudentsRoute: typeof ApiAdminStudentsRoute
+  ApiAdminTeachersRoute: typeof ApiAdminTeachersRoute
   ApiAuthPasswordRoute: typeof ApiAuthPasswordRoute
   ApiAuthRecoverRoute: typeof ApiAuthRecoverRoute
+  ApiAuthRegisterTeacherRoute: typeof ApiAuthRegisterTeacherRoute
   ApiAuthSessionRoute: typeof ApiAuthSessionRoute
   ApiGerusaActionRoute: typeof ApiGerusaActionRoute
   ApiGerusaChatRoute: typeof ApiGerusaChatRoute
@@ -290,6 +355,13 @@ declare module '@tanstack/react-router' {
       path: '/setup'
       fullPath: '/setup'
       preLoaderRoute: typeof SetupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cadastro': {
+      id: '/cadastro'
+      path: '/cadastro'
+      fullPath: '/cadastro'
+      preLoaderRoute: typeof CadastroRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -325,6 +397,13 @@ declare module '@tanstack/react-router' {
       path: '/conversa/$threadId'
       fullPath: '/conversa/$threadId'
       preLoaderRoute: typeof ConversaThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/student-invites': {
+      id: '/api/student-invites'
+      path: '/api/student-invites'
+      fullPath: '/api/student-invites'
+      preLoaderRoute: typeof ApiStudentInvitesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/profile': {
@@ -404,6 +483,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSessionRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/register-teacher': {
+      id: '/api/auth/register-teacher'
+      path: '/api/auth/register-teacher'
+      fullPath: '/api/auth/register-teacher'
+      preLoaderRoute: typeof ApiAuthRegisterTeacherRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/auth/recover': {
       id: '/api/auth/recover'
       path: '/api/auth/recover'
@@ -418,11 +504,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/admin/teachers': {
+      id: '/api/admin/teachers'
+      path: '/api/admin/teachers'
+      fullPath: '/api/admin/teachers'
+      preLoaderRoute: typeof ApiAdminTeachersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/admin/students': {
       id: '/api/admin/students'
       path: '/api/admin/students'
       fullPath: '/api/admin/students'
       preLoaderRoute: typeof ApiAdminStudentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/admin/student-invites': {
+      id: '/api/admin/student-invites'
+      path: '/api/admin/student-invites'
+      fullPath: '/api/admin/student-invites'
+      preLoaderRoute: typeof ApiAdminStudentInvitesRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -445,13 +545,18 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
+  CadastroRoute: CadastroRoute,
   SetupRoute: SetupRoute,
   ApiProfileRoute: ApiProfileRoute,
+  ApiStudentInvitesRoute: ApiStudentInvitesRoute,
   ConversaThreadIdRoute: ConversaThreadIdRoute,
   ConversaIndexRoute: ConversaIndexRoute,
+  ApiAdminStudentInvitesRoute: ApiAdminStudentInvitesRoute,
   ApiAdminStudentsRoute: ApiAdminStudentsRoute,
+  ApiAdminTeachersRoute: ApiAdminTeachersRoute,
   ApiAuthPasswordRoute: ApiAuthPasswordRoute,
   ApiAuthRecoverRoute: ApiAuthRecoverRoute,
+  ApiAuthRegisterTeacherRoute: ApiAuthRegisterTeacherRoute,
   ApiAuthSessionRoute: ApiAuthSessionRoute,
   ApiGerusaActionRoute: ApiGerusaActionRoute,
   ApiGerusaChatRoute: ApiGerusaChatRoute,
